@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>坪數計算器</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: #fefefe;
+    }
+    h1 {
+      color: #333;
+    }
+    input {
+      padding: 10px;
+      margin: 5px;
+      width: 120px;
+      font-size: 16px;
+      text-align: center;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #0066cc;
+    }
+    .note {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>坪數計算器</h1>
+  <p>輸入長、寬（公分）：</p>
+  <input type="number" id="length" placeholder="長 (cm)" oninput="calc()">
+  <input type="number" id="width" placeholder="寬 (cm)" oninput="calc()">
+  <div id="result">請輸入長和寬</div>
+  <div class="note">1 坪 ≈ 3.305785 m² ≈ 33057.85 cm²</div>
+
+  <script>
+    function calc() {
+      let length = parseFloat(document.getElementById('length').value);
+      let width = parseFloat(document.getElementById('width').value);
+      if (isNaN(length) || isNaN(width)) {
+        document.getElementById('result').innerText = "請輸入長和寬";
+        return;
+      }
+      let area_cm2 = length * width;               // cm²
+      let area_m2 = area_cm2 / 10000;             // m²
+      let ping = area_cm2 / 33057.85;             // 坪
+      document.getElementById('result').innerText = 
+        `面積：約 ${ping.toFixed(2)} 坪（${area_m2.toFixed(2)} m²）`;
+    }
+  </script>
+</body>
+</html>
