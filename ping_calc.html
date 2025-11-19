@@ -1,131 +1,162 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <title>坪數＋浪板＋C型鋼計算器</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 30px;
-      background: #fafafa;
-      max-width: 600px;
-      margin: auto;
-    }
-    h1 { text-align: center; }
-    .block { margin: 25px 0; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 0 6px rgba(0,0,0,0.08); }
-    input, select {
-      width: 160px;
-      padding: 8px;
-      margin: 5px;
-      font-size: 16px;
-      text-align: center;
-    }
-    .result { font-size: 18px; font-weight: bold; color: #0077cc; margin-top: 10px; }
-  </style>
+<meta charset="UTF-8">
+<title>坪數＋浪板＋C型鋼 計算器</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f7f7f7;
+    padding: 30px;
+    text-align: center;
+  }
+
+  .box {
+    background: white;
+    padding: 25px;
+    margin: 20px auto;
+    width: 90%;
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px #ddd;
+  }
+
+  input, select {
+    padding: 10px;
+    margin: 5px;
+    width: 160px;
+    font-size: 16px;
+    text-align: center;
+  }
+
+  .result {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #0055cc;
+  }
+
+  label {
+    font-size: 15px;
+    margin-right: 5px;
+  }
+</style>
 </head>
 <body>
 
-<h1>多功能計算器</h1>
+<h1>坪數 + 浪板 + C型鋼 計算器</h1>
 
-<!-- 坪數 -->
-<div class="block">
-  <h3>坪數計算</h3>
-  <input type="number" id="len_cm" placeholder="長 (cm)" oninput="calc_ping()">
-  <input type="number" id="wid_cm" placeholder="寬 (cm)" oninput="calc_ping()">
-  <div id="ping_result" class="result">請輸入長寬</div>
+<!-- 坪數計算 -->
+<div class="box">
+  <h2>坪數計算</h2>
+  <input type="number" id="len" placeholder="長 (cm)" oninput="calcPing()">
+  <input type="number" id="wid" placeholder="寬 (cm)" oninput="calcPing()">
+  <div id="pingResult" class="result">請輸入長寬</div>
 </div>
 
-<!-- 單斜 / 雙斜 浪板片數 -->
-<div class="block">
-  <h3>浪板片數計算（750型）</h3>
+<!-- 浪板片數 -->
+<div class="box">
+  <h2>浪板片數計算（750型）</h2>
 
-  <select id="slope_type" onchange="calc_wave()">
+  <select id="slopeType" onchange="calcWave()">
     <option value="1">單斜</option>
-    <option value="2">雙斜</option>
+    <option value="2">雙斜（自動 ×2）</option>
   </select>
 
   <br>
-  <input type="number" id="roof_len" placeholder="屋頂長度 (cm)" oninput="calc_wave()">
+  <input type="number" id="roofLen" placeholder="單邊屋頂長度 (cm)" oninput="calcWave()">
 
-  <div id="wave_result" class="result">請輸入數據</div>
+  <div id="waveResult" class="result">請輸入資料</div>
 </div>
 
-<!-- C 型鋼間距計算 -->
-<div class="block">
-  <h3>C 型鋼間距計算（60～80 cm）</h3>
+<!-- C型鋼計算 -->
+<div class="box">
+  <h2>C 型鋼間距計算（60～80 cm）</h2>
 
-  <input type="number" id="beam_len" placeholder="斜樑總長 (cm)" oninput="calc_csteel()">
-  <input type="number" id="first_gap" placeholder="第一支距離 (cm)" value="15" oninput="calc_csteel()">
+  <input type="number" id="cLen" placeholder="斜樑總長 (cm)" oninput="calcC()">
 
-  <div id="csteel_result" class="result">請輸入數據</div>
+  <br>
+  <label>首隻間距（固定）</label>
+  <input type="number" value="15" id="firstGap" readonly>
+
+  <div id="cResult" class="result">請輸入資料</div>
 </div>
-
 
 <script>
-// -------- 坪數計算 --------
-function calc_ping() {
-  let L = parseFloat(document.getElementById('len_cm').value);
-  let W = parseFloat(document.getElementById('wid_cm').value);
+
+// ------------------ 坪數 ------------------
+function calcPing() {
+  let L = parseFloat(document.getElementById("len").value);
+  let W = parseFloat(document.getElementById("wid").value);
 
   if (isNaN(L) || isNaN(W)) {
-    document.getElementById('ping_result').innerText = "請輸入長寬";
+    document.getElementById("pingResult").innerHTML = "請輸入長寬";
     return;
   }
 
-  let area_cm2 = L * W;
-  let area_m2 = area_cm2 / 10000;
-  let ping = area_cm2 / 33057.85;
+  let cm2 = L * W;
+  let m2 = cm2 / 10000;
+  let ping = cm2 / 33057.85;
 
-  document.getElementById('ping_result').innerText =
-    `面積：${ping.toFixed(2)} 坪（${area_m2.toFixed(2)} m²）`;
+  document.getElementById("pingResult").innerHTML =
+    `約 ${ping.toFixed(2)} 坪（${m2.toFixed(2)} m²）`;
 }
 
 
-// -------- 浪板片數計算 --------
-function calc_wave() {
-  let type = parseInt(document.getElementById('slope_type').value);
-  let L = parseFloat(document.getElementById('roof_len').value);
+
+// ------------------ 浪板片數 ------------------
+function calcWave() {
+  let type = parseInt(document.getElementById("slopeType").value);
+  let L = parseFloat(document.getElementById("roofLen").value);
 
   if (isNaN(L)) {
-    document.getElementById('wave_result').innerText = "請輸入數據";
+    document.getElementById("waveResult").innerHTML = "請輸入資料";
     return;
   }
 
-  let total_length = (type === 1) ? L : L * 2;
-  let pieces = Math.ceil(total_length / 75);
+  let pcs = Math.ceil(L / 75);   // 單邊片數
 
-  document.getElementById('wave_result').innerHTML =
-    `總長：${total_length} cm<br>需浪板：${pieces} 片`;
+  if (type === 2) pcs = pcs * 2; // 雙斜 ×2
+
+  document.getElementById("waveResult").innerHTML =
+    `需要浪板：${pcs} 片`;
 }
 
 
-// -------- C 型鋼間距計算 --------
-function calc_csteel() {
-  let total = parseFloat(document.getElementById('beam_len').value);
-  let first = parseFloat(document.getElementById('first_gap').value);
 
-  if (isNaN(total) || isNaN(first)) {
-    document.getElementById('csteel_result').innerText = "請輸入數據";
+// ------------------ C 型鋼隻數計算 ------------------
+function calcC() {
+  let total = parseFloat(document.getElementById("cLen").value);
+  let firstGap = 15;
+
+  if (isNaN(total)) {
+    document.getElementById("cResult").innerHTML = "請輸入資料";
     return;
   }
 
-  let effective = total - first; // 有效長度
+  let usable = total - firstGap;
+  let txt = "";
 
-  let result = "";
-  for (let n = 5; n <= 20; n++) {
-    let gap = effective / n;
+  txt += `總長：${total} cm（已扣首隻 15 cm）<br><br>`;
 
-    if (gap >= 60 && gap <= 80) {
-      result += `${effective} / ${n} 隻 = ${gap.toFixed(1)} cm<br>`;
+  // 測試 7～12 隻（你可調整）
+  for (let n = 7; n <= 12; n++) {
+
+    let space = usable / n;
+
+    if (space <= 80 && space >= 60) {
+
+      txt += `${usable} / ${n} 隻 = ${space.toFixed(1)} cm　（共計 ${n + 1} 隻）<br>`;
     }
   }
 
-  if (result === "") {
-    result = "沒有符合 60～80 cm 間距的隻數。";
+  if (txt.indexOf("隻") === -1) {
+    txt = "沒有符合 60～80 cm 的分佈";
   }
 
-  document.getElementById('csteel_result').innerHTML = result;
+  document.getElementById("cResult").innerHTML = txt;
 }
+
 </script>
 
 </body>
