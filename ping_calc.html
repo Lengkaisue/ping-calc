@@ -1,41 +1,46 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>組合屋材料清單對照表</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>🛠️ 組合屋材料清單對照表</title>
     <style>
-        body { font-family: 'Microsoft JhengHei', Arial, sans-serif; margin: 20px; background: #f5f7fa; }
-        .container { max-width: 1600px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        h1 { text-align: center; margin-bottom: 15px; color: #2c3e50; }
-        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
-        button { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; background: #667eea; transition: 0.3s; }
-        button:hover { background: #5566cc; }
-        button.add-row { background: #51cf66; } 
-        button.add-col { background: #f093fb; }
-        button.export { background: #f5576c; }
-        button.clear { background: #ff6b6b; }
-        button.print { background: #4facfe; }
-        table { border-collapse: collapse; width: 100%; font-size: 13px; }
-        th, td { border: 2px solid #dee2e6; padding: 10px 8px; min-width: 80px; height: 40px; text-align: center; }
-        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: bold; position: sticky; top: 0; z-index: 10; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Microsoft JhengHei', Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+        .container { max-width: 1600px; margin: 0 auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 28px; }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+        button { padding: 12px 20px; border: none; border-radius: 8px; background: #667eea; color: white; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .add-row { background: #51cf66; }
+        .add-col { background: #f093fb; }
+        .export { background: #f5576c; }
+        .print { background: #4facfe; }
+        .clear { background: #ff6b6b; }
+        table { border-collapse: collapse; width: 100%; font-size: 13px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        th, td { border: 2px solid #dee2e6; padding: 12px 8px; min-height: 45px; text-align: center; position: relative; }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; color: white; font-weight: bold; position: sticky; top: 0; z-index: 10; }
         td[contenteditable="true"], th[contenteditable="true"] { background: white; cursor: text; }
-        td:focus, th:focus { outline: 3px solid #4facfe; background: #fff; }
-        .item { font-weight: 600; text-align: left; padding-left: 15px; }
-        .delete-btn { cursor: pointer; color: red; font-weight: bold; user-select: none; }
+        td:focus, th:focus { outline: 3px solid #4facfe; background: #fff !important; transform: scale(1.01); }
+        .item { background: #f8f9fa !important; font-weight: 500; text-align: left; padding-left: 15px; }
+        .delete-btn { position: absolute; top: 2px; right: 2px; width: 24px; height: 24px; border-radius: 50%; background: #ff6b6b; color: white; border: none; font-size: 14px; cursor: pointer; display: none; line-height: 24px; }
+        tr:hover .delete-btn { display: block; }
+        .notes { background: #fff3cd !important; font-size: 12px; }
+        @media print { .toolbar, .delete-btn { display: none !important; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 contenteditable="true">🛠️ 夾層平台材料清單對照表</h1>
+        <h1 contenteditable="true">🛠️ 組合屋材料清單對照表</h1>
         <div class="toolbar">
             <button class="add-row" onclick="addRow()">➕ 新增材料項目</button>
             <button class="add-col" onclick="addColumn()">➕ 新增尺寸欄</button>
-            <button class="export" onclick="exportTableToExcel()">📊 匯出Excel</button>
+            <button class="export" onclick="exportExcel()">📊 匯出Excel</button>
             <button class="print" onclick="window.print()">🖨️ 列印</button>
-            <button class="clear" onclick="clearTable()">🗑️ 清空所有內容</button>
+            <button class="clear" onclick="clearAll()">🗑️ 清空所有內容</button>
         </div>
-        <table id="materialTable">
+        
+        <table id="materialsTable">
             <thead>
                 <tr>
                     <th contenteditable="true">材料項目</th>
@@ -48,160 +53,23 @@
                     <th contenteditable="true">5x6米</th>
                     <th contenteditable="true">5x7米</th>
                     <th contenteditable="true">5x8米</th>
-                    <th>刪除列</th>
+                    <th style="background:#ff6b6b;">刪除</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- 範例列 -->
-                <tr>
-                    <td contenteditable="true" class="item">地板</td>
-                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
-                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
-                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
-                    <td><span class="delete-btn" onclick="deleteRow(this)">×</span></td>
-                </tr>
-                <tr>
-                    <td contenteditable="true" class="item">庫版</td>
-                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
-                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
-                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
-                    <td><span class="delete-btn" onclick="deleteRow(this)">×</span></td>
-                </tr>
-                <!-- 可刪除列範例結束 -->
-            </tbody>
-        </table>
-    </div>
-    <script>
-        // 新增材料項目
-        function addRow() {
-            const table = document.getElementById('materialTable').getElementsByTagName('tbody')[0];
-            const cols = table.rows[0].cells.length;
-            const newRow = table.insertRow();
-            for(let i=0; i < cols; i++){
-                let newCell = newRow.insertCell(i);
-                if(i===0) {
-                    newCell.contentEditable = "true";
-                    newCell.className = "item";
-                } else if(i === cols - 1){
-                    newCell.innerHTML = '<span class="delete-btn" onclick="deleteRow(this)">×</span>';
-                } else {
-                    newCell.contentEditable = "true";
-                }
-            }
-            saveTableData();
-        }
-        // 新增尺寸欄位
-        function addColumn() {
-            const table = document.getElementById('materialTable');
-            // 頭列新增欄位
-            const headRow = table.tHead.rows[0];
-            const headRow2 = table.tHead.rows[1];
-            const newTH1 = document.createElement('th');
-            newTH1.contentEditable = "true";
-            newTH1.innerText = "新尺寸";
-            headRow.appendChild(newTH1);
-            const newTH2 = document.createElement('th');
-            newTH2.contentEditable = "true";
-            newTH2.innerText = "";
-            headRow2.appendChild(newTH2);
-            // tbody新增欄位
-            const rows = table.tBodies[0].rows;
-            for(let r=0; r<rows.length; r++) {
-                const newTD = rows[r].insertCell(-1);
-                newTD.contentEditable = "true";
-            }
-            // 刪除欄位寫死在倒數第1欄，需將刪除欄位cell移到最後
-            for(let r=0; r<rows.length; r++) {
-                let delCell = rows[r].cells[rows[r].cells.length-2];
-                rows[r].appendChild(delCell);
-            }
-            saveTableData();
-        }
-        // 刪除列
-        function deleteRow(elm) {
-            if(confirm("確定刪除此項目？")) {
-                const row = elm.parentNode.parentNode;
-                row.parentNode.removeChild(row);
-                saveTableData();
-            }
-        }
-        // 儲存到LocalStorage
-        function saveTableData() {
-            const table = document.getElementById('materialTable');
-            const data = [];
-            for(let i = 0; i < table.rows.length; i++) {
-                let rowdata = [];
-                for(let j = 0; j < table.rows[i].cells.length - 1; j++) {
-                    rowdata.push(table.rows[i].cells[j].innerText.trim());
-                }
-                data.push(rowdata);
-            }
-            localStorage.setItem('materialTable', JSON.stringify(data));
-        }
-        // 載入LocalStorage資料
-        function loadTableData() {
-            const data = JSON.parse(localStorage.getItem('materialTable'));
-            if(!data) return;
-            const table = document.getElementById('materialTable');
-            // 清空tbody
-            const tbody = table.tBodies[0];
-            tbody.innerHTML = '';
-            // 先重建thead部分（只重建第一行，假設第二行為空或忽略）
-            const thead = table.tHead;
-            thead.rows[0].innerHTML = '';
-            data[0].forEach(text => {
-                let th = document.createElement('th');
-                th.contentEditable = "true";
-                th.innerText = text;
-                thead.rows[0].appendChild(th);
-            });
-            // 逐行添加tbody
-            for(let r=1; r<data.length; r++) {
-                let newRow = tbody.insertRow();
-                data[r].forEach((text, i) => {
-                    let newCell = newRow.insertCell(i);
-                    newCell.contentEditable = "true";
-                    if(i===0) newCell.className = "item";
-                    newCell.innerText = text;
-                });
-                // 刪除按鈕
-                let delCell = newRow.insertCell(-1);
-                delCell.innerHTML = '<span class="delete-btn" onclick="deleteRow(this)">×</span>';
-            }
-        }
-        // 匯出 Excel (簡易CSV)
-        function exportTableToExcel() {
-            let table = document.getElementById("materialTable");
-            let csv = [];
-            for (let row of table.rows) {
-                let cols = [];
-                for(let cell of row.cells){
-                    cols.push('"' + cell.innerText.replace(/"/g, '""') + '"');
-                }
-                csv.push(cols.join(","));
-            }
-            let csvString = csv.join("\n");
-            let blob = new Blob([csvString], {type: 'text/csv'});
-            let url = URL.createObjectURL(blob);
-            let a = document.createElement("a");
-            a.href = url;
-            a.download = "material-list.csv";
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-        // 清空表格所有內容
-        function clearTable() {
-            if(confirm("確定清空整張表格内容嗎？此動作無法復原。")) {
-                const table = document.getElementById('materialTable');
-                const tbody = table.tBodies[0];
-                tbody.innerHTML = '';
-                // 保留表頭第一行標題內容，不動
-                saveTableData();
-            }
-        }
-        // 監控內容變動自動儲存
-        document.getElementById('materialTable').addEventListener('input', saveTableData);
-        window.onload = loadTableData;
-    </script>
-</body>
-</html>
+                <tr><td class="item" contenteditable="true">地板</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">庫版</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">地板支架</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">天花板主支架</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">天花板支架粗</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">天花板支架細</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">短邊3米樑組（上+下）</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">短邊4米樑組（上+下）</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">短邊5米樑組（上+下）</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">長邊6米樑組（上+下）</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">長邊7米樑組（上+下）</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">長邊8米樑組（上+下）</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">立柱每間4隻</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">角座每間8顆</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="item" contenteditable="true">短邊3米扣布每間2隻</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
+                <tr><td class="
