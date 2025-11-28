@@ -1,183 +1,207 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>坪數＋浪板＋斜切＋C型鋼 計算器</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      padding: 30px;
-      text-align: center;
-    }
-    .box {
-      background: white;
-      padding: 25px;
-      margin: 20px auto;
-      width: 90%;
-      max-width: 600px;
-      border-radius: 10px;
-      box-shadow: 0px 0px 10px #ddd;
-    }
-    input, select {
-      padding: 10px;
-      margin: 5px;
-      width: 160px;
-      font-size: 16px;
-      text-align: center;
-    }
-    .result {
-      margin-top: 15px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #0055cc;
-    }
-    label {
-      font-size: 15px;
-      margin-right: 5px;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>可編輯夾層材料清單對照表</title>
+    <style>
+        body { font-family: 'Microsoft JhengHei', Arial, sans-serif; margin: 20px; background: #f5f7fa; }
+        .container { max-width: 1600px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        h1 { text-align: center; margin-bottom: 15px; color: #2c3e50; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        button { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; background: #667eea; transition: 0.3s; }
+        button:hover { background: #5566cc; }
+        button.add-row { background: #51cf66; } 
+        button.add-col { background: #f093fb; }
+        button.export { background: #f5576c; }
+        button.clear { background: #ff6b6b; }
+        button.print { background: #4facfe; }
+        table { border-collapse: collapse; width: 100%; font-size: 13px; }
+        th, td { border: 2px solid #dee2e6; padding: 10px 8px; min-width: 80px; height: 40px; text-align: center; }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: bold; position: sticky; top: 0; z-index: 10; }
+        td[contenteditable="true"], th[contenteditable="true"] { background: white; cursor: text; }
+        td:focus, th:focus { outline: 3px solid #4facfe; background: #fff; }
+        .item { font-weight: 600; text-align: left; padding-left: 15px; }
+        .delete-btn { cursor: pointer; color: red; font-weight: bold; user-select: none; }
+    </style>
 </head>
 <body>
-
-<h1>坪數 + 浪板 + 斜切 + C型鋼 計算器</h1>
-
-<!-- 坪數計算 -->
-<div class="box">
-  <h2>坪數計算</h2>
-  <input type="number" id="len" placeholder="長 (cm)" oninput="calcPing()">
-  <input type="number" id="wid" placeholder="寬 (cm)" oninput="calcPing()">
-  <div id="pingResult" class="result">請輸入長寬</div>
-</div>
-
-<!-- 浪板片數 -->
-<div class="box">
-  <h2>浪板片數計算（750型）</h2>
-  <select id="slopeType" onchange="calcWave()">
-    <option value="1">單斜</option>
-    <option value="2">雙斜（自動 ×2）</option>
-  </select>
-  <br>
-  <input type="number" id="roofLen" placeholder="單邊屋頂長度 (cm)" oninput="calcWave()">
-  <div id="waveResult" class="result">請輸入資料</div>
-</div>
-
-<!-- 斜切計算器（移到這邊）-->
-<div class="box">
-  <h2>斜切計算器</h2>
-  <input type="number" id="fenShui" step="0.01" placeholder="請輸入分水">
-  <select id="liaoKuan">
-    <option value="10">10 cm</option>
-    <option value="12.5" selected>12.5 cm</option>
-  </select>
-  <br>
-  <input type="number" id="bottom" step="0.1" placeholder="請輸入底長 (cm)">
-  <br>
-  <input type="number" id="centerH" step="0.1" placeholder="自動計算中心高 (cm)" readonly>
-  <br>
-  <button onclick="calc()">計算斜切</button>
-  <div id="result" class="result">請輸入所有欄位，點選計算。</div>
-</div>
-
-<!-- C型鋼計算（移到斜切計算器後面） -->
-<div class="box">
-  <h2>C 型鋼間距計算（60～80 cm）</h2>
-  <input type="number" id="cLen" placeholder="斜樑總長 (cm)" oninput="calcC()">
-  <br>
-  <label>首隻間距（固定）</label>
-  <input type="number" value="15" id="firstGap" readonly>
-  <div id="cResult" class="result">請輸入資料</div>
-</div>
-
-<script>
-function calcPing() {
-  let L = parseFloat(document.getElementById("len").value);
-  let W = parseFloat(document.getElementById("wid").value);
-  if (isNaN(L) || isNaN(W)) {
-    document.getElementById("pingResult").innerHTML = "請輸入長寬";
-    return;
-  }
-  let cm2 = L * W;
-  let m2 = cm2 / 10000;
-  let ping = cm2 / 33057.85;
-  document.getElementById("pingResult").innerHTML = `約 ${ping.toFixed(2)} 坪（${m2.toFixed(2)} m²）`;
-}
-
-function calcWave() {
-  let type = parseInt(document.getElementById("slopeType").value);
-  let L = parseFloat(document.getElementById("roofLen").value);
-  if (isNaN(L)) {
-    document.getElementById("waveResult").innerHTML = "請輸入資料";
-    return;
-  }
-  let pcs = Math.ceil(L / 75);
-  if (type === 2) pcs *= 2;
-  document.getElementById("waveResult").innerHTML = `需要浪板：${pcs} 片`;
-}
-
-function calc() {
-  const fenShuiVal = parseFloat(document.getElementById("fenShui").value);
-  const liaoKuanVal = parseFloat(document.getElementById("liaoKuan").value);
-  const bottomVal = parseFloat(document.getElementById("bottom").value);
-  const centerHInput = document.getElementById("centerH");
-  const result = document.getElementById("result");
-
-  if (isNaN(fenShuiVal) || isNaN(liaoKuanVal) || isNaN(bottomVal)) {
-    result.innerHTML = "請輸入分水、料寬和底長";
-    centerHInput.value = "";
-    return;
-  }
-
-  const angleRad = Math.atan(fenShuiVal / 10);
-  const angleDeg = angleRad * 180 / Math.PI;
-  const centerHVal = bottomVal * Math.tan(angleRad);
-  centerHInput.value = centerHVal.toFixed(2);
-  const slopeLen = Math.sqrt(bottomVal * bottomVal + centerHVal * centerHVal);
-  const delta = liaoKuanVal * Math.tan(angleRad);
-  const cutLen = liaoKuanVal / Math.cos(angleRad);
-  const halfCut = delta / 2;
-
-  result.innerHTML =
-    `<p>坡度角度：<b>${angleDeg.toFixed(2)}°</b></p>
-     <p>計算高度（中心高）：<b>${centerHVal.toFixed(2)} cm</b></p>
-     <p>屋頂斜長：<b>${slopeLen.toFixed(2)} cm</b></p>
-     <p>端面切量 Δ（垂直落差）：<b>${delta.toFixed(2)} cm</b></p>
-     <p>料寬斜切長（沿斜面）：<b>${cutLen.toFixed(2)} cm</b></p>
-     <p>中脊左右各切：<b>${halfCut.toFixed(2)} cm</b></p>`;
-}
-
-function calcC() {
-  let total = parseFloat(document.getElementById("cLen").value);
-  let firstGap = 15;
-  let resultDiv = document.getElementById("cResult");
-
-  if (isNaN(total) || total <= firstGap) {
-    resultDiv.innerHTML = "請輸入大於首隻間距的有效斜樑總長";
-    return;
-  }
-
-  let usable = total - firstGap;
-  let txt = `總長：${total} cm（已扣首隻 ${firstGap} cm）<br><br>`;
-  let found = false;
-
-  for (let n = 2; n <= 1000; n++) {
-    let segments = n - 1;
-    let space = usable / segments;
-
-    if (space >= 60 && space <= 80) {
-      found = true;
-      txt += `${usable} / ${segments} 隻 = ${space.toFixed(1)} cm　（共 ${n} 隻）<br>`;
-    }
-    if (space < 60) break;
-  }
-
-  if (!found) {
-    txt = "沒有符合 60～80 cm 的分佈";
-  }
-  resultDiv.innerHTML = txt;
-}
-</script>
-
+    <div class="container">
+        <h1 contenteditable="true">🛠️ 夾層平台材料清單對照表</h1>
+        <div class="toolbar">
+            <button class="add-row" onclick="addRow()">➕ 新增材料項目</button>
+            <button class="add-col" onclick="addColumn()">➕ 新增尺寸欄</button>
+            <button class="export" onclick="exportTableToExcel()">📊 匯出Excel</button>
+            <button class="print" onclick="window.print()">🖨️ 列印</button>
+            <button class="clear" onclick="clearTable()">🗑️ 清空所有內容</button>
+        </div>
+        <table id="materialTable">
+            <thead>
+                <tr>
+                    <th contenteditable="true">材料項目</th>
+                    <th contenteditable="true">3x6米</th>
+                    <th contenteditable="true">3x7米</th>
+                    <th contenteditable="true">3x8米</th>
+                    <th contenteditable="true">4x6米</th>
+                    <th contenteditable="true">4x7米</th>
+                    <th contenteditable="true">4x8米</th>
+                    <th contenteditable="true">5x6米</th>
+                    <th contenteditable="true">5x7米</th>
+                    <th contenteditable="true">5x8米</th>
+                    <th>刪除列</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 範例列 -->
+                <tr>
+                    <td contenteditable="true" class="item">地板</td>
+                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                    <td><span class="delete-btn" onclick="deleteRow(this)">×</span></td>
+                </tr>
+                <tr>
+                    <td contenteditable="true" class="item">庫版</td>
+                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                    <td><span class="delete-btn" onclick="deleteRow(this)">×</span></td>
+                </tr>
+                <!-- 可刪除列範例結束 -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        // 新增材料項目
+        function addRow() {
+            const table = document.getElementById('materialTable').getElementsByTagName('tbody')[0];
+            const cols = table.rows[0].cells.length;
+            const newRow = table.insertRow();
+            for(let i=0; i < cols; i++){
+                let newCell = newRow.insertCell(i);
+                if(i===0) {
+                    newCell.contentEditable = "true";
+                    newCell.className = "item";
+                } else if(i === cols - 1){
+                    newCell.innerHTML = '<span class="delete-btn" onclick="deleteRow(this)">×</span>';
+                } else {
+                    newCell.contentEditable = "true";
+                }
+            }
+            saveTableData();
+        }
+        // 新增尺寸欄位
+        function addColumn() {
+            const table = document.getElementById('materialTable');
+            // 頭列新增欄位
+            const headRow = table.tHead.rows[0];
+            const headRow2 = table.tHead.rows[1];
+            const newTH1 = document.createElement('th');
+            newTH1.contentEditable = "true";
+            newTH1.innerText = "新尺寸";
+            headRow.appendChild(newTH1);
+            const newTH2 = document.createElement('th');
+            newTH2.contentEditable = "true";
+            newTH2.innerText = "";
+            headRow2.appendChild(newTH2);
+            // tbody新增欄位
+            const rows = table.tBodies[0].rows;
+            for(let r=0; r<rows.length; r++) {
+                const newTD = rows[r].insertCell(-1);
+                newTD.contentEditable = "true";
+            }
+            // 刪除欄位寫死在倒數第1欄，需將刪除欄位cell移到最後
+            for(let r=0; r<rows.length; r++) {
+                let delCell = rows[r].cells[rows[r].cells.length-2];
+                rows[r].appendChild(delCell);
+            }
+            saveTableData();
+        }
+        // 刪除列
+        function deleteRow(elm) {
+            if(confirm("確定刪除此項目？")) {
+                const row = elm.parentNode.parentNode;
+                row.parentNode.removeChild(row);
+                saveTableData();
+            }
+        }
+        // 儲存到LocalStorage
+        function saveTableData() {
+            const table = document.getElementById('materialTable');
+            const data = [];
+            for(let i = 0; i < table.rows.length; i++) {
+                let rowdata = [];
+                for(let j = 0; j < table.rows[i].cells.length - 1; j++) {
+                    rowdata.push(table.rows[i].cells[j].innerText.trim());
+                }
+                data.push(rowdata);
+            }
+            localStorage.setItem('materialTable', JSON.stringify(data));
+        }
+        // 載入LocalStorage資料
+        function loadTableData() {
+            const data = JSON.parse(localStorage.getItem('materialTable'));
+            if(!data) return;
+            const table = document.getElementById('materialTable');
+            // 清空tbody
+            const tbody = table.tBodies[0];
+            tbody.innerHTML = '';
+            // 先重建thead部分（只重建第一行，假設第二行為空或忽略）
+            const thead = table.tHead;
+            thead.rows[0].innerHTML = '';
+            data[0].forEach(text => {
+                let th = document.createElement('th');
+                th.contentEditable = "true";
+                th.innerText = text;
+                thead.rows[0].appendChild(th);
+            });
+            // 逐行添加tbody
+            for(let r=1; r<data.length; r++) {
+                let newRow = tbody.insertRow();
+                data[r].forEach((text, i) => {
+                    let newCell = newRow.insertCell(i);
+                    newCell.contentEditable = "true";
+                    if(i===0) newCell.className = "item";
+                    newCell.innerText = text;
+                });
+                // 刪除按鈕
+                let delCell = newRow.insertCell(-1);
+                delCell.innerHTML = '<span class="delete-btn" onclick="deleteRow(this)">×</span>';
+            }
+        }
+        // 匯出 Excel (簡易CSV)
+        function exportTableToExcel() {
+            let table = document.getElementById("materialTable");
+            let csv = [];
+            for (let row of table.rows) {
+                let cols = [];
+                for(let cell of row.cells){
+                    cols.push('"' + cell.innerText.replace(/"/g, '""') + '"');
+                }
+                csv.push(cols.join(","));
+            }
+            let csvString = csv.join("\n");
+            let blob = new Blob([csvString], {type: 'text/csv'});
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement("a");
+            a.href = url;
+            a.download = "material-list.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        // 清空表格所有內容
+        function clearTable() {
+            if(confirm("確定清空整張表格内容嗎？此動作無法復原。")) {
+                const table = document.getElementById('materialTable');
+                const tbody = table.tBodies[0];
+                tbody.innerHTML = '';
+                // 保留表頭第一行標題內容，不動
+                saveTableData();
+            }
+        }
+        // 監控內容變動自動儲存
+        document.getElementById('materialTable').addEventListener('input', saveTableData);
+        window.onload = loadTableData;
+    </script>
 </body>
 </html>
