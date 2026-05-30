@@ -1,73 +1,143 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>🛠️ 組合屋材料清單對照表</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: 'Microsoft JhengHei', Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
-        .container { max-width: 1600px; margin: 0 auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 28px; }
-        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
-        button { padding: 12px 20px; border: none; border-radius: 8px; background: #667eea; color: white; cursor: pointer; font-weight: bold; transition: all 0.3s; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .add-row { background: #51cf66; }
-        .add-col { background: #f093fb; }
-        .export { background: #f5576c; }
-        .print { background: #4facfe; }
-        .clear { background: #ff6b6b; }
-        table { border-collapse: collapse; width: 100%; font-size: 13px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        th, td { border: 2px solid #dee2e6; padding: 12px 8px; min-height: 45px; text-align: center; position: relative; }
-        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; color: white; font-weight: bold; position: sticky; top: 0; z-index: 10; }
-        td[contenteditable="true"], th[contenteditable="true"] { background: white; cursor: text; }
-        td:focus, th:focus { outline: 3px solid #4facfe; background: #fff !important; transform: scale(1.01); }
-        .item { background: #f8f9fa !important; font-weight: 500; text-align: left; padding-left: 15px; }
-        .delete-btn { position: absolute; top: 2px; right: 2px; width: 24px; height: 24px; border-radius: 50%; background: #ff6b6b; color: white; border: none; font-size: 14px; cursor: pointer; display: none; line-height: 24px; z-index: 20; }
-        tr:hover .delete-btn { display: block; }
-        .notes { background: #fff3cd !important; font-size: 12px; }
-        @media print { .toolbar, .delete-btn { display: none !important; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>庫板排版與定錨計算器</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e9ecef; padding: 20px; color: #343a40; }
+  .calculator-box { max-width: 500px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+  h2 { text-align: center; color: #495057; border-bottom: 2px solid #adb5bd; padding-bottom: 10px; margin-top: 0; }
+  .input-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+  .input-row label { font-weight: bold; width: 55%; color: #495057; }
+  .input-row input { width: 40%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 16px; text-align: right; }
+  .input-row input:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); }
+  .divider { height: 1px; background: #dee2e6; margin: 20px 0; }
+  button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+  button:hover { background: #0056b3; }
+  .result-area { margin-top: 20px; padding: 15px; border-radius: 4px; display: none; }
+  .success { background: #d4edda; border: 1px solid #c3e6cb; }
+  .warning { background: #f8d7da; border: 1px solid #f5c6cb; }
+  .result-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #212529; }
+  .data-line { margin-bottom: 6px; font-size: 16px; }
+  .seam-box { background: #fff; border: 1px dashed #6c757d; padding: 10px; margin-top: 10px; font-family: monospace; font-size: 16px; color: #d63384; word-break: break-all; }
+  .highlight { font-weight: bold; color: #dc3545; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1 contenteditable="true">🛠️ 組合屋材料清單對照表</h1>
-        <div class="toolbar">
-            <button class="add-row" onclick="addRow()">➕ 新增材料項目</button>
-            <button class="add-col" onclick="addColumn()">➕ 新增尺寸欄</button>
-            <button class="export" onclick="exportExcel()">📊 匯出Excel</button>
-            <button class="print" onclick="window.print()">🖨️ 列印</button>
-            <button class="clear" onclick="clearAll()">🗑️ 清空所有內容</button>
-        </div>
-        
-        <table id="materialsTable">
-            <thead>
-                <tr>
-                    <th contenteditable="true">材料項目</th>
-                    <th contenteditable="true">3x5米</th>
-                    <th contenteditable="true">3x6米</th>
-                    <th contenteditable="true">3x7米</th>
-                    <th contenteditable="true">3x8米</th>
-                    <th contenteditable="true">4x5米</th>
-                    <th contenteditable="true">4x6米</th>
-                    <th contenteditable="true">4x7米</th>
-                    <th contenteditable="true">4x8米</th>
-                    <th contenteditable="true">5x5米</th>                    
-                    <th contenteditable="true">5x6米</th>
-                    <th contenteditable="true">5x7米</th>
-                    <th contenteditable="true">5x8米</th>
-                    <th style="background:#ff6b6b;color:white;">刪除</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td class="item" contenteditable="true">地板</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
-                <tr><td class="item" contenteditable="true">庫版</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
-                <tr><td class="item" contenteditable="true">地板支架</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
-                <tr><td class="item" contenteditable="true">天花板主支架</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
-                <tr><td class="item" contenteditable="true">天花板支架粗</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
-                <tr><td class="item" contenteditable="true">天花板支架細</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
-                <tr><td class="item" contenteditable="true">短邊3米樑組（上+下）</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
-                <tr><td class="item" contenteditable="true">短邊4米樑組（上+下）</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
-                <tr><td class="item" contenteditable="true">短邊5米樑組（上+下）</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
-                <tr><td class="item" contenteditable="true">長邊6米樑組（上+下）</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><button class="delete-btn" onclick="deleteRow(this)">×</button></td></tr>
-                <tr><td class="item" contenteditable="true">長邊7米樑組（上+下）</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="
+
+<div class="calculator-box">
+  <h2>📏 實戰庫板定錨計算器</h2>
+  
+  <!-- 參數輸入區 -->
+  <div class="input-row">
+    <label>實內總長度 (cm):</label>
+    <input type="number" id="valTotalLen" value="764" step="0.1">
+  </div>
+  <div class="input-row">
+    <label>進料物理總寬 (cm):</label>
+    <input type="number" id="valPhysWidth" value="96.5" step="0.1">
+  </div>
+  <div class="input-row">
+    <label>公母榫咬合損耗 (cm):</label>
+    <input type="number" id="valLoss" value="1.5" step="0.1">
+  </div>
+  
+  <div class="divider"></div>
+  
+  <!-- 定錨控制區 -->
+  <div class="input-row">
+    <label>起頭板尺寸 [定錨推算] (cm):</label>
+    <input type="number" id="valHeadCut" value="57" placeholder="例如: 57">
+  </div>
+  <div class="input-row">
+    <label>障礙物/隔間牆座標 (cm):</label>
+    <input type="number" id="valObstacle" value="310" placeholder="例如: 310">
+  </div>
+
+  <button onclick="runLayoutEngine()">執行防呆排版推演</button>
+
+  <!-- 結果輸出區 -->
+  <div id="outputArea" class="result-area">
+    <div class="result-title" id="outStatus">📋 運算結果</div>
+    <div id="outEffective" class="data-line"></div>
+    <div id="outList" class="data-line"></div>
+    <div id="outTail" class="data-line"></div>
+    
+    <div style="margin-top: 15px; font-weight: bold;">絕對接縫座標 (放樣用):</div>
+    <div id="outSeams" class="seam-box"></div>
+    <div id="outWarning" style="margin-top: 10px; font-weight: bold;"></div>
+  </div>
+</div>
+
+<script>
+function runLayoutEngine() {
+  const totalLen = parseFloat(document.getElementById('valTotalLen').value);
+  const physWidth = parseFloat(document.getElementById('valPhysWidth').value);
+  const loss = parseFloat(document.getElementById('valLoss').value);
+  const headCut = parseFloat(document.getElementById('valHeadCut').value) || 0;
+  const obstacle = parseFloat(document.getElementById('valObstacle').value) || -1;
+  
+  const outputArea = document.getElementById('outputArea');
+  const outWarning = document.getElementById('outWarning');
+  
+  // 1. 計算實效面寬
+  const effectiveWidth = physWidth - loss;
+  if (effectiveWidth <= 0 || totalLen <= 0) return alert("參數錯誤！");
+
+  let currentPos = 0;
+  let seams = [];
+  let fullPanels = 0;
+  
+  // 2. 處理起頭板
+  if (headCut > 0) {
+    currentPos += headCut;
+    seams.push(currentPos);
+  }
+
+  // 3. 填入全板
+  let remaining = totalLen - currentPos;
+  fullPanels = Math.floor(remaining / effectiveWidth);
+  
+  for(let i = 0; i < fullPanels; i++) {
+    currentPos += effectiveWidth;
+    let roundedPos = parseFloat(currentPos.toFixed(2));
+    if (roundedPos < totalLen) {
+      seams.push(roundedPos);
+    }
+  }
+
+  // 4. 計算收尾板
+  let tailCut = parseFloat((totalLen - currentPos).toFixed(2));
+
+  // 5. 碰撞與防呆偵測
+  let isDanger = false;
+  let warningMsg = "✅ 動線安全：接縫未與障礙物衝突。";
+  
+  if (obstacle > 0 && obstacle < totalLen) {
+    for(let s of seams) {
+      let dist = Math.abs(s - obstacle);
+      // 如果接縫距離隔間牆/障礙物小於 5cm，判定為危險碰撞
+      if (dist < 5) {
+        isDanger = true;
+        warningMsg = `⚠️ 嚴重警告：接縫座標 [${s} cm] 距離障礙物 (${obstacle} cm) 僅剩 ${dist.toFixed(1)} cm！建議調整起頭板尺寸。`;
+        break;
+      }
+    }
+  }
+
+  // 6. 渲染畫面
+  outputArea.className = isDanger ? "result-area warning" : "result-area success";
+  outputArea.style.display = "block";
+  
+  document.getElementById('outEffective').innerHTML = `➤ 實效面寬: <b>${effectiveWidth}</b> cm (物理 ${physWidth} - 損耗 ${loss})`;
+  document.getElementById('outList').innerHTML = `➤ 完整庫板 (${effectiveWidth}cm): <b>${fullPanels}</b> 片`;
+  document.getElementById('outTail').innerHTML = `➤ 尾端裁切板: <b>${tailCut}</b> cm`;
+  document.getElementById('outSeams').innerHTML = seams.join(" , ");
+  
+  outWarning.innerHTML = warningMsg;
+  outWarning.className = isDanger ? "highlight" : "";
+}
+</script>
+</body>
+</html>
