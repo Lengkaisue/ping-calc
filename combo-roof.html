@@ -5,88 +5,89 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>組合屋屋頂計算器</title>
 <style>
-body { background:#0d0d0d; color:#fff; font-family:Arial; padding:20px; margin:0; }
-h1  { text-align:center; margin-bottom:30px; }
+body { background:#0d0d0d; color:#fff; font-family:Arial; padding:16px; margin:0; }
+h1  { text-align:center; margin-bottom:24px; font-size:20px; }
 
 .main-grid {
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-  gap:20px;
-  max-width:1400px;
-  margin:0 auto;
+  gap:16px; max-width:1400px; margin:0 auto;
 }
 .wide { grid-column:1/-1; }
 
-.container {
-  background:#1a1a1a; padding:20px; border-radius:12px;
+.card {
+  background:#1a1a1a; padding:18px; border-radius:12px;
   display:flex; flex-direction:column;
 }
-.container h2 { margin-top:0; border-bottom:2px solid #333; padding-bottom:10px; }
+.card h2 { margin:0 0 12px; border-bottom:2px solid #333; padding-bottom:8px; font-size:16px; }
 
-.row { display:flex; margin:8px 0; align-items:center; }
-.row label { width:90px; text-align:right; padding-right:10px; font-size:14px; color:#aaa; }
-.row input,.row select {
-  flex:1; padding:8px; background:#262626; color:#fff;
-  border:1px solid #555; border-radius:6px; text-align:center; font-size:16px;
+/* Building rows */
+.b-row {
+  display:flex; align-items:center; gap:6px; padding:8px 0;
+  border-bottom:1px solid #222; flex-wrap:wrap;
 }
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+.b-row:last-child { border-bottom:none; }
+.b-num { color:#4da3ff; font-weight:bold; min-width:28px; font-size:14px; }
+.b-inp {
+  width:64px; padding:6px; background:#262626; color:#fff;
+  border:1px solid #555; border-radius:6px; text-align:center; font-size:15px;
+}
+.b-inp:focus { border-color:#4d8edb; outline:none; }
+
+/* Preset buttons */
+.preset-bar { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.preset-bar button {
+  padding:7px 12px; background:#262626; color:#ccc; border:1px solid #444;
+  border-radius:6px; font-size:13px; cursor:pointer; transition:background .15s;
+}
+.preset-bar button:hover { background:#333; color:#fff; }
 
 button {
-  width:100%; padding:14px; margin-top:12px;
-  background:#1a73e8; color:#fff; border:none; border-radius:8px;
-  font-size:17px; font-weight:bold; cursor:pointer;
-  box-shadow:0 5px 0 #114b9e; transition:all .1s; -webkit-tap-highlight-color:transparent;
+  padding:12px; background:#1a73e8; color:#fff; border:none;
+  border-radius:8px; font-size:15px; font-weight:bold; cursor:pointer;
+  box-shadow:0 4px 0 #114b9e; transition:all .1s; -webkit-tap-highlight-color:transparent;
+  margin-top:10px; width:100%;
 }
-button:active { transform:translateY(5px); box-shadow:0 0 0 #114b9e; background:#155cb8; }
+button:active { transform:translateY(4px); box-shadow:0 0 0 #114b9e; }
 
 .btn-sm {
-  width:auto; padding:8px 14px; font-size:13px; margin-top:0;
-  background:#333; box-shadow:0 4px 0 #111;
+  padding:6px 12px; font-size:12px; margin-top:0; width:auto;
+  background:#333; box-shadow:0 3px 0 #111;
 }
 .btn-sm:active { background:#222; box-shadow:0 0 0 #111; }
+.btn-rot { background:#4a2800; box-shadow:0 3px 0 #1a0e00; }
+.btn-rot.on { background:#7a4000; border:1px solid #e07800; }
+.btn-del { background:#3a1010; box-shadow:0 3px 0 #150505; color:#f08080; }
+
+.row { display:flex; margin:8px 0; align-items:center; }
+.row label { width:80px; text-align:right; padding-right:10px; font-size:13px; color:#aaa; }
+.row select, .row input {
+  flex:1; padding:8px; background:#262626; color:#fff;
+  border:1px solid #555; border-radius:6px; text-align:center; font-size:15px;
+}
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; }
 
 .result-box {
-  margin-top:12px; padding:12px; background:#111; border-radius:8px;
-  min-height:24px; line-height:1.8;
+  margin-top:10px; padding:12px; background:#111; border-radius:8px;
+  min-height:24px; line-height:1.9; font-size:14px;
 }
-
-/* Size picker */
-.size-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin:8px 0; }
-.sz {
-  padding:10px 4px; background:#262626; border:2px solid #555;
-  border-radius:8px; color:#fff; cursor:pointer; text-align:center;
-  font-size:14px; transition:border-color .15s, background .15s; user-select:none;
-}
-.sz:hover { border-color:#888; }
-.sz.on  { border-color:#1a73e8; background:#1a3a6e; }
-
-/* Canvas area */
-#canvasWrap {
-  overflow:auto; margin-top:10px; border:1px solid #333;
-  border-radius:8px; background:#111; padding:10px;
-}
-canvas { display:block; cursor:pointer; touch-action:none; }
-
-/* Grid controls bar */
-.ctrl-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:10px 0; }
-.ctrl-bar select {
-  width:62px; padding:6px; background:#262626; color:#fff;
-  border:1px solid #555; border-radius:6px; font-size:16px; text-align:center;
-}
-.ctrl-bar span { color:#aaa; font-size:14px; }
-
-/* Materials */
-.mat-row {
-  display:flex; justify-content:space-between;
-  padding:6px 0; border-bottom:1px solid #222;
-}
+.mat-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #222; }
 .mat-row:last-child { border-bottom:none; }
-.mat-lbl { color:#aaa; font-size:14px; }
+.mat-lbl { color:#aaa; font-size:13px; }
 .mat-val { color:#4da3ff; font-weight:bold; }
 
-a.back { display:inline-block; color:#888; text-decoration:none; font-size:13px; margin-bottom:18px; }
+#canvasWrap {
+  overflow:auto; margin-top:10px; border:1px solid #333;
+  border-radius:8px; background:#111; padding:8px;
+  cursor:grab;
+}
+#canvasWrap:active { cursor:grabbing; }
+canvas { display:block; touch-action:none; }
+
+a.back { display:inline-block; color:#888; text-decoration:none; font-size:13px; margin-bottom:16px; }
 a.back:hover { color:#fff; }
+
+#empty-hint { color:#555; text-align:center; padding:16px; font-size:14px; }
 </style>
 </head>
 <body>
@@ -96,81 +97,41 @@ a.back:hover { color:#fff; }
 
 <div class="main-grid">
 
-  <!-- ① 規格 -->
-  <div class="container">
-    <h2>① 模組規格</h2>
-    <p style="color:#666;font-size:13px;margin:0 0 10px;">每間組合屋固定尺寸，寬度與深度各自選擇</p>
+  <!-- ① 新增建築 -->
+  <div class="card wide">
+    <h2>① 新增建築</h2>
 
-    <label style="color:#aaa;font-size:13px;">面寬（橫向）</label>
-    <div class="size-grid" id="wBtns" style="grid-template-columns:repeat(3,1fr);">
-      <div class="sz on" data-v="301" onclick="pickW(301,this)">3米<br><small style="color:#888">301cm</small></div>
-      <div class="sz"    data-v="396" onclick="pickW(396,this)">4米<br><small style="color:#888">396cm</small></div>
-      <div class="sz"    data-v="500" onclick="pickW(500,this)">5米<br><small style="color:#888">500cm</small></div>
-      <div class="sz"    data-v="596" onclick="pickW(596,this)">6米<br><small style="color:#888">596cm</small></div>
-      <div class="sz"    data-v="690" onclick="pickW(690,this)">7米<br><small style="color:#888">690cm</small></div>
-      <div class="sz"    data-v="785" onclick="pickW(785,this)">8米<br><small style="color:#888">785cm</small></div>
+    <p style="color:#666;font-size:12px;margin:0 0 8px;">快速新增（cm）：</p>
+    <div class="preset-bar" id="presetBar"></div>
+
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+      <span style="color:#aaa;font-size:13px;">自訂：寬</span>
+      <input id="newW" type="number" value="301" min="100" max="900" style="width:70px;padding:7px;background:#262626;color:#fff;border:1px solid #555;border-radius:6px;text-align:center;font-size:15px;">
+      <span style="color:#aaa;font-size:13px;">× 深</span>
+      <input id="newD" type="number" value="596" min="100" max="900" style="width:70px;padding:7px;background:#262626;color:#fff;border:1px solid #555;border-radius:6px;text-align:center;font-size:15px;">
+      <span style="color:#666;font-size:12px;">cm</span>
+      <button class="btn-sm" style="margin-top:0;" onclick="addCustom()">＋ 新增</button>
     </div>
 
-    <label style="color:#aaa;font-size:13px;display:block;margin-top:8px;">進深（縱向）</label>
-    <div class="size-grid" id="dBtns" style="grid-template-columns:repeat(3,1fr);">
-      <div class="sz"    data-v="301" onclick="pickD(301,this)">3米<br><small style="color:#888">301cm</small></div>
-      <div class="sz"    data-v="396" onclick="pickD(396,this)">4米<br><small style="color:#888">396cm</small></div>
-      <div class="sz"    data-v="500" onclick="pickD(500,this)">5米<br><small style="color:#888">500cm</small></div>
-      <div class="sz on" data-v="596" onclick="pickD(596,this)">6米<br><small style="color:#888">596cm</small></div>
-      <div class="sz"    data-v="690" onclick="pickD(690,this)">7米<br><small style="color:#888">690cm</small></div>
-      <div class="sz"    data-v="785" onclick="pickD(785,this)">8米<br><small style="color:#888">785cm</small></div>
-    </div>
-
-    <div class="result-box" id="sizeInfo" style="text-align:center;font-size:15px;">
-      每間：301 × 596 cm｜<b>5.43 坪</b>
-    </div>
+    <div id="buildingList"><div id="empty-hint">尚無建築，請點上方按鈕新增</div></div>
   </div>
 
-  <!-- ② 平面排列 -->
-  <div class="container wide">
-    <h2>② 平面排列（俯視）</h2>
-    <p style="color:#666;font-size:13px;margin:0 0 6px;">設定欄數與列數，點格子切換有/無；可做 L 型、ㄇ 型等任意形狀</p>
-
-    <div class="ctrl-bar">
-      <span>欄：</span>
-      <select id="selCols" onchange="rebuildGrid()">
-        <option>1</option><option selected>2</option><option>3</option>
-        <option>4</option><option>5</option><option>6</option>
-        <option>7</option><option>8</option><option>9</option><option>10</option>
-      </select>
-      <span>列：</span>
-      <select id="selRows" onchange="rebuildGrid()">
-        <option>1</option><option selected>2</option><option>3</option>
-        <option>4</option><option>5</option><option>6</option>
-        <option>7</option><option>8</option><option>9</option><option>10</option>
-      </select>
-      <button class="btn-sm" onclick="setAll(true)">全選</button>
-      <button class="btn-sm" onclick="setAll(false)">清空</button>
-      <button class="btn-sm" onclick="presetU()">ㄇ字型</button>
-      <button class="btn-sm" onclick="presetL()">L字型</button>
-      <button class="btn-sm" onclick="rotateLayout()" title="整體旋轉 90°">↻ 旋轉</button>
-    </div>
-
+  <!-- ② 俯視排列 -->
+  <div class="card wide">
+    <h2>② 俯視排列（可拖曳）</h2>
+    <p style="color:#666;font-size:12px;margin:0 0 6px;">拖曳建築調整位置，比例依實際尺寸顯示</p>
     <div id="canvasWrap"><canvas id="cv"></canvas></div>
-
-    <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:#666;">
-      <span>🔵 正向</span><span>🟠 轉向90°</span><span>⬛ 無（點格子循環切換）</span>
-    </div>
-
-    <div class="result-box" id="layoutInfo" style="text-align:center;margin-top:8px;">
-      點格子設定排列
-    </div>
+    <div id="layoutInfo" class="result-box" style="text-align:center;margin-top:8px;">新增建築後顯示</div>
   </div>
 
   <!-- ③ 屋頂設定 -->
-  <div class="container">
+  <div class="card">
     <h2>③ 屋頂設定</h2>
-
     <div class="row">
       <label>排水方向</label>
       <select id="roofDir" onchange="draw()">
-        <option value="col">沿寬排水（前後流）</option>
-        <option value="row">沿深排水（左右流）</option>
+        <option value="col">沿深排水（前後流）</option>
+        <option value="row">沿寬排水（左右流）</option>
       </select>
     </div>
     <div class="row">
@@ -209,207 +170,297 @@ a.back:hover { color:#fff; }
       <label>分水比</label>
       <input type="number" id="slopeR" value="1" min="0.5" step="0.5" inputmode="decimal">
     </div>
-    <p style="color:#555;font-size:12px;margin:4px 0 0 90px;">分水:10＝坡度比（例：1:10）</p>
-
+    <p style="color:#555;font-size:11px;margin:2px 0 0 80px;">分水:10＝坡度比（例：1:10）</p>
     <button onclick="calcMats()">計算材料清單</button>
   </div>
 
-  <!-- ④ 材料 -->
-  <div class="container">
+  <!-- ④ 材料清單 -->
+  <div class="card">
     <h2>④ 材料清單</h2>
     <div class="result-box" id="matResult">請先完成 ①②③ 再按計算</div>
   </div>
 
-</div><!-- /main-grid -->
+</div>
 
 <script>
-// cells[r][c]: 0=空, 1=正向(unitW×unitD), 2=轉向(unitD×unitW)
-let unitW = 301, unitD = 596;
-let gCols = 2, gRows = 2;
-let cells = [];
+// 尺寸常數（cm）
+const SIZE_MAP = {3:301, 4:396, 5:500, 6:596, 7:690, 8:785};
+const PRESETS = [
+  [301,596,'3×6'],[396,596,'4×6'],[500,596,'5×6'],
+  [301,690,'3×7'],[396,690,'4×7'],[500,690,'5×7'],
+  [301,785,'3×8'],[396,785,'4×8'],[500,785,'5×8'],
+];
 
-function pickW(v, el) {
-  document.querySelectorAll('#wBtns .sz').forEach(b=>b.classList.remove('on'));
-  el.classList.add('on'); unitW = v; updSizeInfo(); draw();
-}
-function pickD(v, el) {
-  document.querySelectorAll('#dBtns .sz').forEach(b=>b.classList.remove('on'));
-  el.classList.add('on'); unitD = v; updSizeInfo(); draw();
-}
-function updSizeInfo() {
-  let ping = (unitW * unitD / 33057.85).toFixed(2);
-  document.getElementById('sizeInfo').innerHTML =
-    `正向：${unitW} × ${unitD} cm｜轉向：${unitD} × ${unitW} cm｜<b>${ping} 坪/間</b>`;
+let buildings = [];
+let nextId = 1;
+let drag = null; // {id, ox, oy} in cm
+const PAD_CM = 30; // canvas padding in cm
+const SNAP = 10;   // snap grid in cm
+
+// Build preset buttons
+const bar = document.getElementById('presetBar');
+PRESETS.forEach(([w,d,lbl]) => {
+  let btn = document.createElement('button');
+  btn.textContent = lbl;
+  btn.onclick = () => addBuilding(w, d);
+  bar.appendChild(btn);
+});
+
+function bDims(b) {
+  return b.rotated ? {bw:b.d, bd:b.w} : {bw:b.w, bd:b.d};
 }
 
-// 取得某格實際尺寸 {cw, cd}
-function cellDims(r, c) {
-  return cells[r][c] === 2
-    ? { cw: unitD, cd: unitW }
-    : { cw: unitW, cd: unitD };
-}
-
-function initCells(cols, rows, preserve) {
-  let old = cells;
-  cells = [];
-  for (let r=0;r<rows;r++) {
-    cells[r]=[];
-    for (let c=0;c<cols;c++) {
-      let prev = preserve && old[r] && old[r][c] !== undefined ? old[r][c] : 1;
-      // 相容舊版 boolean
-      if (prev === true) prev = 1;
-      if (prev === false) prev = 0;
-      cells[r][c] = prev;
-    }
+function addBuilding(w, d) {
+  // Place to the right of existing buildings
+  let x = 0;
+  for (let b of buildings) {
+    let {bw} = bDims(b);
+    x = Math.max(x, b.x + bw + 20);
   }
-}
-function rebuildGrid() {
-  gCols = parseInt(document.getElementById('selCols').value);
-  gRows = parseInt(document.getElementById('selRows').value);
-  initCells(gCols, gRows, true);
-  draw(); updLayout();
-}
-function setAll(v) {
-  // v=true → 1(正向), v=false → 0(空)
-  let val = v ? 1 : 0;
-  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) cells[r][c]=val;
-  draw(); updLayout();
-}
-function presetU() {
-  gCols = Math.max(3, gCols); gRows = Math.max(2, gRows);
-  document.getElementById('selCols').value = gCols;
-  document.getElementById('selRows').value = gRows;
-  initCells(gCols, gRows, false);
-  for (let r=0;r<gRows-1;r++)
-    for (let c=1;c<gCols-1;c++) cells[r][c]=0;
-  draw(); updLayout();
-}
-function presetL() {
-  gCols = Math.max(2, gCols); gRows = Math.max(2, gRows);
-  document.getElementById('selCols').value = gCols;
-  document.getElementById('selRows').value = gRows;
-  initCells(gCols, gRows, false);
-  for (let r=1;r<gRows;r++) for (let c=1;c<gCols;c++) cells[r][c]=0;
-  draw(); updLayout();
+  buildings.push({id:nextId++, w, d, x, y:0, rotated:false});
+  renderList(); draw(); updLayout();
 }
 
-function rotateLayout() {
-  let newRows = gCols, newCols = gRows;
-  let newCells = [];
-  for (let r=0;r<newRows;r++) { newCells[r]=[]; for(let c=0;c<newCols;c++) newCells[r][c]=0; }
-  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) {
-    let v = cells[r][c];
-    // 整體旋轉時，每格方向也跟著翻轉（1↔2）
-    if (v===1) v=2; else if (v===2) v=1;
-    newCells[c][gRows-1-r] = v;
+function addCustom() {
+  let w = Math.max(100, parseInt(document.getElementById('newW').value) || 301);
+  let d = Math.max(100, parseInt(document.getElementById('newD').value) || 596);
+  addBuilding(w, d);
+}
+
+function removeBuilding(id) {
+  buildings = buildings.filter(b => b.id !== id);
+  renderList(); draw(); updLayout();
+}
+
+function rotateBuilding(id) {
+  let b = buildings.find(b => b.id === id);
+  if (!b) return;
+  // Swap position so top-left stays consistent
+  let oldDims = bDims(b);
+  b.rotated = !b.rotated;
+  renderList(); draw(); updLayout();
+}
+
+function setBW(id, val) {
+  let b = buildings.find(b => b.id === id);
+  if (b) { b.w = Math.max(100, parseInt(val)||b.w); draw(); updLayout(); }
+}
+function setBD(id, val) {
+  let b = buildings.find(b => b.id === id);
+  if (b) { b.d = Math.max(100, parseInt(val)||b.d); draw(); updLayout(); }
+}
+
+function renderList() {
+  let el = document.getElementById('buildingList');
+  if (buildings.length === 0) {
+    el.innerHTML = '<div id="empty-hint">尚無建築，請點上方按鈕新增</div>';
+    return;
   }
-  let tmp = unitW; unitW = unitD; unitD = tmp;
-  document.querySelectorAll('#wBtns .sz').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.v)===unitW));
-  document.querySelectorAll('#dBtns .sz').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.v)===unitD));
-  gCols = newCols; gRows = newRows; cells = newCells;
-  document.getElementById('selCols').value = gCols;
-  document.getElementById('selRows').value = gRows;
-  updSizeInfo(); draw(); updLayout();
+  el.innerHTML = buildings.map(b => {
+    let {bw, bd} = bDims(b);
+    let ping = (b.w * b.d / 33057.85).toFixed(2);
+    return `<div class="b-row">
+      <span class="b-num">棟${b.id}</span>
+      <input class="b-inp" type="number" value="${b.w}" onchange="setBW(${b.id},this.value)" min="100" max="900">
+      <span style="color:#555">×</span>
+      <input class="b-inp" type="number" value="${b.d}" onchange="setBD(${b.id},this.value)" min="100" max="900">
+      <span style="color:#555;font-size:11px;">cm</span>
+      <span style="color:#666;font-size:11px;margin-left:2px;">${ping}坪</span>
+      <button class="btn-sm btn-rot ${b.rotated?'on':''}" onclick="rotateBuilding(${b.id})">↻ ${b.rotated?'已轉向':'正向'}</button>
+      <button class="btn-sm btn-del" onclick="removeBuilding(${b.id})">✕</button>
+    </div>`;
+  }).join('');
 }
 
-const PAD_L = 36, PAD_T = 28;
+// ── Canvas ──────────────────────────────────────────
+
+let cvScale = 0.5; // px per cm
+
+function calcScale() {
+  if (buildings.length === 0) { cvScale = 0.4; return; }
+  let maxX = 0, maxY = 0;
+  for (let b of buildings) {
+    let {bw, bd} = bDims(b);
+    maxX = Math.max(maxX, b.x + bw);
+    maxY = Math.max(maxY, b.y + bd);
+  }
+  const wrap = document.getElementById('canvasWrap');
+  const avW = Math.min(wrap.clientWidth - 20, window.innerWidth - 60) || 300;
+  const avH = 420;
+  let sx = (avW - PAD_CM*2*0.5) / (maxX + PAD_CM);
+  let sy = (avH - PAD_CM*2*0.5) / (maxY + PAD_CM);
+  cvScale = Math.min(sx, sy, 1.2);
+  if (cvScale < 0.08) cvScale = 0.08;
+}
 
 function draw() {
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
-  const maxW = Math.min(window.innerWidth - 60, 760);
-  const maxH = 480;
-  const scaleW = (maxW - PAD_L) / (gCols * unitW);
-  const scaleH = (maxH - PAD_T) / (gRows * unitD);
-  const scale  = Math.min(scaleW, scaleH);
-  const CW = Math.max(40, Math.floor(scale * unitW));
-  const CH = Math.max(30, Math.floor(scale * unitD));
+  calcScale();
 
-  cv.width  = gCols*CW + PAD_L;
-  cv.height = gRows*CH + PAD_T;
-  ctx.fillStyle='#111'; ctx.fillRect(0,0,cv.width,cv.height);
+  let maxX = 0, maxY = 0;
+  for (let b of buildings) {
+    let {bw, bd} = bDims(b);
+    maxX = Math.max(maxX, b.x + bw);
+    maxY = Math.max(maxY, b.y + bd);
+  }
 
+  const totalCmW = maxX + PAD_CM * 2;
+  const totalCmH = maxY + PAD_CM * 2;
+  cv.width  = Math.max(200, Math.round(totalCmW * cvScale));
+  cv.height = Math.max(150, Math.round(totalCmH * cvScale));
+
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, cv.width, cv.height);
+
+  // Light grid
+  ctx.strokeStyle = '#1c1c1c';
+  ctx.lineWidth = 0.5;
+  let gridStep = 100 * cvScale; // 100cm grid
+  for (let gx = 0; gx < cv.width; gx += gridStep) {
+    ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, cv.height); ctx.stroke();
+  }
+  for (let gy = 0; gy < cv.height; gy += gridStep) {
+    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(cv.width, gy); ctx.stroke();
+  }
+
+  // Drainage direction arrow
   let dir = document.getElementById('roofDir').value;
-  ctx.save(); ctx.strokeStyle='#ff9500'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  ctx.save(); ctx.strokeStyle='#ff9500'; ctx.lineWidth=1.2; ctx.setLineDash([5,4]);
   if (dir==='col') {
-    let y=cv.height/2;
-    ctx.beginPath(); ctx.moveTo(PAD_L,y); ctx.lineTo(cv.width-4,y); ctx.stroke();
-    ctx.fillStyle='#ff9500'; ctx.font='11px Arial'; ctx.textAlign='center';
-    ctx.fillText('↓ 排水', cv.width/2, y-4);
+    let ay = cv.height / 2;
+    ctx.beginPath(); ctx.moveTo(PAD_CM*cvScale, ay); ctx.lineTo(cv.width - 6, ay); ctx.stroke();
+    ctx.fillStyle='#ff9500'; ctx.font='11px Arial'; ctx.textAlign='left'; ctx.setLineDash([]);
+    ctx.fillText('↓ 排水方向', PAD_CM*cvScale + 4, ay - 4);
   } else {
-    let x=cv.width/2;
-    ctx.beginPath(); ctx.moveTo(x,PAD_T); ctx.lineTo(x,cv.height-4); ctx.stroke();
-    ctx.fillStyle='#ff9500'; ctx.font='11px Arial'; ctx.textAlign='left';
-    ctx.fillText('→排水', x+4, cv.height/2);
+    let ax = cv.width / 2;
+    ctx.beginPath(); ctx.moveTo(ax, PAD_CM*cvScale); ctx.lineTo(ax, cv.height - 6); ctx.stroke();
+    ctx.fillStyle='#ff9500'; ctx.font='11px Arial'; ctx.textAlign='left'; ctx.setLineDash([]);
+    ctx.fillText('→ 排水', ax + 4, PAD_CM*cvScale + 14);
   }
   ctx.restore();
 
-  for (let r=0;r<gRows;r++) {
-    for (let c=0;c<gCols;c++) {
-      let x = PAD_L + c*CW, y = PAD_T + r*CH;
-      let state = cells[r][c];
-      // 顏色：0=暗, 1=藍(正向), 2=橘(轉向)
-      ctx.fillStyle   = state===1 ? '#1a3d6e' : state===2 ? '#5c3300' : '#1e1e1e';
-      ctx.fillRect(x+2,y+2,CW-4,CH-4);
-      ctx.strokeStyle = state===1 ? '#4d8edb' : state===2 ? '#e07800' : '#383838';
-      ctx.lineWidth   = state>0 ? 2 : 1;
-      ctx.strokeRect(x+2,y+2,CW-4,CH-4);
+  // Draw buildings
+  for (let b of buildings) {
+    let {bw, bd} = bDims(b);
+    let px = (b.x + PAD_CM) * cvScale;
+    let py = (b.y + PAD_CM) * cvScale;
+    let pw = bw * cvScale;
+    let ph = bd * cvScale;
 
-      if (state>0) {
-        let {cw,cd} = cellDims(r,c);
-        let fs = Math.min(12, CW/6);
-        ctx.fillStyle = state===1 ? '#7ab3e8' : '#f0a040';
-        ctx.font=`${fs}px Arial`; ctx.textAlign='center';
-        let label = state===2 ? `↻ ${cw}×${cd}` : `${cw}×${cd}`;
-        ctx.fillText(label, x+CW/2, y+CH/2+fs/2);
-      }
+    ctx.fillStyle   = b.rotated ? '#4a2200' : '#0e2a50';
+    ctx.fillRect(px, py, pw, ph);
+    ctx.strokeStyle = b.rotated ? '#e07800' : '#4d8edb';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px, py, pw, ph);
 
-      if (r===0) {
-        ctx.fillStyle='#555'; ctx.font='11px Arial'; ctx.textAlign='center';
-        ctx.fillText(`欄${c+1}`, x+CW/2, PAD_T-6);
-      }
-      if (c===0) {
-        ctx.fillStyle='#555'; ctx.font='11px Arial'; ctx.textAlign='right';
-        ctx.fillText(`列${r+1}`, PAD_L-4, y+CH/2+4);
+    // Dimension lines
+    if (pw > 30) {
+      ctx.fillStyle = '#333'; ctx.fillRect(px+1, py+1, pw-2, 14);
+      ctx.fillStyle = b.rotated ? '#f0a040' : '#7ab3e8';
+      ctx.font = `${Math.min(11, pw/5)}px Arial`; ctx.textAlign='center';
+      ctx.fillText(`${bw}cm`, px+pw/2, py+11);
+    }
+    if (ph > 30) {
+      ctx.save();
+      ctx.translate(px+pw-1, py+ph/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillStyle = '#333'; ctx.fillRect(-ph/2+1, -14, ph-2, 14);
+      ctx.fillStyle = b.rotated ? '#f0a040' : '#7ab3e8';
+      ctx.font = `${Math.min(11, ph/5)}px Arial`; ctx.textAlign='center';
+      ctx.fillText(`${bd}cm`, 0, -3);
+      ctx.restore();
+    }
+
+    // Building label center
+    let lfs = Math.max(10, Math.min(18, Math.min(pw, ph) / 3.5));
+    if (pw > 24 && ph > 24) {
+      ctx.fillStyle = b.rotated ? '#ffb84d' : '#a8d4ff';
+      ctx.font = `bold ${lfs}px Arial`; ctx.textAlign='center';
+      ctx.fillText(`棟${b.id}`, px+pw/2, py+ph/2+lfs/3);
+      if (b.rotated && pw > 40) {
+        ctx.font = `${lfs*0.7}px Arial`;
+        ctx.fillText('↻', px+pw/2, py+ph/2+lfs+2);
       }
     }
   }
+
+  // Scale bar (bottom-left)
+  let barCm = 100;
+  let barPx = barCm * cvScale;
+  let bx = PAD_CM*cvScale, by = cv.height - 12;
+  ctx.fillStyle='#555'; ctx.fillRect(bx, by, barPx, 3);
+  ctx.fillStyle='#666'; ctx.font='10px Arial'; ctx.textAlign='center';
+  ctx.fillText('1m', bx + barPx/2, by - 2);
 }
 
-function toggleCell(e) {
-  const cv = document.getElementById('cv');
-  const rect = cv.getBoundingClientRect();
-  const sx = cv.width/rect.width, sy = cv.height/rect.height;
-  let rx = (e.clientX - rect.left)*sx - PAD_L;
-  let ry = (e.clientY - rect.top)*sy  - PAD_T;
-  let CW = (cv.width-PAD_L)/gCols, CH = (cv.height-PAD_T)/gRows;
-  let col = Math.floor(rx/CW), row = Math.floor(ry/CH);
-  if (row>=0&&row<gRows&&col>=0&&col<gCols) {
-    cells[row][col] = (cells[row][col] + 1) % 3; // 0→1→2→0
+// ── Drag ─────────────────────────────────────────────
+function getCmPos(e, cv) {
+  let rect = cv.getBoundingClientRect();
+  let sx = cv.width / rect.width, sy = cv.height / rect.height;
+  let ex = e.touches ? e.touches[0].clientX : e.clientX;
+  let ey = e.touches ? e.touches[0].clientY : e.clientY;
+  let px = (ex - rect.left) * sx;
+  let py = (ey - rect.top)  * sy;
+  return { cmX: px/cvScale - PAD_CM, cmY: py/cvScale - PAD_CM };
+}
+
+function findAt(cmX, cmY) {
+  for (let i = buildings.length-1; i >= 0; i--) {
+    let b = buildings[i];
+    let {bw, bd} = bDims(b);
+    if (cmX>=b.x && cmX<=b.x+bw && cmY>=b.y && cmY<=b.y+bd) return b;
+  }
+  return null;
+}
+
+const cv = document.getElementById('cv');
+cv.addEventListener('mousedown',  e => startDrag(e));
+cv.addEventListener('touchstart', e => startDrag(e), {passive:false});
+cv.addEventListener('mousemove',  e => doDrag(e));
+cv.addEventListener('touchmove',  e => doDrag(e),   {passive:false});
+cv.addEventListener('mouseup',    () => { drag=null; });
+cv.addEventListener('touchend',   () => { drag=null; });
+
+function startDrag(e) {
+  e.preventDefault();
+  let {cmX, cmY} = getCmPos(e, cv);
+  let b = findAt(cmX, cmY);
+  if (b) drag = {id:b.id, ox:cmX-b.x, oy:cmY-b.y};
+}
+function doDrag(e) {
+  if (!drag) return;
+  e.preventDefault();
+  let {cmX, cmY} = getCmPos(e, cv);
+  let b = buildings.find(b=>b.id===drag.id);
+  if (b) {
+    b.x = Math.max(0, Math.round((cmX-drag.ox)/SNAP)*SNAP);
+    b.y = Math.max(0, Math.round((cmY-drag.oy)/SNAP)*SNAP);
     draw(); updLayout();
   }
 }
-document.getElementById('cv').addEventListener('click', toggleCell);
+
 window.addEventListener('resize', draw);
 
+// ── Layout info ───────────────────────────────────────
 function updLayout() {
-  let n=0, footM2=0;
-  for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) {
-    if(!cells[r][c]) continue;
-    n++;
-    let {cw,cd} = cellDims(r,c);
-    footM2 += cw*cd/10000;
+  let n = buildings.length;
+  if (n === 0) {
+    document.getElementById('layoutInfo').textContent = '新增建築後顯示';
+    return;
   }
-  let ping = (footM2 * 10000 / 33057.85).toFixed(2);
+  let footM2 = 0, ping = 0;
+  for (let b of buildings) footM2 += b.w*b.d/10000;
+  ping = (footM2*10000/33057.85).toFixed(2);
   document.getElementById('layoutInfo').innerHTML =
-    `共 <b>${n}</b> 間組合屋 | 覆蓋面積：<b>${footM2.toFixed(1)} m²</b>（${ping} 坪）`;
+    `共 <b>${n}</b> 棟 | 總覆蓋面積：<b>${footM2.toFixed(1)} m²</b>（${ping} 坪）`;
 }
 
+// ── Material calc ─────────────────────────────────────
 function calcMats() {
-  let n=0;
-  for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) if(cells[r][c]) n++;
-  if (n===0) { document.getElementById('matResult').innerHTML='⚠️ 請先排列組合屋'; return; }
-
+  if (buildings.length === 0) {
+    document.getElementById('matResult').innerHTML = '⚠️ 請先新增建築'; return;
+  }
   let rType      = parseInt(document.getElementById('roofType').value);
   let wW         = parseInt(document.getElementById('waveW').value);
   let sr         = parseFloat(document.getElementById('slopeR').value)||1;
@@ -421,54 +472,59 @@ function calcMats() {
   let sFac = 1/Math.cos(rad);
 
   let totalSheets=0, totalRidgeM=0, totalPurlinM=0, footM2=0, roofM2=0;
+  let rows = '';
 
-  for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) {
-    if(!cells[r][c]) continue;
-    let {cw, cd} = cellDims(r, c);
-    // dir='col': 水沿深度(cd)流 → 斜面跨度=cd, 浪板沿寬度(cw)並排
-    // dir='row': 水沿寬度(cw)流 → 斜面跨度=cw, 浪板沿深度(cd)並排
-    let spanCm  = dir==='col' ? cd : cw;
-    let perpCm  = dir==='col' ? cw : cd;
+  for (let b of buildings) {
+    let {bw, bd} = bDims(b);
+    // dir='col': 水沿深(bd)流，斜面跨度=bd，浪板並排方向=bw
+    // dir='row': 水沿寬(bw)流，斜面跨度=bw，浪板並排方向=bd
+    let spanCm  = dir==='col' ? bd : bw;
+    let perpCm  = dir==='col' ? bw : bd;
     let halfSpan   = rType===2 ? spanCm/2 : spanCm;
     let slopeLenCm = halfSpan * sFac;
     let purlinCnt  = Math.floor(slopeLenCm/60) + 2;
 
-    footM2      += cw*cd/10000;
-    roofM2      += (cw*cd/10000) * sFac * rType;
-    totalSheets += Math.ceil(perpCm/wW) * rType;
-    if (rType===2) totalRidgeM += perpCm/100;
-    totalPurlinM += (perpCm/100) * purlinCnt * rType;
+    let sheets  = Math.ceil(perpCm/wW) * rType;
+    let ridge   = rType===2 ? perpCm/100 : 0;
+    let purlin  = (perpCm/100) * purlinCnt * rType;
+    let foot    = bw*bd/10000;
+    let roof    = foot * sFac * rType;
+
+    totalSheets  += sheets;
+    totalRidgeM  += ridge;
+    totalPurlinM += purlin;
+    footM2       += foot;
+    roofM2       += roof;
+
+    let tag = b.rotated ? '↻轉向' : '正向';
+    rows += `<div class="mat-row">
+      <span class="mat-lbl">棟${b.id}（${bw}×${bd} ${tag}）</span>
+      <span class="mat-val">${sheets}片 / ${(slopeLenCm/100).toFixed(2)}m斜長</span>
+    </div>`;
   }
 
-  // 代表坡長：用正向格子的值顯示參考
-  let spanRef  = dir==='col' ? unitD : unitW;
-  let halfRef  = rType===2 ? spanRef/2 : spanRef;
-  let slopeRef = (halfRef * sFac / 100).toFixed(2);
   let slopeStr = `1:${sr}（坡角 ${(rad*180/Math.PI).toFixed(1)}°）`;
-
   let h = `
-    <div class="mat-row"><span class="mat-lbl">組合屋數量</span><span class="mat-val">${n} 間</span></div>
+    ${rows}
+    <hr style="border-color:#222;margin:6px 0;">
+    <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">${slopeStr}</span></div>
     <div class="mat-row"><span class="mat-lbl">覆蓋面積（水平）</span><span class="mat-val">${footM2.toFixed(1)} m²</span></div>
     <div class="mat-row"><span class="mat-lbl">屋面實際面積</span><span class="mat-val">${roofM2.toFixed(1)} m²</span></div>
-    <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">${slopeStr}</span></div>
-    <div class="mat-row"><span class="mat-lbl">斜長參考（正向）</span><span class="mat-val">${slopeRef} 米</span></div>
     <hr style="border-color:#222;margin:6px 0;">
     <div class="mat-row"><span class="mat-lbl">浪板類型</span><span class="mat-val">${panelType}／${panelColor}</span></div>
-    <div class="mat-row"><span class="mat-lbl">🌊 浪板數量（${wW}cm寬）</span><span class="mat-val">${totalSheets} 片</span></div>`;
+    <div class="mat-row"><span class="mat-lbl">🌊 浪板總數（${wW}cm寬）</span><span class="mat-val">${totalSheets} 片</span></div>`;
   if (rType===2)
     h += `<div class="mat-row"><span class="mat-lbl">🔺 中脊收邊長度</span><span class="mat-val">${totalRidgeM.toFixed(2)} 米</span></div>`;
   h += `
     <div class="mat-row"><span class="mat-lbl">📏 C型鋼桁條（參考）</span><span class="mat-val">${totalPurlinM.toFixed(1)} 米</span></div>
     <hr style="border-color:#222;margin:6px 0;">
-    <div style="color:#555;font-size:12px;">⚠️ 轉向格子斜長以轉後尺寸計算；實際施工請現場核對</div>`;
+    <div style="color:#555;font-size:11px;">⚠️ 各棟獨立計算，共用屋脊請手動調整；採購時浪板加計搭接 +5~10cm</div>`;
 
   document.getElementById('matResult').innerHTML = h;
 }
 
-initCells(gCols, gRows, false);
-updSizeInfo();
+// Init
 draw();
-updLayout();
 </script>
 </body>
 </html>
