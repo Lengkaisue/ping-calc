@@ -154,7 +154,7 @@ a.back:hover { color:#fff; }
     <div id="canvasWrap"><canvas id="cv"></canvas></div>
 
     <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:#666;">
-      <span>🔵 有組合屋</span><span>⬛ 無</span>
+      <span>🔵 正向</span><span>🟠 轉向90°</span><span>⬛ 無（點格子循環切換）</span>
     </div>
 
     <div class="result-box" id="layoutInfo" style="text-align:center;margin-top:8px;">
@@ -223,9 +223,7 @@ a.back:hover { color:#fff; }
 </div><!-- /main-grid -->
 
 <script>
-const W_OPTS = [301,396,500];
-const D_OPTS = [596,690,785];
-
+// cells[r][c]: 0=空, 1=正向(unitW×unitD), 2=轉向(unitD×unitW)
 let unitW = 301, unitD = 596;
 let gCols = 2, gRows = 2;
 let cells = [];
@@ -241,7 +239,14 @@ function pickD(v, el) {
 function updSizeInfo() {
   let ping = (unitW * unitD / 33057.85).toFixed(2);
   document.getElementById('sizeInfo').innerHTML =
-    `每間：${unitW} × ${unitD} cm｜<b>${ping} 坪</b>`;
+    `正向：${unitW} × ${unitD} cm｜轉向：${unitD} × ${unitW} cm｜<b>${ping} 坪/間</b>`;
+}
+
+// 取得某格實際尺寸 {cw, cd}
+function cellDims(r, c) {
+  return cells[r][c] === 2
+    ? { cw: unitD, cd: unitW }
+    : { cw: unitW, cd: unitD };
 }
 
 function initCells(cols, rows, preserve) {
@@ -250,7 +255,11 @@ function initCells(cols, rows, preserve) {
   for (let r=0;r<rows;r++) {
     cells[r]=[];
     for (let c=0;c<cols;c++) {
-      cells[r][c] = (preserve && old[r] && old[r][c] !== undefined) ? old[r][c] : true;
+      let prev = preserve && old[r] && old[r][c] !== undefined ? old[r][c] : 1;
+      // 相容舊版 boolean
+      if (prev === true) prev = 1;
+      if (prev === false) prev = 0;
+      cells[r][c] = prev;
     }
   }
 }
@@ -261,7 +270,9 @@ function rebuildGrid() {
   draw(); updLayout();
 }
 function setAll(v) {
-  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) cells[r][c]=v;
+  // v=true → 1(正向), v=false → 0(空)
+  let val = v ? 1 : 0;
+  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) cells[r][c]=val;
   draw(); updLayout();
 }
 function presetU() {
@@ -269,9 +280,8 @@ function presetU() {
   document.getElementById('selCols').value = gCols;
   document.getElementById('selRows').value = gRows;
   initCells(gCols, gRows, false);
-  // 挖空所有列（除最後一列）的中間格子，形成合院ㄇ字
   for (let r=0;r<gRows-1;r++)
-    for (let c=1;c<gCols-1;c++) cells[r][c]=false;
+    for (let c=1;c<gCols-1;c++) cells[r][c]=0;
   draw(); updLayout();
 }
 function presetL() {
@@ -279,15 +289,20 @@ function presetL() {
   document.getElementById('selCols').value = gCols;
   document.getElementById('selRows').value = gRows;
   initCells(gCols, gRows, false);
-  for (let r=1;r<gRows;r++) for (let c=1;c<gCols;c++) cells[r][c]=false;
+  for (let r=1;r<gRows;r++) for (let c=1;c<gCols;c++) cells[r][c]=0;
   draw(); updLayout();
 }
 
 function rotateLayout() {
   let newRows = gCols, newCols = gRows;
   let newCells = [];
-  for (let r=0;r<newRows;r++) { newCells[r]=[]; for(let c=0;c<newCols;c++) newCells[r][c]=false; }
-  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) newCells[c][gRows-1-r] = cells[r][c];
+  for (let r=0;r<newRows;r++) { newCells[r]=[]; for(let c=0;c<newCols;c++) newCells[r][c]=0; }
+  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) {
+    let v = cells[r][c];
+    // 整體旋轉時，每格方向也跟著翻轉（1↔2）
+    if (v===1) v=2; else if (v===2) v=1;
+    newCells[c][gRows-1-r] = v;
+  }
   let tmp = unitW; unitW = unitD; unitD = tmp;
   document.querySelectorAll('#wBtns .sz').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.v)===unitW));
   document.querySelectorAll('#dBtns .sz').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.v)===unitD));
@@ -332,17 +347,21 @@ function draw() {
   for (let r=0;r<gRows;r++) {
     for (let c=0;c<gCols;c++) {
       let x = PAD_L + c*CW, y = PAD_T + r*CH;
-      let on = cells[r][c];
-      ctx.fillStyle = on ? '#1a3d6e' : '#1e1e1e';
+      let state = cells[r][c];
+      // 顏色：0=暗, 1=藍(正向), 2=橘(轉向)
+      ctx.fillStyle   = state===1 ? '#1a3d6e' : state===2 ? '#5c3300' : '#1e1e1e';
       ctx.fillRect(x+2,y+2,CW-4,CH-4);
-      ctx.strokeStyle = on ? '#4d8edb' : '#383838';
-      ctx.lineWidth = on ? 2 : 1;
+      ctx.strokeStyle = state===1 ? '#4d8edb' : state===2 ? '#e07800' : '#383838';
+      ctx.lineWidth   = state>0 ? 2 : 1;
       ctx.strokeRect(x+2,y+2,CW-4,CH-4);
 
-      if (on) {
+      if (state>0) {
+        let {cw,cd} = cellDims(r,c);
         let fs = Math.min(12, CW/6);
-        ctx.fillStyle='#7ab3e8'; ctx.font=`${fs}px Arial`; ctx.textAlign='center';
-        ctx.fillText(`${unitW}×${unitD}`, x+CW/2, y+CH/2+fs/2);
+        ctx.fillStyle = state===1 ? '#7ab3e8' : '#f0a040';
+        ctx.font=`${fs}px Arial`; ctx.textAlign='center';
+        let label = state===2 ? `↻ ${cw}×${cd}` : `${cw}×${cd}`;
+        ctx.fillText(label, x+CW/2, y+CH/2+fs/2);
       }
 
       if (r===0) {
@@ -366,7 +385,7 @@ function toggleCell(e) {
   let CW = (cv.width-PAD_L)/gCols, CH = (cv.height-PAD_T)/gRows;
   let col = Math.floor(rx/CW), row = Math.floor(ry/CH);
   if (row>=0&&row<gRows&&col>=0&&col<gCols) {
-    cells[row][col] = !cells[row][col];
+    cells[row][col] = (cells[row][col] + 1) % 3; // 0→1→2→0
     draw(); updLayout();
   }
 }
@@ -374,12 +393,16 @@ document.getElementById('cv').addEventListener('click', toggleCell);
 window.addEventListener('resize', draw);
 
 function updLayout() {
-  let n=0;
-  for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) if(cells[r][c]) n++;
-  let m2 = (n*unitW*unitD/10000).toFixed(1);
-  let ping = (n*unitW*unitD/33057.85).toFixed(2);
+  let n=0, footM2=0;
+  for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) {
+    if(!cells[r][c]) continue;
+    n++;
+    let {cw,cd} = cellDims(r,c);
+    footM2 += cw*cd/10000;
+  }
+  let ping = (footM2 * 10000 / 33057.85).toFixed(2);
   document.getElementById('layoutInfo').innerHTML =
-    `共 <b>${n}</b> 間組合屋 | 覆蓋面積：<b>${m2} m²</b>（${ping} 坪）`;
+    `共 <b>${n}</b> 間組合屋 | 覆蓋面積：<b>${footM2.toFixed(1)} m²</b>（${ping} 坪）`;
 }
 
 function calcMats() {
@@ -397,43 +420,30 @@ function calcMats() {
   let rad  = Math.atan(sr/10);
   let sFac = 1/Math.cos(rad);
 
-  let spanCm = dir==='col' ? unitD : unitW;
-  let halfSpan = (rType===2) ? spanCm/2 : spanCm;
-  let slopeLenCm = halfSpan * sFac;
+  let totalSheets=0, totalRidgeM=0, totalPurlinM=0, footM2=0, roofM2=0;
 
-  let totalSheets = 0;
-  let totalRidgeM = 0;
-
-  if (dir==='col') {
-    for (let r=0;r<gRows;r++) {
-      let rowW = 0;
-      for (let c=0;c<gCols;c++) if(cells[r][c]) rowW += unitW;
-      if (rowW>0) {
-        totalSheets += Math.ceil(rowW/wW) * rType;
-        if (rType===2) totalRidgeM += rowW/100;
-      }
-    }
-  } else {
-    for (let c=0;c<gCols;c++) {
-      let colD = 0;
-      for (let r=0;r<gRows;r++) if(cells[r][c]) colD += unitD;
-      if (colD>0) {
-        totalSheets += Math.ceil(colD/wW) * rType;
-        if (rType===2) totalRidgeM += colD/100;
-      }
-    }
-  }
-
-  let footM2  = n*unitW*unitD/10000;
-  let roofM2  = footM2 * sFac * rType;
-
-  let purlinCnt = Math.floor(slopeLenCm/60) + 2;
-  let purlinLenCm = dir==='col' ? unitW : unitD;
-  let totalPurlinM = 0;
   for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) {
-    if(cells[r][c]) totalPurlinM += purlinLenCm/100 * purlinCnt * rType;
+    if(!cells[r][c]) continue;
+    let {cw, cd} = cellDims(r, c);
+    // dir='col': 水沿深度(cd)流 → 斜面跨度=cd, 浪板沿寬度(cw)並排
+    // dir='row': 水沿寬度(cw)流 → 斜面跨度=cw, 浪板沿深度(cd)並排
+    let spanCm  = dir==='col' ? cd : cw;
+    let perpCm  = dir==='col' ? cw : cd;
+    let halfSpan   = rType===2 ? spanCm/2 : spanCm;
+    let slopeLenCm = halfSpan * sFac;
+    let purlinCnt  = Math.floor(slopeLenCm/60) + 2;
+
+    footM2      += cw*cd/10000;
+    roofM2      += (cw*cd/10000) * sFac * rType;
+    totalSheets += Math.ceil(perpCm/wW) * rType;
+    if (rType===2) totalRidgeM += perpCm/100;
+    totalPurlinM += (perpCm/100) * purlinCnt * rType;
   }
 
+  // 代表坡長：用正向格子的值顯示參考
+  let spanRef  = dir==='col' ? unitD : unitW;
+  let halfRef  = rType===2 ? spanRef/2 : spanRef;
+  let slopeRef = (halfRef * sFac / 100).toFixed(2);
   let slopeStr = `1:${sr}（坡角 ${(rad*180/Math.PI).toFixed(1)}°）`;
 
   let h = `
@@ -441,22 +451,16 @@ function calcMats() {
     <div class="mat-row"><span class="mat-lbl">覆蓋面積（水平）</span><span class="mat-val">${footM2.toFixed(1)} m²</span></div>
     <div class="mat-row"><span class="mat-lbl">屋面實際面積</span><span class="mat-val">${roofM2.toFixed(1)} m²</span></div>
     <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">${slopeStr}</span></div>
-    <div class="mat-row"><span class="mat-lbl">每斜面斜長（椽長）</span><span class="mat-val">${(slopeLenCm/100).toFixed(2)} 米</span></div>
+    <div class="mat-row"><span class="mat-lbl">斜長參考（正向）</span><span class="mat-val">${slopeRef} 米</span></div>
     <hr style="border-color:#222;margin:6px 0;">
     <div class="mat-row"><span class="mat-lbl">浪板類型</span><span class="mat-val">${panelType}／${panelColor}</span></div>
     <div class="mat-row"><span class="mat-lbl">🌊 浪板數量（${wW}cm寬）</span><span class="mat-val">${totalSheets} 片</span></div>`;
-
-  if (rType===2) {
+  if (rType===2)
     h += `<div class="mat-row"><span class="mat-lbl">🔺 中脊收邊長度</span><span class="mat-val">${totalRidgeM.toFixed(2)} 米</span></div>`;
-  }
-
   h += `
     <div class="mat-row"><span class="mat-lbl">📏 C型鋼桁條（參考）</span><span class="mat-val">${totalPurlinM.toFixed(1)} 米</span></div>
     <hr style="border-color:#222;margin:6px 0;">
-    <div style="color:#555;font-size:12px;">
-      ⚠️ 以上為估算；實際施工請現場核對<br>
-      浪板每片需長：<b>${(slopeLenCm/100).toFixed(2)}m</b>，採購時加計搭接（建議 +5~10cm）
-    </div>`;
+    <div style="color:#555;font-size:12px;">⚠️ 轉向格子斜長以轉後尺寸計算；實際施工請現場核對</div>`;
 
   document.getElementById('matResult').innerHTML = h;
 }
