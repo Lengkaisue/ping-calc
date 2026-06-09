@@ -235,10 +235,8 @@ function removeBuilding(id) {
 function rotateBuilding(id) {
   let b = buildings.find(b => b.id === id);
   if (!b) return;
-  // Swap position so top-left stays consistent
-  let oldDims = bDims(b);
   b.rotated = !b.rotated;
-  renderList(); draw(); updLayout();
+  renderList(); draw(false); updLayout(); // 不重算 scale，讓比例真實變化
 }
 
 function setBW(id, val) {
@@ -293,10 +291,10 @@ function calcScale() {
   if (cvScale < 0.08) cvScale = 0.08;
 }
 
-function draw() {
+function draw(rescale=true) {
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
-  calcScale();
+  if (rescale) calcScale();
 
   let maxX = 0, maxY = 0;
   for (let b of buildings) {
@@ -436,7 +434,7 @@ function doDrag(e) {
   if (b) {
     b.x = Math.max(0, Math.round((cmX-drag.ox)/SNAP)*SNAP);
     b.y = Math.max(0, Math.round((cmY-drag.oy)/SNAP)*SNAP);
-    draw(); updLayout();
+    draw(false); updLayout();
   }
 }
 
