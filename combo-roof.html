@@ -99,17 +99,23 @@ a.back:hover { color:#fff; }
   <!-- ① 規格 -->
   <div class="container">
     <h2>① 模組規格</h2>
-    <p style="color:#666;font-size:13px;margin:0 0 10px;">每間組合屋固定尺寸，選寬度與深度</p>
+    <p style="color:#666;font-size:13px;margin:0 0 10px;">每間組合屋固定尺寸，寬度與深度各自選擇</p>
 
     <label style="color:#aaa;font-size:13px;">面寬（橫向）</label>
-    <div class="size-grid" id="wBtns">
+    <div class="size-grid" id="wBtns" style="grid-template-columns:repeat(3,1fr);">
       <div class="sz on" data-v="301" onclick="pickW(301,this)">3米<br><small style="color:#888">301cm</small></div>
       <div class="sz"    data-v="396" onclick="pickW(396,this)">4米<br><small style="color:#888">396cm</small></div>
       <div class="sz"    data-v="500" onclick="pickW(500,this)">5米<br><small style="color:#888">500cm</small></div>
+      <div class="sz"    data-v="596" onclick="pickW(596,this)">6米<br><small style="color:#888">596cm</small></div>
+      <div class="sz"    data-v="690" onclick="pickW(690,this)">7米<br><small style="color:#888">690cm</small></div>
+      <div class="sz"    data-v="785" onclick="pickW(785,this)">8米<br><small style="color:#888">785cm</small></div>
     </div>
 
     <label style="color:#aaa;font-size:13px;display:block;margin-top:8px;">進深（縱向）</label>
-    <div class="size-grid" id="dBtns">
+    <div class="size-grid" id="dBtns" style="grid-template-columns:repeat(3,1fr);">
+      <div class="sz"    data-v="301" onclick="pickD(301,this)">3米<br><small style="color:#888">301cm</small></div>
+      <div class="sz"    data-v="396" onclick="pickD(396,this)">4米<br><small style="color:#888">396cm</small></div>
+      <div class="sz"    data-v="500" onclick="pickD(500,this)">5米<br><small style="color:#888">500cm</small></div>
       <div class="sz on" data-v="596" onclick="pickD(596,this)">6米<br><small style="color:#888">596cm</small></div>
       <div class="sz"    data-v="690" onclick="pickD(690,this)">7米<br><small style="color:#888">690cm</small></div>
       <div class="sz"    data-v="785" onclick="pickD(785,this)">8米<br><small style="color:#888">785cm</small></div>
@@ -140,6 +146,7 @@ a.back:hover { color:#fff; }
       <button class="btn-sm" onclick="setAll(false)">清空</button>
       <button class="btn-sm" onclick="presetU()">ㄇ字型</button>
       <button class="btn-sm" onclick="presetL()">L字型</button>
+      <button class="btn-sm" onclick="rotateLayout()" title="整體旋轉 90°">↻ 旋轉</button>
     </div>
 
     <div id="canvasWrap"><canvas id="cv"></canvas></div>
@@ -255,6 +262,23 @@ function presetL() {
   initCells(gCols, gRows, false);
   for (let r=1;r<gRows;r++) for (let c=1;c<gCols;c++) cells[r][c]=false;
   draw(); updLayout();
+}
+
+function rotateLayout() {
+  // Rotate 90° clockwise: new[c][gRows-1-r] = old[r][c]
+  let newRows = gCols, newCols = gRows;
+  let newCells = [];
+  for (let r=0;r<newRows;r++) { newCells[r]=[]; for(let c=0;c<newCols;c++) newCells[r][c]=false; }
+  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) newCells[c][gRows-1-r] = cells[r][c];
+  // Swap unitW/unitD
+  let tmp = unitW; unitW = unitD; unitD = tmp;
+  // Update size buttons highlight
+  document.querySelectorAll('#wBtns .sz').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.v)===unitW));
+  document.querySelectorAll('#dBtns .sz').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.v)===unitD));
+  gCols = newCols; gRows = newRows; cells = newCells;
+  document.getElementById('selCols').value = gCols;
+  document.getElementById('selRows').value = gRows;
+  updSizeInfo(); draw(); updLayout();
 }
 
 // ── Canvas 繪製 ───────────────────────────────────────
