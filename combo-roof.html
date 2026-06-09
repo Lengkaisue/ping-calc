@@ -179,6 +179,24 @@ a.back:hover { color:#fff; }
       </select>
     </div>
     <div class="row">
+      <label>浪板類型</label>
+      <select id="panelType">
+        <option value="清版">清版</option>
+        <option value="三合一">三合一</option>
+        <option value="琉璃瓦">琉璃瓦</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>顏色</label>
+      <select id="panelColor">
+        <option value="白色">白色</option>
+        <option value="蘋果綠">蘋果綠</option>
+        <option value="鐵灰">鐵灰</option>
+        <option value="紅色">紅色</option>
+        <option value="黑色">黑色</option>
+      </select>
+    </div>
+    <div class="row">
       <label>浪板寬</label>
       <select id="waveW">
         <option value="75">75 cm（標準）</option>
@@ -375,10 +393,12 @@ function calcMats() {
   for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) if(cells[r][c]) n++;
   if (n===0) { document.getElementById('matResult').innerHTML='⚠️ 請先排列組合屋'; return; }
 
-  let rType = parseInt(document.getElementById('roofType').value);
-  let wW    = parseInt(document.getElementById('waveW').value);
-  let sr    = parseFloat(document.getElementById('slopeR').value)||1;
-  let dir   = document.getElementById('roofDir').value;
+  let rType      = parseInt(document.getElementById('roofType').value);
+  let wW         = parseInt(document.getElementById('waveW').value);
+  let sr         = parseFloat(document.getElementById('slopeR').value)||1;
+  let dir        = document.getElementById('roofDir').value;
+  let panelType  = document.getElementById('panelType').value;
+  let panelColor = document.getElementById('panelColor').value;
 
   // Slope geometry
   let rad  = Math.atan(sr/10);
@@ -440,6 +460,7 @@ function calcMats() {
     <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">${slopeStr}</span></div>
     <div class="mat-row"><span class="mat-lbl">每斜面斜長（椽長）</span><span class="mat-val">${(slopeLenCm/100).toFixed(2)} 米</span></div>
     <hr style="border-color:#222;margin:6px 0;">
+    <div class="mat-row"><span class="mat-lbl">浪板類型</span><span class="mat-val">${panelType}／${panelColor}</span></div>
     <div class="mat-row"><span class="mat-lbl">🌊 浪板數量（${wW}cm寬）</span><span class="mat-val">${totalSheets} 片</span></div>`;
 
   if (rType===2) {
