@@ -136,11 +136,13 @@ a.back:hover { color:#fff; }
       <select id="selCols" onchange="rebuildGrid()">
         <option>1</option><option selected>2</option><option>3</option>
         <option>4</option><option>5</option><option>6</option>
+        <option>7</option><option>8</option><option>9</option><option>10</option>
       </select>
       <span>列：</span>
       <select id="selRows" onchange="rebuildGrid()">
         <option>1</option><option selected>2</option><option>3</option>
         <option>4</option><option>5</option><option>6</option>
+        <option>7</option><option>8</option><option>9</option><option>10</option>
       </select>
       <button class="btn-sm" onclick="setAll(true)">全選</button>
       <button class="btn-sm" onclick="setAll(false)">清空</button>
@@ -221,15 +223,13 @@ a.back:hover { color:#fff; }
 </div><!-- /main-grid -->
 
 <script>
-// ── 尺寸常數 ──────────────────────────────────────────
 const W_OPTS = [301,396,500];
 const D_OPTS = [596,690,785];
 
 let unitW = 301, unitD = 596;
 let gCols = 2, gRows = 2;
-let cells = [];   // cells[r][c] = bool
+let cells = [];
 
-// ── 規格選擇 ──────────────────────────────────────────
 function pickW(v, el) {
   document.querySelectorAll('#wBtns .sz').forEach(b=>b.classList.remove('on'));
   el.classList.add('on'); unitW = v; updSizeInfo(); draw();
@@ -244,7 +244,6 @@ function updSizeInfo() {
     `每間：${unitW} × ${unitD} cm｜<b>${ping} 坪</b>`;
 }
 
-// ── 格子 ──────────────────────────────────────────────
 function initCells(cols, rows, preserve) {
   let old = cells;
   cells = [];
@@ -270,7 +269,9 @@ function presetU() {
   document.getElementById('selCols').value = gCols;
   document.getElementById('selRows').value = gRows;
   initCells(gCols, gRows, false);
-  for (let c=1;c<gCols-1;c++) cells[0][c]=false;
+  // 挖空所有列（除最後一列）的中間格子，形成合院ㄇ字
+  for (let r=0;r<gRows-1;r++)
+    for (let c=1;c<gCols-1;c++) cells[r][c]=false;
   draw(); updLayout();
 }
 function presetL() {
@@ -283,14 +284,11 @@ function presetL() {
 }
 
 function rotateLayout() {
-  // Rotate 90° clockwise: new[c][gRows-1-r] = old[r][c]
   let newRows = gCols, newCols = gRows;
   let newCells = [];
   for (let r=0;r<newRows;r++) { newCells[r]=[]; for(let c=0;c<newCols;c++) newCells[r][c]=false; }
   for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) newCells[c][gRows-1-r] = cells[r][c];
-  // Swap unitW/unitD
   let tmp = unitW; unitW = unitD; unitD = tmp;
-  // Update size buttons highlight
   document.querySelectorAll('#wBtns .sz').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.v)===unitW));
   document.querySelectorAll('#dBtns .sz').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.v)===unitD));
   gCols = newCols; gRows = newRows; cells = newCells;
@@ -299,7 +297,6 @@ function rotateLayout() {
   updSizeInfo(); draw(); updLayout();
 }
 
-// ── Canvas 繪製 ───────────────────────────────────────
 const PAD_L = 36, PAD_T = 28;
 
 function draw() {
@@ -317,7 +314,6 @@ function draw() {
   cv.height = gRows*CH + PAD_T;
   ctx.fillStyle='#111'; ctx.fillRect(0,0,cv.width,cv.height);
 
-  // Direction arrow
   let dir = document.getElementById('roofDir').value;
   ctx.save(); ctx.strokeStyle='#ff9500'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
   if (dir==='col') {
@@ -349,7 +345,6 @@ function draw() {
         ctx.fillText(`${unitW}×${unitD}`, x+CW/2, y+CH/2+fs/2);
       }
 
-      // Axis labels
       if (r===0) {
         ctx.fillStyle='#555'; ctx.font='11px Arial'; ctx.textAlign='center';
         ctx.fillText(`欄${c+1}`, x+CW/2, PAD_T-6);
@@ -387,7 +382,6 @@ function updLayout() {
     `共 <b>${n}</b> 間組合屋 | 覆蓋面積：<b>${m2} m²</b>（${ping} 坪）`;
 }
 
-// ── 材料計算 ──────────────────────────────────────────
 function calcMats() {
   let n=0;
   for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) if(cells[r][c]) n++;
@@ -400,24 +394,17 @@ function calcMats() {
   let panelType  = document.getElementById('panelType').value;
   let panelColor = document.getElementById('panelColor').value;
 
-  // Slope geometry
   let rad  = Math.atan(sr/10);
-  let sFac = 1/Math.cos(rad);   // slope extension factor
+  let sFac = 1/Math.cos(rad);
 
-  // Span = the dimension water travels down the slope
-  // dir='col' → water flows along depth (unitD direction), ridge runs along width
-  // dir='row' → water flows along width (unitW direction), ridge runs along depth
   let spanCm = dir==='col' ? unitD : unitW;
   let halfSpan = (rType===2) ? spanCm/2 : spanCm;
-  let slopeLenCm = halfSpan * sFac;   // actual rafter length
+  let slopeLenCm = halfSpan * sFac;
 
-  // Count wave sheets per strip
   let totalSheets = 0;
   let totalRidgeM = 0;
 
   if (dir==='col') {
-    // Strips run along depth; each row of buildings shares a ridge line (if double)
-    // Count connected width per row
     for (let r=0;r<gRows;r++) {
       let rowW = 0;
       for (let c=0;c<gCols;c++) if(cells[r][c]) rowW += unitW;
@@ -427,7 +414,6 @@ function calcMats() {
       }
     }
   } else {
-    // Strips run along width; count connected depth per col
     for (let c=0;c<gCols;c++) {
       let colD = 0;
       for (let r=0;r<gRows;r++) if(cells[r][c]) colD += unitD;
@@ -438,13 +424,10 @@ function calcMats() {
     }
   }
 
-  // Roofing area
   let footM2  = n*unitW*unitD/10000;
-  let roofM2  = footM2 * sFac * rType;  // each slope × slope factor
+  let roofM2  = footM2 * sFac * rType;
 
-  // C-channel purlins: one purlin every ~60cm along slope
-  let purlinCnt = Math.floor(slopeLenCm/60) + 2;  // +2 for top & bottom
-  // Length per purlin = perpendicular direction
+  let purlinCnt = Math.floor(slopeLenCm/60) + 2;
   let purlinLenCm = dir==='col' ? unitW : unitD;
   let totalPurlinM = 0;
   for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) {
@@ -478,7 +461,6 @@ function calcMats() {
   document.getElementById('matResult').innerHTML = h;
 }
 
-// ── 初始化 ────────────────────────────────────────────
 initCells(gCols, gRows, false);
 updSizeInfo();
 draw();
