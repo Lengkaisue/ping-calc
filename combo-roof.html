@@ -99,20 +99,15 @@ a.back:hover { color:#fff; }
 
   <!-- ① 新增建築 -->
   <div class="card wide">
-    <h2>① 新增建築</h2>
-
-    <p style="color:#666;font-size:12px;margin:0 0 8px;">快速新增（cm）：</p>
-    <div class="preset-bar" id="presetBar"></div>
-
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
-      <span style="color:#aaa;font-size:13px;">自訂：寬</span>
-      <input id="newW" type="number" value="301" min="100" max="900" style="width:70px;padding:7px;background:#262626;color:#fff;border:1px solid #555;border-radius:6px;text-align:center;font-size:15px;">
-      <span style="color:#aaa;font-size:13px;">× 深</span>
-      <input id="newD" type="number" value="596" min="100" max="900" style="width:70px;padding:7px;background:#262626;color:#fff;border:1px solid #555;border-radius:6px;text-align:center;font-size:15px;">
-      <span style="color:#666;font-size:12px;">cm</span>
-      <button class="btn-sm" style="margin-top:0;" onclick="addCustom()">＋ 新增</button>
+    <h2>① 建築清單</h2>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+      <div id="presetBar" style="display:contents;"></div>
+      <span style="color:#444;font-size:12px;">｜自訂</span>
+      <input id="newW" type="number" value="301" min="100" max="900" style="width:60px;padding:5px;background:#262626;color:#fff;border:1px solid #555;border-radius:6px;text-align:center;font-size:14px;">
+      <span style="color:#555">×</span>
+      <input id="newD" type="number" value="596" min="100" max="900" style="width:60px;padding:5px;background:#262626;color:#fff;border:1px solid #555;border-radius:6px;text-align:center;font-size:14px;">
+      <button class="btn-sm" style="margin-top:0;" onclick="addCustom()">＋</button>
     </div>
-
     <div id="buildingList"><div id="empty-hint">尚無建築，請點上方按鈕新增</div></div>
   </div>
 
