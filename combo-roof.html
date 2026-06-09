@@ -288,8 +288,12 @@ function draw() {
   const cv = document.getElementById('cv');
   const ctx = cv.getContext('2d');
   const maxW = Math.min(window.innerWidth - 60, 760);
-  const CW = Math.max(70, Math.floor((maxW - PAD_L) / gCols));
-  const CH = Math.min(130, Math.max(60, Math.floor(CW * unitD / unitW)));
+  const maxH = 480;
+  const scaleW = (maxW - PAD_L) / (gCols * unitW);
+  const scaleH = (maxH - PAD_T) / (gRows * unitD);
+  const scale  = Math.min(scaleW, scaleH);
+  const CW = Math.max(40, Math.floor(scale * unitW));
+  const CH = Math.max(30, Math.floor(scale * unitD));
 
   cv.width  = gCols*CW + PAD_L;
   cv.height = gRows*CH + PAD_T;
