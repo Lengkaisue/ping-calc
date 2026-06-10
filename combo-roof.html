@@ -444,8 +444,23 @@ function updLayout(){
     `共 <b>${buildings.length}</b> 間｜覆蓋面積：<b>${m2.toFixed(1)} m²</b>（${ping} 坪）`;
 }
 
+// 最佳 C型鋼間距演算法（從 roof-calc 搬來）
+function bestCSpacing(lenCm, first=15){
+  let usable=lenCm-first;
+  if(usable<=0) return {n:1,space:0};
+  let minSp=lenCm<=200?50:60;
+  for(let n=2;n<100;n++){
+    let sp=usable/(n-1);
+    if(sp>=minSp&&sp<80) return {n,space:+sp.toFixed(1)};
+    if(sp<minSp) break;
+  }
+  let n=Math.ceil(usable/70)+1;
+  return {n,space:+(usable/(n-1)).toFixed(1)};
+}
+
 function calcMats(){
-  if(!buildings.length){ document.getElementById('matResult').innerHTML='⚠️ 請先排列組合屋'; return; }
+  let modBuildings=buildings.filter(b=>b.type!=='deck');
+  if(!modBuildings.length){ document.getElementById('matResult').innerHTML='⚠️ 請先加入組合屋'; return; }
   let rType=parseInt(document.getElementById('roofType').value);
   let wW=parseInt(document.getElementById('waveW').value);
   let sr=parseFloat(document.getElementById('slopeR').value)||1;
@@ -453,33 +468,49 @@ function calcMats(){
   let panelType=document.getElementById('panelType').value;
   let panelColor=document.getElementById('panelColor').value;
   let rad=Math.atan(sr/10), sFac=1/Math.cos(rad);
-  let ts=0,tr=0,tp=0,fm=0,rm=0;
-  buildings.forEach(b=>{
+
+  let ts=0,tr=0,fm=0,rm=0;
+  // C型鋼：按建築分組統計，每棟獨立計算間距
+  let cRows=[];
+  modBuildings.forEach(b=>{
     let{bw,bd}=bDims(b);
     let sp=dir==='col'?bd:bw, pp=dir==='col'?bw:bd;
-    let sl=(rType===2?sp/2:sp)*sFac;
-    let pc=Math.floor(sl/60)+2;
+    let slCm=(rType===2?sp/2:sp)*sFac;
+    let slM=(slCm/100).toFixed(2);
     fm+=bw*bd/10000; rm+=(bw*bd/10000)*sFac*rType;
     ts+=Math.ceil(pp/wW)*rType;
     if(rType===2) tr+=pp/100;
-    tp+=(pp/100)*pc*rType;
+    // C型鋼：每斜面最佳間距
+    let {n,space}=bestCSpacing(slCm);
+    let totalC=n*rType; // 單斜×1，雙斜×2
+    let perpM=(pp/100).toFixed(2);
+    cRows.push({slM,space,n,totalC,perpM,bwLabel:`${bw}×${bd}`});
   });
-  // 用第一棟的尺寸當斜長參考
-  let b0=buildings[0],{bw:b0w,bd:b0d}=bDims(b0);
-  let sRef=dir==='col'?b0d:b0w, slRef=((rType===2?sRef/2:sRef)*sFac/100).toFixed(2);
+
+  // 彙整同規格 C型鋼
+  let totalCPcs=cRows.reduce((s,r)=>s+r.totalC,0);
+  let cDetail=cRows.map(r=>
+    `${r.bwLabel}cm：斜長${r.slM}m，間距${r.space}cm，每斜${r.n}支×${rType}＝${r.totalC}支（各${r.perpM}m長）`
+  ).join('<br>');
+
+  let b0=modBuildings[0],{bw:b0w,bd:b0d}=bDims(b0);
+  let sRef=dir==='col'?b0d:b0w;
+  let slRef=((rType===2?sRef/2:sRef)*sFac/100).toFixed(2);
+  let ping=(fm*10000/33057.85).toFixed(1);
+
   let h=`
-    <div class="mat-row"><span class="mat-lbl">組合屋數量</span><span class="mat-val">${buildings.length} 間</span></div>
-    <div class="mat-row"><span class="mat-lbl">覆蓋面積（水平）</span><span class="mat-val">${fm.toFixed(1)} m²</span></div>
+    <div class="mat-row"><span class="mat-lbl">組合屋</span><span class="mat-val">${modBuildings.length} 間</span></div>
+    <div class="mat-row"><span class="mat-lbl">水平面積</span><span class="mat-val">${fm.toFixed(1)} m²（${ping} 坪）</span></div>
     <div class="mat-row"><span class="mat-lbl">屋面實際面積</span><span class="mat-val">${rm.toFixed(1)} m²</span></div>
     <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">1:${sr}（${(rad*180/Math.PI).toFixed(1)}°）</span></div>
-    <div class="mat-row"><span class="mat-lbl">斜長參考（正向）</span><span class="mat-val">${slRef} 米</span></div>
     <hr style="border-color:#222;margin:6px 0;">
-    <div class="mat-row"><span class="mat-lbl">浪板類型</span><span class="mat-val">${panelType}／${panelColor}</span></div>
-    <div class="mat-row"><span class="mat-lbl">🌊 浪板數量（${wW}cm寬）</span><span class="mat-val">${ts} 片</span></div>`;
-  if(rType===2) h+=`<div class="mat-row"><span class="mat-lbl">🔺 中脊收邊長度</span><span class="mat-val">${tr.toFixed(2)} 米</span></div>`;
-  h+=`<div class="mat-row"><span class="mat-lbl">📏 C型鋼桁條（參考）</span><span class="mat-val">${tp.toFixed(1)} 米</span></div>
-    <hr style="border-color:#222;margin:6px 0;">
-    <div style="color:#555;font-size:12px;">⚠️ 以上為估算；實際施工請現場核對<br>浪板每片需長：<b>${slRef}m</b>，採購時加計搭接（+5~10cm）</div>`;
+    <div class="mat-row"><span class="mat-lbl">浪板</span><span class="mat-val">${panelType}／${panelColor}／${wW}cm寬</span></div>
+    <div class="mat-row"><span class="mat-lbl">🌊 浪板數量</span><span class="mat-val">${ts} 片（每片需長 ≥${slRef}m）</span></div>`;
+  if(rType===2) h+=`<div class="mat-row"><span class="mat-lbl">🔺 中脊收邊</span><span class="mat-val">${tr.toFixed(2)} 米</span></div>`;
+  h+=`<hr style="border-color:#222;margin:6px 0;">
+    <div class="mat-row"><span class="mat-lbl">📏 C型鋼總數</span><span class="mat-val">${totalCPcs} 支</span></div>
+    <div style="color:#666;font-size:12px;margin:4px 0 8px;">${cDetail}</div>
+    <div style="color:#555;font-size:12px;">⚠️ 估算值，施工前請現場核對</div>`;
   document.getElementById('matResult').innerHTML=h;
 }
 
