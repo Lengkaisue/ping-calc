@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8" />
@@ -148,7 +148,7 @@ a.back:hover { color:#fff; }
     <div id="canvasWrap"><canvas id="cv"></canvas></div>
 
     <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:#666;">
-      <span>🔵 有組合屋</span><span>⬛ 無</span>
+      <span>🔵 正向</span><span style="color:#c07020">🟠 轉向90°</span><span>⬛ 無（點擊切換）</span>
     </div>
 
     <div class="result-box" id="layoutInfo" style="text-align:center;margin-top:8px;">
@@ -213,9 +213,33 @@ a.back:hover { color:#fff; }
 </div>
 
 <script>
+// cells[r][c]: 0=空, 1=正向(unitW×unitD), 2=轉向(unitD×unitW)
 let unitW = 301, unitD = 596;
 let gCols = 2, gRows = 2;
 let cells = [];
+
+function cDims(r,c) {
+  return cells[r][c]===2 ? {cw:unitD,cd:unitW} : {cw:unitW,cd:unitD};
+}
+// 每欄寬 = 該欄最大 cw；每列高 = 該列最大 cd
+function colWidths() {
+  let w=[];
+  for(let c=0;c<gCols;c++) {
+    let mx=10;
+    for(let r=0;r<gRows;r++) mx=Math.max(mx, cells[r][c]?cDims(r,c).cw:unitW);
+    w[c]=mx;
+  }
+  return w;
+}
+function rowHeights() {
+  let h=[];
+  for(let r=0;r<gRows;r++) {
+    let mx=10;
+    for(let c=0;c<gCols;c++) mx=Math.max(mx, cells[r][c]?cDims(r,c).cd:unitD);
+    h[r]=mx;
+  }
+  return h;
+}
 
 function pickW(v, el) {
   document.querySelectorAll('#wBtns .sz').forEach(b=>b.classList.remove('on'));
@@ -228,15 +252,18 @@ function pickD(v, el) {
 function updSizeInfo() {
   let ping = (unitW * unitD / 33057.85).toFixed(2);
   document.getElementById('sizeInfo').innerHTML =
-    `每間：${unitW} × ${unitD} cm｜<b>${ping} 坪</b>`;
+    `正向：${unitW}×${unitD} cm｜轉向：${unitD}×${unitW} cm｜<b>${ping} 坪/間</b>`;
 }
 
 function initCells(cols, rows, preserve) {
   let old = cells; cells = [];
   for (let r=0;r<rows;r++) {
     cells[r]=[];
-    for (let c=0;c<cols;c++)
-      cells[r][c] = (preserve && old[r] && old[r][c] !== undefined) ? old[r][c] : true;
+    for (let c=0;c<cols;c++) {
+      let v = preserve && old[r] && old[r][c]!==undefined ? old[r][c] : 1;
+      if (v===true) v=1; if (v===false) v=0;
+      cells[r][c]=v;
+    }
   }
 }
 function rebuildGrid() {
@@ -245,7 +272,8 @@ function rebuildGrid() {
   initCells(gCols, gRows, true); draw(); updLayout();
 }
 function setAll(v) {
-  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) cells[r][c]=v;
+  let val=v?1:0;
+  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) cells[r][c]=val;
   draw(); updLayout();
 }
 function presetU() {
@@ -254,7 +282,7 @@ function presetU() {
   document.getElementById('selRows').value = gRows;
   initCells(gCols, gRows, false);
   for (let r=0;r<gRows-1;r++)
-    for (let c=1;c<gCols-1;c++) cells[r][c]=false;
+    for (let c=1;c<gCols-1;c++) cells[r][c]=0;
   draw(); updLayout();
 }
 function presetL() {
@@ -262,13 +290,16 @@ function presetL() {
   document.getElementById('selCols').value = gCols;
   document.getElementById('selRows').value = gRows;
   initCells(gCols, gRows, false);
-  for (let r=1;r<gRows;r++) for (let c=1;c<gCols;c++) cells[r][c]=false;
+  for (let r=1;r<gRows;r++) for (let c=1;c<gCols;c++) cells[r][c]=0;
   draw(); updLayout();
 }
 function rotateLayout() {
   let newRows=gCols, newCols=gRows, newCells=[];
-  for (let r=0;r<newRows;r++) { newCells[r]=[]; for(let c=0;c<newCols;c++) newCells[r][c]=false; }
-  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) newCells[c][gRows-1-r]=cells[r][c];
+  for (let r=0;r<newRows;r++) { newCells[r]=[]; for(let c=0;c<newCols;c++) newCells[r][c]=0; }
+  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) {
+    let v=cells[r][c]; if(v===1)v=2; else if(v===2)v=1;
+    newCells[c][gRows-1-r]=v;
+  }
   let tmp=unitW; unitW=unitD; unitD=tmp;
   document.querySelectorAll('#wBtns .sz').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.v)===unitW));
   document.querySelectorAll('#dBtns .sz').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.v)===unitD));
@@ -282,9 +313,14 @@ const PAD_L=36, PAD_T=28;
 function draw() {
   const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
   const maxW=Math.min(window.innerWidth-60,760), maxH=480;
-  const scale=Math.min((maxW-PAD_L)/(gCols*unitW),(maxH-PAD_T)/(gRows*unitD));
-  const CW=Math.max(40,Math.floor(scale*unitW)), CH=Math.max(30,Math.floor(scale*unitD));
-  cv.width=gCols*CW+PAD_L; cv.height=gRows*CH+PAD_T;
+  let cW=colWidths(), rH=rowHeights();
+  let totalW=cW.reduce((a,b)=>a+b,0), totalH=rH.reduce((a,b)=>a+b,0);
+  let scale=Math.min((maxW-PAD_L)/totalW,(maxH-PAD_T)/totalH);
+  let pxCW=cW.map(w=>Math.max(30,Math.floor(w*scale)));
+  let pxRH=rH.map(h=>Math.max(22,Math.floor(h*scale)));
+
+  cv.width=pxCW.reduce((a,b)=>a+b,0)+PAD_L;
+  cv.height=pxRH.reduce((a,b)=>a+b,0)+PAD_T;
   ctx.fillStyle='#111'; ctx.fillRect(0,0,cv.width,cv.height);
 
   let dir=document.getElementById('roofDir').value;
@@ -292,47 +328,83 @@ function draw() {
   if (dir==='col') {
     let y=cv.height/2;
     ctx.beginPath(); ctx.moveTo(PAD_L,y); ctx.lineTo(cv.width-4,y); ctx.stroke();
-    ctx.fillStyle='#ff9500'; ctx.font='11px Arial'; ctx.textAlign='center';
+    ctx.fillStyle='#ff9500'; ctx.font='11px Arial'; ctx.textAlign='center'; ctx.setLineDash([]);
     ctx.fillText('↓ 排水', cv.width/2, y-4);
   } else {
     let x=cv.width/2;
     ctx.beginPath(); ctx.moveTo(x,PAD_T); ctx.lineTo(x,cv.height-4); ctx.stroke();
-    ctx.fillStyle='#ff9500'; ctx.font='11px Arial'; ctx.textAlign='left';
+    ctx.fillStyle='#ff9500'; ctx.font='11px Arial'; ctx.textAlign='left'; ctx.setLineDash([]);
     ctx.fillText('→排水', x+4, cv.height/2);
   }
   ctx.restore();
 
-  for (let r=0;r<gRows;r++) for (let c=0;c<gCols;c++) {
-    let x=PAD_L+c*CW, y=PAD_T+r*CH, on=cells[r][c];
-    ctx.fillStyle=on?'#1a3d6e':'#1e1e1e'; ctx.fillRect(x+2,y+2,CW-4,CH-4);
-    ctx.strokeStyle=on?'#4d8edb':'#383838'; ctx.lineWidth=on?2:1;
-    ctx.strokeRect(x+2,y+2,CW-4,CH-4);
-    if (on) {
-      let fs=Math.min(12,CW/6);
-      ctx.fillStyle='#7ab3e8'; ctx.font=`${fs}px Arial`; ctx.textAlign='center';
-      ctx.fillText(`${unitW}×${unitD}`,x+CW/2,y+CH/2+fs/2);
+  let yOff=PAD_T;
+  for (let r=0;r<gRows;r++) {
+    let xOff=PAD_L;
+    for (let c=0;c<gCols;c++) {
+      let PW=pxCW[c], PH=pxRH[r];
+      let state=cells[r][c];
+      // 格子槽（灰底）
+      ctx.fillStyle='#161616'; ctx.fillRect(xOff,yOff,PW,PH);
+      ctx.strokeStyle='#2a2a2a'; ctx.lineWidth=1; ctx.strokeRect(xOff,yOff,PW,PH);
+
+      if (state>0) {
+        let {cw,cd}=cDims(r,c);
+        let bw=Math.floor(cw*scale), bh=Math.floor(cd*scale);
+        let bx=xOff+Math.floor((PW-bw)/2), by=yOff+Math.floor((PH-bh)/2);
+        ctx.fillStyle=state===2?'#5c3300':'#1a3d6e';
+        ctx.fillRect(bx+1,by+1,bw-2,bh-2);
+        ctx.strokeStyle=state===2?'#e07800':'#4d8edb';
+        ctx.lineWidth=2; ctx.strokeRect(bx+1,by+1,bw-2,bh-2);
+        let fs=Math.min(12,Math.min(bw,bh)/5);
+        if (fs>=6) {
+          ctx.fillStyle=state===2?'#f0a040':'#7ab3e8';
+          ctx.font=`${fs}px Arial`; ctx.textAlign='center';
+          let lbl=state===2?`↻${cw}×${cd}`:`${cw}×${cd}`;
+          ctx.fillText(lbl,bx+bw/2,by+bh/2+fs/3);
+        }
+      }
+
+      if (r===0) { ctx.fillStyle='#555'; ctx.font='11px Arial'; ctx.textAlign='center'; ctx.fillText(`欄${c+1}`,xOff+PW/2,PAD_T-6); }
+      if (c===0) { ctx.fillStyle='#555'; ctx.font='11px Arial'; ctx.textAlign='right'; ctx.fillText(`列${r+1}`,PAD_L-4,yOff+PH/2+4); }
+      xOff+=PW;
     }
-    if (r===0) { ctx.fillStyle='#555'; ctx.font='11px Arial'; ctx.textAlign='center'; ctx.fillText(`欄${c+1}`,x+CW/2,PAD_T-6); }
-    if (c===0) { ctx.fillStyle='#555'; ctx.font='11px Arial'; ctx.textAlign='right'; ctx.fillText(`列${r+1}`,PAD_L-4,y+CH/2+4); }
+    yOff+=pxRH[r];
   }
 }
 
-function toggleCell(e) {
+// 存格子位置供 hit-test
+function getCellAt(ex, ey) {
   const cv=document.getElementById('cv'), rect=cv.getBoundingClientRect();
-  const sx=cv.width/rect.width, sy=cv.height/rect.height;
-  let rx=(e.clientX-rect.left)*sx-PAD_L, ry=(e.clientY-rect.top)*sy-PAD_T;
-  let CW=(cv.width-PAD_L)/gCols, CH=(cv.height-PAD_T)/gRows;
-  let col=Math.floor(rx/CW), row=Math.floor(ry/CH);
-  if (row>=0&&row<gRows&&col>=0&&col<gCols) { cells[row][col]=!cells[row][col]; draw(); updLayout(); }
+  let px=(ex-rect.left)*(cv.width/rect.width)-PAD_L;
+  let py=(ey-rect.top)*(cv.height/rect.height)-PAD_T;
+  let cW=colWidths(), rH=rowHeights();
+  const scale=Math.min((Math.min(window.innerWidth-60,760)-PAD_L)/cW.reduce((a,b)=>a+b,0),
+                       (480-PAD_T)/rH.reduce((a,b)=>a+b,0));
+  let pxCW=cW.map(w=>Math.max(30,Math.floor(w*scale)));
+  let pxRH=rH.map(h=>Math.max(22,Math.floor(h*scale)));
+  let xOff=0, col=-1;
+  for (let c=0;c<gCols;c++) { if(px>=xOff&&px<xOff+pxCW[c]){col=c;break;} xOff+=pxCW[c]; }
+  let yOff=0, row=-1;
+  for (let r=0;r<gRows;r++) { if(py>=yOff&&py<yOff+pxRH[r]){row=r;break;} yOff+=pxRH[r]; }
+  return {row,col};
+}
+
+function toggleCell(e) {
+  let {row,col}=getCellAt(e.clientX,e.clientY);
+  if (row>=0&&col>=0) { cells[row][col]=(cells[row][col]+1)%3; draw(); updLayout(); }
 }
 document.getElementById('cv').addEventListener('click', toggleCell);
 window.addEventListener('resize', draw);
 
 function updLayout() {
-  let n=0;
-  for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) if(cells[r][c]) n++;
-  let m2=(n*unitW*unitD/10000).toFixed(1), ping=(n*unitW*unitD/33057.85).toFixed(2);
-  document.getElementById('layoutInfo').innerHTML=`共 <b>${n}</b> 間組合屋 | 覆蓋面積：<b>${m2} m²</b>（${ping} 坪）`;
+  let n=0, footM2=0;
+  for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) {
+    if(!cells[r][c]) continue; n++;
+    let {cw,cd}=cDims(r,c); footM2+=cw*cd/10000;
+  }
+  let ping=(footM2*10000/33057.85).toFixed(2);
+  document.getElementById('layoutInfo').innerHTML=`共 <b>${n}</b> 間｜覆蓋面積：<b>${footM2.toFixed(1)} m²</b>（${ping} 坪）`;
 }
 
 function calcMats() {
@@ -346,40 +418,35 @@ function calcMats() {
   let panelType=document.getElementById('panelType').value;
   let panelColor=document.getElementById('panelColor').value;
   let rad=Math.atan(sr/10), sFac=1/Math.cos(rad);
-  let spanCm=dir==='col'?unitD:unitW, halfSpan=rType===2?spanCm/2:spanCm;
-  let slopeLenCm=halfSpan*sFac;
-  let totalSheets=0, totalRidgeM=0;
-  if (dir==='col') {
-    for (let r=0;r<gRows;r++) {
-      let rowW=0; for (let c=0;c<gCols;c++) if(cells[r][c]) rowW+=unitW;
-      if (rowW>0) { totalSheets+=Math.ceil(rowW/wW)*rType; if(rType===2) totalRidgeM+=rowW/100; }
-    }
-  } else {
-    for (let c=0;c<gCols;c++) {
-      let colD=0; for (let r=0;r<gRows;r++) if(cells[r][c]) colD+=unitD;
-      if (colD>0) { totalSheets+=Math.ceil(colD/wW)*rType; if(rType===2) totalRidgeM+=colD/100; }
-    }
+  let totalSheets=0,totalRidgeM=0,totalPurlinM=0,footM2=0,roofM2=0;
+  for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++) {
+    if(!cells[r][c]) continue;
+    let {cw,cd}=cDims(r,c);
+    let spanCm=dir==='col'?cd:cw, perpCm=dir==='col'?cw:cd;
+    let half=rType===2?spanCm/2:spanCm, slopeLenCm=half*sFac;
+    let purlinCnt=Math.floor(slopeLenCm/60)+2;
+    footM2+=cw*cd/10000; roofM2+=(cw*cd/10000)*sFac*rType;
+    totalSheets+=Math.ceil(perpCm/wW)*rType;
+    if(rType===2) totalRidgeM+=perpCm/100;
+    totalPurlinM+=(perpCm/100)*purlinCnt*rType;
   }
-  let footM2=n*unitW*unitD/10000, roofM2=footM2*sFac*rType;
-  let purlinCnt=Math.floor(slopeLenCm/60)+2;
-  let purlinLenCm=dir==='col'?unitW:unitD, totalPurlinM=0;
-  for(let r=0;r<gRows;r++) for(let c=0;c<gCols;c++)
-    if(cells[r][c]) totalPurlinM+=purlinLenCm/100*purlinCnt*rType;
+  let spanRef=dir==='col'?unitD:unitW, halfRef=rType===2?spanRef/2:spanRef;
+  let slopeRef=(halfRef*sFac/100).toFixed(2);
   let slopeStr=`1:${sr}（坡角 ${(rad*180/Math.PI).toFixed(1)}°）`;
   let h=`
     <div class="mat-row"><span class="mat-lbl">組合屋數量</span><span class="mat-val">${n} 間</span></div>
     <div class="mat-row"><span class="mat-lbl">覆蓋面積（水平）</span><span class="mat-val">${footM2.toFixed(1)} m²</span></div>
     <div class="mat-row"><span class="mat-lbl">屋面實際面積</span><span class="mat-val">${roofM2.toFixed(1)} m²</span></div>
     <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">${slopeStr}</span></div>
-    <div class="mat-row"><span class="mat-lbl">每斜面斜長</span><span class="mat-val">${(slopeLenCm/100).toFixed(2)} 米</span></div>
+    <div class="mat-row"><span class="mat-lbl">斜長參考（正向）</span><span class="mat-val">${slopeRef} 米</span></div>
     <hr style="border-color:#222;margin:6px 0;">
     <div class="mat-row"><span class="mat-lbl">浪板類型</span><span class="mat-val">${panelType}／${panelColor}</span></div>
     <div class="mat-row"><span class="mat-lbl">🌊 浪板數量（${wW}cm寬）</span><span class="mat-val">${totalSheets} 片</span></div>`;
-  if (rType===2) h+=`<div class="mat-row"><span class="mat-lbl">🔺 中脊收邊長度</span><span class="mat-val">${totalRidgeM.toFixed(2)} 米</span></div>`;
+  if(rType===2) h+=`<div class="mat-row"><span class="mat-lbl">🔺 中脊收邊長度</span><span class="mat-val">${totalRidgeM.toFixed(2)} 米</span></div>`;
   h+=`
     <div class="mat-row"><span class="mat-lbl">📏 C型鋼桁條（參考）</span><span class="mat-val">${totalPurlinM.toFixed(1)} 米</span></div>
     <hr style="border-color:#222;margin:6px 0;">
-    <div style="color:#555;font-size:12px;">⚠️ 以上為估算；實際施工請現場核對<br>浪板每片需長：<b>${(slopeLenCm/100).toFixed(2)}m</b>，採購時加計搭接（建議 +5~10cm）</div>`;
+    <div style="color:#555;font-size:12px;">⚠️ 以上為估算；實際施工請現場核對<br>浪板每片需長：<b>${slopeRef}m</b>，採購時加計搭接（+5~10cm）</div>`;
   document.getElementById('matResult').innerHTML=h;
 }
 
