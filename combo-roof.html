@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8" />
@@ -181,6 +181,21 @@ a.back:hover { color:#fff; }
         <option value="2">雙斜</option>
       </select>
     </div>
+    <div class="row">
+      <label>前 / 後延伸</label>
+      <div style="display:flex;gap:6px;flex:1;">
+        <input type="number" id="ovF" value="0" min="0" step="5" inputmode="numeric" style="flex:1;text-align:center;" placeholder="前(cm)">
+        <input type="number" id="ovB" value="0" min="0" step="5" inputmode="numeric" style="flex:1;text-align:center;" placeholder="後(cm)">
+      </div>
+    </div>
+    <div class="row">
+      <label>左 / 右延伸</label>
+      <div style="display:flex;gap:6px;flex:1;">
+        <input type="number" id="ovL" value="0" min="0" step="5" inputmode="numeric" style="flex:1;text-align:center;" placeholder="左(cm)">
+        <input type="number" id="ovR" value="0" min="0" step="5" inputmode="numeric" style="flex:1;text-align:center;" placeholder="右(cm)">
+      </div>
+    </div>
+    <p style="color:#555;font-size:12px;margin:4px 0 8px 90px;">屋頂超出建築邊緣的距離（cm）</p>
     <div class="row">
       <label>浪板類型</label>
       <select id="panelType">
@@ -468,38 +483,45 @@ function calcMats(){
   let panelType=document.getElementById('panelType').value;
   let panelColor=document.getElementById('panelColor').value;
   let rad=Math.atan(sr/10), sFac=1/Math.cos(rad);
+  let ovF=parseInt(document.getElementById('ovF').value)||0;
+  let ovB=parseInt(document.getElementById('ovB').value)||0;
+  let ovL=parseInt(document.getElementById('ovL').value)||0;
+  let ovR=parseInt(document.getElementById('ovR').value)||0;
+  let hasOv=ovF||ovB||ovL||ovR;
 
   let ts=0,tr=0,fm=0,rm=0;
-  // C型鋼：按建築分組統計，每棟獨立計算間距
   let cRows=[];
   modBuildings.forEach(b=>{
     let{bw,bd}=bDims(b);
-    let sp=dir==='col'?bd:bw, pp=dir==='col'?bw:bd;
+    let extW=bw+ovL+ovR, extD=bd+ovF+ovB;
+    let sp=dir==='col'?extD:extW; // 斜面方向含延伸
+    let pp=dir==='col'?extW:extD; // 垂直方向含延伸
     let slCm=(rType===2?sp/2:sp)*sFac;
     let slM=(slCm/100).toFixed(2);
-    fm+=bw*bd/10000; rm+=(bw*bd/10000)*sFac*rType;
+    fm+=extW*extD/10000;
+    rm+=(extW*extD/10000)*sFac;
     ts+=Math.ceil(pp/wW)*rType;
     if(rType===2) tr+=pp/100;
-    // C型鋼：每斜面最佳間距
     let {n,space}=bestCSpacing(slCm);
-    let totalC=n*rType; // 單斜×1，雙斜×2
+    let totalC=n*rType;
     let perpM=(pp/100).toFixed(2);
     cRows.push({slM,space,n,totalC,perpM,bwLabel:`${bw}×${bd}`});
   });
 
-  // 彙整同規格 C型鋼
   let totalCPcs=cRows.reduce((s,r)=>s+r.totalC,0);
   let cDetail=cRows.map(r=>
     `${r.bwLabel}cm：斜長${r.slM}m，間距${r.space}cm，每斜${r.n}支×${rType}＝${r.totalC}支（各${r.perpM}m長）`
   ).join('<br>');
 
   let b0=modBuildings[0],{bw:b0w,bd:b0d}=bDims(b0);
-  let sRef=dir==='col'?b0d:b0w;
+  let sRef=dir==='col'?(b0d+ovF+ovB):(b0w+ovL+ovR);
   let slRef=((rType===2?sRef/2:sRef)*sFac/100).toFixed(2);
   let ping=(fm*10000/33057.85).toFixed(1);
+  let ovNote=hasOv?`前${ovF}/後${ovB}/左${ovL}/右${ovR} cm`:'無';
 
   let h=`
     <div class="mat-row"><span class="mat-lbl">組合屋</span><span class="mat-val">${modBuildings.length} 間</span></div>
+    <div class="mat-row"><span class="mat-lbl">屋頂延伸</span><span class="mat-val">${ovNote}</span></div>
     <div class="mat-row"><span class="mat-lbl">水平面積</span><span class="mat-val">${fm.toFixed(1)} m²（${ping} 坪）</span></div>
     <div class="mat-row"><span class="mat-lbl">屋面實際面積</span><span class="mat-val">${rm.toFixed(1)} m²</span></div>
     <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">1:${sr}（${(rad*180/Math.PI).toFixed(1)}°）</span></div>
