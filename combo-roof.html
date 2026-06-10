@@ -498,8 +498,11 @@ function calcMats(){
     let extW=bw+ovL+ovR, extD=bd+ovF+ovB;
     let sp=dir==='col'?extD:extW; // 斜面方向含延伸
     let pp=dir==='col'?extW:extD; // 垂直方向含延伸
-    let slCm=(rType===2?sp/2:sp)*sFac;
+    let halfSp=rType===2?sp/2:sp;  // 每斜面水平跨距
+    let slCm=halfSp*sFac;          // 每斜面實際斜面長度
     let slM=(slCm/100).toFixed(2);
+    let halfFlatCm=Math.round(halfSp); // 水平板長(cm)
+    let slopeCm=Math.round(slCm);      // 斜面板長(cm)
     fm+=extW*extD/10000;
     rm+=(extW*extD/10000)*sFac;
     ts+=Math.ceil(pp/wW)*rType;
@@ -507,34 +510,40 @@ function calcMats(){
     let {n,space}=bestCSpacing(slCm);
     let totalC=n*rType;
     let perpM=(pp/100).toFixed(2);
-    cRows.push({slM,space,n,totalC,perpM,bwLabel:`${bw}×${bd}`});
+    cRows.push({slM,space,n,totalC,perpM,halfFlatCm,slopeCm,bwLabel:`${bw}×${bd}`});
   });
 
   let totalCPcs=cRows.reduce((s,r)=>s+r.totalC,0);
-  let cDetail=cRows.map(r=>
-    `${r.bwLabel}cm：斜長${r.slM}m，間距${r.space}cm，每斜${r.n}支×${rType}＝${r.totalC}支（各${r.perpM}m長）`
-  ).join('<br>');
-
-  let b0=modBuildings[0],{bw:b0w,bd:b0d}=bDims(b0);
-  let sRef=dir==='col'?(b0d+ovF+ovB):(b0w+ovL+ovR);
-  let slRef=((rType===2?sRef/2:sRef)*sFac/100).toFixed(2);
   let ping=(fm*10000/33057.85).toFixed(1);
   let ovNote=hasOv?`前${ovF}/後${ovB}/左${ovL}/右${ovR} cm`:'無';
+  let slopeDir=dir==='col'?'前後斜':'左右斜';
+  let slopeNote=dir==='col'?`板長方向延伸：前${ovF}+後${ovB} cm`:`板長方向延伸：左${ovL}+右${ovR} cm`;
+
+  // 板長：取第一棟為代表（同規格通常相同）
+  let r0=cRows[0];
+  let boardNote=rType===2
+    ? `半跨${r0.halfFlatCm}cm → 斜面 <b>${r0.slopeCm}cm</b>（雙斜各面）`
+    : `跨距${r0.halfFlatCm}cm → 斜面 <b>${r0.slopeCm}cm</b>`;
 
   let h=`
-    <div class="mat-row"><span class="mat-lbl">組合屋</span><span class="mat-val">${modBuildings.length} 間</span></div>
-    <div class="mat-row"><span class="mat-lbl">屋頂延伸</span><span class="mat-val">${ovNote}</span></div>
-    <div class="mat-row"><span class="mat-lbl">水平面積</span><span class="mat-val">${fm.toFixed(1)} m²（${ping} 坪）</span></div>
-    <div class="mat-row"><span class="mat-lbl">屋面實際面積</span><span class="mat-val">${rm.toFixed(1)} m²</span></div>
+    <div class="mat-row"><span class="mat-lbl">組合屋</span><span class="mat-val">${modBuildings.length} 間　${slopeDir}　${rType===1?'單斜':'雙斜'}</span></div>
+    <div class="mat-row"><span class="mat-lbl">屋頂延伸</span><span class="mat-val">${ovNote}　<span style="color:#666;font-size:12px;">${slopeNote}</span></span></div>
     <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">1:${sr}（${(rad*180/Math.PI).toFixed(1)}°）</span></div>
+    <div class="mat-row"><span class="mat-lbl">水平面積</span><span class="mat-val">${fm.toFixed(1)} m²（${ping} 坪）</span></div>
     <hr style="border-color:#222;margin:6px 0;">
-    <div class="mat-row"><span class="mat-lbl">浪板</span><span class="mat-val">${panelType}／${panelColor}／${wW}cm寬</span></div>
-    <div class="mat-row"><span class="mat-lbl">🌊 浪板數量</span><span class="mat-val">${ts} 片（每片需長 ≥${slRef}m）</span></div>`;
+    <div class="mat-row"><span class="mat-lbl">浪板規格</span><span class="mat-val">${panelType}／${panelColor}／${wW}cm寬</span></div>
+    <div class="mat-row"><span class="mat-lbl">📐 板長</span><span class="mat-val">${boardNote}</span></div>
+    <div class="mat-row"><span class="mat-lbl">🌊 浪板數量</span><span class="mat-val">${ts} 片</span></div>`;
   if(rType===2) h+=`<div class="mat-row"><span class="mat-lbl">🔺 中脊收邊</span><span class="mat-val">${tr.toFixed(2)} 米</span></div>`;
   h+=`<hr style="border-color:#222;margin:6px 0;">
-    <div class="mat-row"><span class="mat-lbl">📏 C型鋼總數</span><span class="mat-val">${totalCPcs} 支</span></div>
-    <div style="color:#666;font-size:12px;margin:4px 0 8px;">${cDetail}</div>
-    <div style="color:#555;font-size:12px;">⚠️ 估算值，施工前請現場核對</div>`;
+    <div class="mat-row"><span class="mat-lbl">📏 C型鋼總數</span><span class="mat-val">${totalCPcs} 支</span></div>`;
+  cRows.forEach(r=>{
+    h+=`<div style="color:#666;font-size:12px;padding:2px 0;">
+      ${r.bwLabel}cm｜斜長${r.slopeCm}cm，首隻15cm，間距${r.space}cm，每斜${r.n}支
+      ×${rType}面＝<b style="color:#4da3ff">${r.totalC}支</b>（各${r.perpM}m長）
+    </div>`;
+  });
+  h+=`<div style="color:#555;font-size:12px;margin-top:8px;">⚠️ 估算值，施工前請現場核對</div>`;
   document.getElementById('matResult').innerHTML=h;
 }
 
