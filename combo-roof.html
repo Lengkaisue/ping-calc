@@ -207,7 +207,8 @@ let bldCount=4;
 let buildings=[];
 let _zoom=1;
 
-function bDims(b){ return b.state===2?{bw:unitD,bd:unitW}:{bw:unitW,bd:unitD}; }
+// 每棟建築自帶尺寸 b.w / b.d，不依賴全域 unitW/unitD
+function bDims(b){ return b.state===2?{bw:b.d,bd:b.w}:{bw:b.w,bd:b.d}; }
 
 function pickSz(el){
   document.querySelectorAll('#szBtns .sz').forEach(b=>b.classList.remove('on'));
@@ -235,7 +236,7 @@ function addBuildings(){
   }
   let cols=Math.min(bldCount,5);
   for(let i=0;i<bldCount;i++)
-    buildings.push({x:(i%cols)*unitW, y:startY+Math.floor(i/cols)*unitD, state:1});
+    buildings.push({x:(i%cols)*unitW, y:startY+Math.floor(i/cols)*unitD, w:unitW, d:unitD, state:1});
   _zoom=1; draw(); updLayout();
 }
 function clearCanvas(){ buildings=[]; draw(); updLayout(); }
@@ -249,7 +250,7 @@ function draw(){
     cv.width=320; cv.height=160;
     ctx.fillStyle='#111'; ctx.fillRect(0,0,cv.width,cv.height);
     ctx.fillStyle='#555'; ctx.font='14px Arial'; ctx.textAlign='center';
-    ctx.fillText('點「全選」初始排列',cv.width/2,cv.height/2); return;
+    ctx.fillText('選規格 → 數量 → 加入畫布',cv.width/2,cv.height/2); return;
   }
   let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
   buildings.forEach(b=>{ let{bw,bd}=bDims(b);
@@ -418,7 +419,9 @@ function calcMats(){
     if(rType===2) tr+=pp/100;
     tp+=(pp/100)*pc*rType;
   });
-  let sRef=dir==='col'?unitD:unitW, slRef=((rType===2?sRef/2:sRef)*sFac/100).toFixed(2);
+  // 用第一棟的尺寸當斜長參考
+  let b0=buildings[0],{bw:b0w,bd:b0d}=bDims(b0);
+  let sRef=dir==='col'?b0d:b0w, slRef=((rType===2?sRef/2:sRef)*sFac/100).toFixed(2);
   let h=`
     <div class="mat-row"><span class="mat-lbl">組合屋數量</span><span class="mat-val">${buildings.length} 間</span></div>
     <div class="mat-row"><span class="mat-lbl">覆蓋面積（水平）</span><span class="mat-val">${fm.toFixed(1)} m²</span></div>
