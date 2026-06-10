@@ -114,7 +114,7 @@ a.back:hover { color:#fff; }
     <label style="color:#aaa;font-size:13px;display:block;margin-top:14px;">數量</label>
     <div style="display:flex;align-items:center;gap:10px;margin:8px 0 14px;">
       <button class="btn-sm" onclick="changeCount(-1)" style="width:44px;font-size:20px;padding:6px">－</button>
-      <span id="bldCountVal" style="font-size:26px;font-weight:bold;min-width:44px;text-align:center;color:#fff;">4</span>
+      <span id="bldCountVal" style="font-size:26px;font-weight:bold;min-width:44px;text-align:center;color:#fff;">1</span>
       <button class="btn-sm" onclick="changeCount(1)" style="width:44px;font-size:20px;padding:6px">＋</button>
     </div>
     <button onclick="addBuildings()">＋ 加入畫布</button>
@@ -203,7 +203,7 @@ a.back:hover { color:#fff; }
 <script>
 // buildings: [{x,y,state}] x,y單位cm，state:1=正向(W×D) 2=轉向(D×W)
 let unitW=301, unitD=596;
-let bldCount=4;
+let bldCount=1;
 let buildings=[];
 let _zoom=1;
 
