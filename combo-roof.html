@@ -501,26 +501,23 @@ function calcMats(){
     fm+=extW*extD/10000;
     rm+=(extW*extD/10000)*sFac;
 
-    // 各斜面獨立計算（前後或左右分開）
+    // 各斜面獨立計算（板材長＝水平跨距，不乘坡度係數）
     let faces=[];
     if(rType===1){
-      let sp=dir==='col'?extD:extW;
-      let sc=Math.round(sp*sFac);
-      let{n,space}=bestCSpacing(sc);
-      faces.push({label:'斜面', flatCm:Math.round(sp), slopeCm:sc, n, space});
+      let sp=Math.round(dir==='col'?extD:extW);
+      let{n,space}=bestCSpacing(sp);
+      faces.push({label:'斜面', flatCm:sp, n, space});
     } else {
       if(dir==='col'){
-        let fFlat=bd/2+ovF, bFlat=bd/2+ovB;
-        let fSc=Math.round(fFlat*sFac), bSc=Math.round(bFlat*sFac);
-        let fC=bestCSpacing(fSc), bC=bestCSpacing(bSc);
-        faces.push({label:'前斜', flatCm:Math.round(fFlat), slopeCm:fSc, n:fC.n, space:fC.space});
-        faces.push({label:'後斜', flatCm:Math.round(bFlat), slopeCm:bSc, n:bC.n, space:bC.space});
+        let fFlat=Math.round(bd/2+ovF), bFlat=Math.round(bd/2+ovB);
+        let fC=bestCSpacing(fFlat), bC=bestCSpacing(bFlat);
+        faces.push({label:'前斜', flatCm:fFlat, n:fC.n, space:fC.space});
+        faces.push({label:'後斜', flatCm:bFlat, n:bC.n, space:bC.space});
       } else {
-        let lFlat=bw/2+ovL, rFlat=bw/2+ovR;
-        let lSc=Math.round(lFlat*sFac), rSc=Math.round(rFlat*sFac);
-        let lC=bestCSpacing(lSc), rC=bestCSpacing(rSc);
-        faces.push({label:'左斜', flatCm:Math.round(lFlat), slopeCm:lSc, n:lC.n, space:lC.space});
-        faces.push({label:'右斜', flatCm:Math.round(rFlat), slopeCm:rSc, n:rC.n, space:rC.space});
+        let lFlat=Math.round(bw/2+ovL), rFlat=Math.round(bw/2+ovR);
+        let lC=bestCSpacing(lFlat), rC=bestCSpacing(rFlat);
+        faces.push({label:'左斜', flatCm:lFlat, n:lC.n, space:lC.space});
+        faces.push({label:'右斜', flatCm:rFlat, n:rC.n, space:rC.space});
       }
     }
 
@@ -554,7 +551,7 @@ function calcMats(){
     h+=`<div style="color:#aaa;font-size:13px;font-weight:bold;margin-bottom:6px;">📦 ${r.bwLabel} cm　C型鋼每支 ${r.perpM}m　浪板每片 ${r.perpM}m</div>`;
     r.faces.forEach(f=>{
       h+=`<div style="color:#ccc;font-size:13px;margin:4px 0;">
-        ${f.label}：水平 ${f.flatCm}cm → 斜面 <b style="color:#4da3ff">${f.slopeCm}cm</b><br>
+        ${f.label}：板材長 <b style="color:#4da3ff">${f.flatCm}cm</b>　斜樑 ${f.flatCm}-15=<b style="color:#4da3ff">${f.flatCm-15}cm</b><br>
         <span style="color:#888;padding-left:8px;">首隻 + ${f.n-1} = <b style="color:#4da3ff">${f.n} 隻</b>（間距 ${f.space} cm）　浪板 ${r.pcsPerFace} 片</span>
       </div>`;
     });
