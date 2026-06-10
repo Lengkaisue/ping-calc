@@ -95,16 +95,37 @@ a.back:hover { color:#fff; }
   <div class="container">
     <h2>① 選規格 → 數量 → 產出</h2>
 
-    <div class="size-grid" id="szBtns">
-      <div class="sz on" data-w="301" data-d="596" onclick="pickSz(this)">3×6米<br><small style="color:#888">301×596</small></div>
-      <div class="sz"    data-w="396" data-d="596" onclick="pickSz(this)">4×6米<br><small style="color:#888">396×596</small></div>
-      <div class="sz"    data-w="500" data-d="596" onclick="pickSz(this)">5×6米<br><small style="color:#888">500×596</small></div>
-      <div class="sz"    data-w="301" data-d="690" onclick="pickSz(this)">3×7米<br><small style="color:#888">301×690</small></div>
-      <div class="sz"    data-w="396" data-d="690" onclick="pickSz(this)">4×7米<br><small style="color:#888">396×690</small></div>
-      <div class="sz"    data-w="500" data-d="690" onclick="pickSz(this)">5×7米<br><small style="color:#888">500×690</small></div>
-      <div class="sz"    data-w="301" data-d="785" onclick="pickSz(this)">3×8米<br><small style="color:#888">301×785</small></div>
-      <div class="sz"    data-w="396" data-d="785" onclick="pickSz(this)">4×8米<br><small style="color:#888">396×785</small></div>
-      <div class="sz"    data-w="500" data-d="785" onclick="pickSz(this)">5×8米<br><small style="color:#888">500×785</small></div>
+    <!-- 類型切換 -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <div class="sz on" id="typeModular" style="flex:1;text-align:center;padding:10px;" onclick="setType('modular',this)">組合屋</div>
+      <div class="sz"    id="typeDeck"    style="flex:1;text-align:center;padding:10px;" onclick="setType('deck',this)">塑木平台</div>
+    </div>
+
+    <!-- 組合屋：固定規格按鈕 -->
+    <div id="panelModular">
+      <div class="size-grid" id="szBtns">
+        <div class="sz on" data-w="301" data-d="596" onclick="pickSz(this)">3×6米<br><small style="color:#888">301×596</small></div>
+        <div class="sz"    data-w="396" data-d="596" onclick="pickSz(this)">4×6米<br><small style="color:#888">396×596</small></div>
+        <div class="sz"    data-w="500" data-d="596" onclick="pickSz(this)">5×6米<br><small style="color:#888">500×596</small></div>
+        <div class="sz"    data-w="301" data-d="690" onclick="pickSz(this)">3×7米<br><small style="color:#888">301×690</small></div>
+        <div class="sz"    data-w="396" data-d="690" onclick="pickSz(this)">4×7米<br><small style="color:#888">396×690</small></div>
+        <div class="sz"    data-w="500" data-d="690" onclick="pickSz(this)">5×7米<br><small style="color:#888">500×690</small></div>
+        <div class="sz"    data-w="301" data-d="785" onclick="pickSz(this)">3×8米<br><small style="color:#888">301×785</small></div>
+        <div class="sz"    data-w="396" data-d="785" onclick="pickSz(this)">4×8米<br><small style="color:#888">396×785</small></div>
+        <div class="sz"    data-w="500" data-d="785" onclick="pickSz(this)">5×8米<br><small style="color:#888">500×785</small></div>
+      </div>
+    </div>
+
+    <!-- 塑木平台：自行輸入 -->
+    <div id="panelDeck" style="display:none;">
+      <div class="row">
+        <label>寬（米）</label>
+        <input type="number" id="deckW" value="3" min="0.5" step="0.5" inputmode="decimal" oninput="updSizeInfo()">
+      </div>
+      <div class="row">
+        <label>深（米）</label>
+        <input type="number" id="deckD" value="4" min="0.5" step="0.5" inputmode="decimal" oninput="updSizeInfo()">
+      </div>
     </div>
 
     <div class="result-box" id="sizeInfo" style="text-align:center;font-size:15px;margin-top:10px;">
@@ -136,7 +157,7 @@ a.back:hover { color:#fff; }
     <div id="canvasWrap"><canvas id="cv"></canvas></div>
 
     <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:#666;flex-wrap:wrap;">
-      <span>🔵 正向</span><span style="color:#c07020">🟠 轉向90°</span>
+      <span>🔵 組合屋正向</span><span style="color:#c07020">🟠 轉向90°</span><span style="color:#4db84d">🟢 塑木平台</span>
     </div>
 
     <div class="result-box" id="layoutInfo" style="text-align:center;margin-top:8px;">
@@ -210,6 +231,16 @@ let _zoom=1;
 // 每棟建築自帶尺寸 b.w / b.d，不依賴全域 unitW/unitD
 function bDims(b){ return b.state===2?{bw:b.d,bd:b.w}:{bw:b.w,bd:b.d}; }
 
+let bldType='modular'; // 'modular' | 'deck'
+function setType(t,el){
+  bldType=t;
+  document.getElementById('typeModular').classList.toggle('on',t==='modular');
+  document.getElementById('typeDeck').classList.toggle('on',t==='deck');
+  document.getElementById('panelModular').style.display=t==='modular'?'':'none';
+  document.getElementById('panelDeck').style.display=t==='deck'?'':'none';
+  updSizeInfo();
+}
+
 function pickSz(el){
   document.querySelectorAll('#szBtns .sz').forEach(b=>b.classList.remove('on'));
   el.classList.add('on');
@@ -217,10 +248,19 @@ function pickSz(el){
   updSizeInfo();
 }
 function updSizeInfo(){
-  let ping=(unitW*unitD/33057.85).toFixed(2);
-  let wm=(unitW/100).toFixed(0), dm=(unitD/100).toFixed(0);
-  document.getElementById('sizeInfo').innerHTML=
-    `${wm}×${dm}米｜${unitW}×${unitD} cm｜<b>${ping} 坪/間</b>`;
+  if(bldType==='deck'){
+    let w=parseFloat(document.getElementById('deckW').value)||0;
+    let d=parseFloat(document.getElementById('deckD').value)||0;
+    let wcm=Math.round(w*100), dcm=Math.round(d*100);
+    let ping=(wcm*dcm/33057.85).toFixed(2);
+    document.getElementById('sizeInfo').innerHTML=
+      `塑木平台 ${w}×${d}米｜${wcm}×${dcm} cm｜<b>${ping} 坪/間</b>`;
+  } else {
+    let ping=(unitW*unitD/33057.85).toFixed(2);
+    let wm=(unitW/100).toFixed(0), dm=(unitD/100).toFixed(0);
+    document.getElementById('sizeInfo').innerHTML=
+      `組合屋 ${wm}×${dm}米｜${unitW}×${unitD} cm｜<b>${ping} 坪/間</b>`;
+  }
 }
 
 function changeCount(d){
@@ -229,14 +269,22 @@ function changeCount(d){
 }
 // 追加（不覆蓋），新建築排在現有建築下方
 function addBuildings(){
+  let w,d,type;
+  if(bldType==='deck'){
+    w=Math.round((parseFloat(document.getElementById('deckW').value)||3)*100);
+    d=Math.round((parseFloat(document.getElementById('deckD').value)||4)*100);
+    type='deck';
+  } else {
+    w=unitW; d=unitD; type='modular';
+  }
   let startY=0;
   if(buildings.length){
     buildings.forEach(b=>{ let{bd}=bDims(b); startY=Math.max(startY,b.y+bd); });
-    startY+=Math.round(unitD*0.05); // 小間距
+    startY+=Math.round(d*0.05);
   }
   let cols=Math.min(bldCount,5);
   for(let i=0;i<bldCount;i++)
-    buildings.push({x:(i%cols)*unitW, y:startY+Math.floor(i/cols)*unitD, w:unitW, d:unitD, state:1});
+    buildings.push({x:(i%cols)*w, y:startY+Math.floor(i/cols)*d, w, d, type, state:1});
   _zoom=1; draw(); updLayout();
 }
 function clearCanvas(){ buildings=[]; draw(); updLayout(); }
@@ -279,13 +327,11 @@ function draw(){
   if(dir==='col'){
     let y=cv.height/2;
     ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(cv.width-PAD,y); ctx.stroke();
-    ctx.setLineDash([]); ctx.fillStyle='#ff9500'; ctx.font='11px Arial'; ctx.textAlign='center';
-    ctx.fillText('↓ 排水',cv.width/2,y-5);
+    ctx.setLineDash([]);
   } else {
     let x=cv.width/2;
     ctx.beginPath(); ctx.moveTo(x,PAD); ctx.lineTo(x,cv.height-PAD); ctx.stroke();
-    ctx.setLineDash([]); ctx.fillStyle='#ff9500'; ctx.font='11px Arial'; ctx.textAlign='left';
-    ctx.fillText('→排水',x+4,cv.height/2);
+    ctx.setLineDash([]);
   }
   ctx.restore();
 
@@ -294,16 +340,18 @@ function draw(){
     let px=PAD+Math.floor((b.x-minX)*sc);
     let py=PAD+Math.floor((b.y-minY)*sc);
     let pw=Math.max(20,Math.floor(bw*sc)), ph=Math.max(16,Math.floor(bd*sc));
-    ctx.fillStyle=b.state===2?'#5c3300':'#1a3d6e';
+    let isDeck=b.type==='deck';
+    ctx.fillStyle=isDeck?'#1a4a1e':(b.state===2?'#5c3300':'#1a3d6e');
     ctx.fillRect(px+1,py+1,pw-2,ph-2);
-    ctx.strokeStyle=i===_di?'#fff':(b.state===2?'#e07800':'#4d8edb');
+    ctx.strokeStyle=i===_di?'#fff':(isDeck?'#4db84d':(b.state===2?'#e07800':'#4d8edb'));
     ctx.lineWidth=i===_di?2.5:1.5;
     ctx.strokeRect(px+1,py+1,pw-2,ph-2);
     let fs=Math.min(12,Math.min(pw,ph)/5);
     if(fs>=7){
-      ctx.fillStyle=b.state===2?'#f0a040':'#7ab3e8';
+      ctx.fillStyle=isDeck?'#7de87d':(b.state===2?'#f0a040':'#7ab3e8');
       ctx.font=`${fs}px Arial`; ctx.textAlign='center';
-      ctx.fillText(b.state===2?`↻${bw}×${bd}`:`${bw}×${bd}`,px+pw/2,py+ph/2+fs/3);
+      let lbl=(isDeck?'木 ':'')+(b.state===2?`↻${bw}×${bd}`:`${bw}×${bd}`);
+      ctx.fillText(lbl,px+pw/2,py+ph/2+fs/3);
     }
   });
 }
