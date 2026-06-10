@@ -491,57 +491,71 @@ function calcMats(){
   let ovR=parseInt(document.getElementById('ovR').value)||0;
   let hasOv=ovF||ovB||ovL||ovR;
 
-  let ts=0,tr=0,fm=0,rm=0;
-  let cRows=[];
+  let ts=0, tr=0, fm=0, rm=0;
+  let bldRows=[];
+
   modBuildings.forEach(b=>{
     let{bw,bd}=bDims(b);
     let extW=bw+ovL+ovR, extD=bd+ovF+ovB;
-    let sp=dir==='col'?extD:extW; // 斜面方向含延伸
-    let pp=dir==='col'?extW:extD; // 垂直方向含延伸
-    let halfSp=rType===2?sp/2:sp;  // 每斜面水平跨距
-    let slCm=halfSp*sFac;          // 每斜面實際斜面長度
-    let slM=(slCm/100).toFixed(2);
-    let halfFlatCm=Math.round(halfSp); // 水平板長(cm)
-    let slopeCm=Math.round(slCm);      // 斜面板長(cm)
+    let pp=dir==='col'?extW:extD; // 垂直方向（浪板寬方向）
     fm+=extW*extD/10000;
     rm+=(extW*extD/10000)*sFac;
-    ts+=Math.ceil(pp/wW)*rType;
+
+    // 各斜面獨立計算（前後或左右分開）
+    let faces=[];
+    if(rType===1){
+      let sp=dir==='col'?extD:extW;
+      let sc=Math.round(sp*sFac);
+      let{n,space}=bestCSpacing(sc);
+      faces.push({label:'斜面', flatCm:Math.round(sp), slopeCm:sc, n, space});
+    } else {
+      if(dir==='col'){
+        let fFlat=bd/2+ovF, bFlat=bd/2+ovB;
+        let fSc=Math.round(fFlat*sFac), bSc=Math.round(bFlat*sFac);
+        let fC=bestCSpacing(fSc), bC=bestCSpacing(bSc);
+        faces.push({label:'前斜', flatCm:Math.round(fFlat), slopeCm:fSc, n:fC.n, space:fC.space});
+        faces.push({label:'後斜', flatCm:Math.round(bFlat), slopeCm:bSc, n:bC.n, space:bC.space});
+      } else {
+        let lFlat=bw/2+ovL, rFlat=bw/2+ovR;
+        let lSc=Math.round(lFlat*sFac), rSc=Math.round(rFlat*sFac);
+        let lC=bestCSpacing(lSc), rC=bestCSpacing(rSc);
+        faces.push({label:'左斜', flatCm:Math.round(lFlat), slopeCm:lSc, n:lC.n, space:lC.space});
+        faces.push({label:'右斜', flatCm:Math.round(rFlat), slopeCm:rSc, n:rC.n, space:rC.space});
+      }
+    }
+
+    let pcsPerFace=Math.ceil(pp/wW);
+    ts+=pcsPerFace*faces.length;
     if(rType===2) tr+=pp/100;
-    let {n,space}=bestCSpacing(slCm);
-    let totalC=n*rType;
-    let perpM=(pp/100).toFixed(2);
-    cRows.push({slM,space,n,totalC,perpM,halfFlatCm,slopeCm,bwLabel:`${bw}×${bd}`});
+    let totalC=faces.reduce((s,f)=>s+f.n,0);
+    bldRows.push({bwLabel:`${bw}×${bd}`, faces, totalC, pcsPerFace, perpM:(pp/100).toFixed(2)});
   });
 
-  let totalCPcs=cRows.reduce((s,r)=>s+r.totalC,0);
+  let totalCPcs=bldRows.reduce((s,r)=>s+r.totalC,0);
   let ping=(fm*10000/33057.85).toFixed(1);
   let ovNote=hasOv?`前${ovF}/後${ovB}/左${ovL}/右${ovR} cm`:'無';
   let slopeDir=dir==='col'?'前後斜':'左右斜';
-  let slopeNote=dir==='col'?`板長方向延伸：前${ovF}+後${ovB} cm`:`板長方向延伸：左${ovL}+右${ovR} cm`;
-
-  // 板長：取第一棟為代表（同規格通常相同）
-  let r0=cRows[0];
-  let boardNote=rType===2
-    ? `半跨${r0.halfFlatCm}cm → 斜面 <b>${r0.slopeCm}cm</b>（雙斜各面）`
-    : `跨距${r0.halfFlatCm}cm → 斜面 <b>${r0.slopeCm}cm</b>`;
 
   let h=`
     <div class="mat-row"><span class="mat-lbl">組合屋</span><span class="mat-val">${modBuildings.length} 間　${slopeDir}　${rType===1?'單斜':'雙斜'}</span></div>
-    <div class="mat-row"><span class="mat-lbl">屋頂延伸</span><span class="mat-val">${ovNote}　<span style="color:#666;font-size:12px;">${slopeNote}</span></span></div>
+    <div class="mat-row"><span class="mat-lbl">屋頂延伸</span><span class="mat-val">${ovNote}</span></div>
     <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">1:${sr}（${(rad*180/Math.PI).toFixed(1)}°）</span></div>
     <div class="mat-row"><span class="mat-lbl">水平面積</span><span class="mat-val">${fm.toFixed(1)} m²（${ping} 坪）</span></div>
     <hr style="border-color:#222;margin:6px 0;">
     <div class="mat-row"><span class="mat-lbl">浪板規格</span><span class="mat-val">${panelType}／${panelColor}／${wW}cm寬</span></div>
-    <div class="mat-row"><span class="mat-lbl">📐 板長</span><span class="mat-val">${boardNote}</span></div>
-    <div class="mat-row"><span class="mat-lbl">🌊 浪板數量</span><span class="mat-val">${ts} 片</span></div>`;
+    <div class="mat-row"><span class="mat-lbl">🌊 浪板總量</span><span class="mat-val">${ts} 片</span></div>`;
   if(rType===2) h+=`<div class="mat-row"><span class="mat-lbl">🔺 中脊收邊</span><span class="mat-val">${tr.toFixed(2)} 米</span></div>`;
   h+=`<hr style="border-color:#222;margin:6px 0;">
     <div class="mat-row"><span class="mat-lbl">📏 C型鋼總數</span><span class="mat-val">${totalCPcs} 支</span></div>`;
-  cRows.forEach(r=>{
-    h+=`<div style="color:#666;font-size:12px;padding:2px 0;">
-      ${r.bwLabel}cm｜斜長${r.slopeCm}cm，首隻15cm，間距${r.space}cm，每斜${r.n}支
-      ×${rType}面＝<b style="color:#4da3ff">${r.totalC}支</b>（各${r.perpM}m長）
-    </div>`;
+  bldRows.forEach(r=>{
+    h+=`<div style="color:#aaa;font-size:13px;margin:8px 0 3px;font-weight:bold;">${r.bwLabel} cm（每支${r.perpM}m長）</div>`;
+    r.faces.forEach(f=>{
+      h+=`<div style="color:#666;font-size:12px;padding:3px 0 3px 8px;border-left:2px solid #333;">
+        <span style="color:#aaa;">${f.label}</span>　水平 ${f.flatCm}cm → 斜面 <b style="color:#4da3ff">${f.slopeCm}cm</b><br>
+        &nbsp;&nbsp;&nbsp;浪板 ${r.pcsPerFace}片　C型鋼：首隻15cm，間距 ${f.space}cm，共 <b style="color:#4da3ff">${f.n}支</b>
+      </div>`;
+    });
+    h+=`<div style="color:#e8a04a;font-size:12px;padding:2px 0 2px 8px;">小計 C型鋼 ${r.totalC} 支</div>`;
   });
   h+=`<div style="color:#555;font-size:12px;margin-top:8px;">⚠️ 估算值，施工前請現場核對</div>`;
   document.getElementById('matResult').innerHTML=h;
