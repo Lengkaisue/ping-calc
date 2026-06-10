@@ -548,14 +548,20 @@ function calcMats(){
   h+=`<hr style="border-color:#222;margin:6px 0;">
     <div class="mat-row"><span class="mat-lbl">📏 C型鋼總數</span><span class="mat-val">${totalCPcs} 支</span></div>`;
   bldRows.forEach(r=>{
-    h+=`<div style="color:#aaa;font-size:13px;margin:8px 0 3px;font-weight:bold;">${r.bwLabel} cm（每支${r.perpM}m長）</div>`;
+    let faceNs=r.faces.map(f=>f.n).join(' + ');
+    let faceTotal=r.faces.reduce((s,f)=>s+f.n,0);
+    h+=`<div style="border:1px solid #333;border-radius:8px;padding:10px;margin:8px 0;">`;
+    h+=`<div style="color:#aaa;font-size:13px;font-weight:bold;margin-bottom:6px;">📦 ${r.bwLabel} cm　C型鋼每支 ${r.perpM}m　浪板每片 ${r.perpM}m</div>`;
     r.faces.forEach(f=>{
-      h+=`<div style="color:#666;font-size:12px;padding:3px 0 3px 8px;border-left:2px solid #333;">
-        <span style="color:#aaa;">${f.label}</span>　水平 ${f.flatCm}cm → 斜面 <b style="color:#4da3ff">${f.slopeCm}cm</b><br>
-        &nbsp;&nbsp;&nbsp;浪板 ${r.pcsPerFace}片　C型鋼：首隻15cm，間距 ${f.space}cm，共 <b style="color:#4da3ff">${f.n}支</b>
+      h+=`<div style="color:#ccc;font-size:13px;margin:4px 0;">
+        ${f.label}：水平 ${f.flatCm}cm → 斜面 <b style="color:#4da3ff">${f.slopeCm}cm</b><br>
+        <span style="color:#888;padding-left:8px;">首隻 + ${f.n-1} = <b style="color:#4da3ff">${f.n} 隻</b>（間距 ${f.space} cm）　浪板 ${r.pcsPerFace} 片</span>
       </div>`;
     });
-    h+=`<div style="color:#e8a04a;font-size:12px;padding:2px 0 2px 8px;">封邊 2支　小計 C型鋼 <b>${r.totalC} 支</b>（含封邊）</div>`;
+    h+=`<div style="border-top:1px solid #333;margin-top:8px;padding-top:6px;color:#e8a04a;font-size:13px;">
+      總結算：C型鋼 [${faceNs}] 隻 + 封邊 2 隻 = 總共 <b>${r.totalC} 隻</b>
+    </div>`;
+    h+=`</div>`;
   });
   h+=`<div style="color:#555;font-size:12px;margin-top:8px;">⚠️ 估算值，施工前請現場核對</div>`;
   document.getElementById('matResult').innerHTML=h;
