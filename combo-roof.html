@@ -124,7 +124,7 @@ a.back:hover { color:#fff; }
     <h2>② 平面排列（俯視）</h2>
 
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-      <span style="color:#555;font-size:13px;">點擊＝轉向　拖曳＝移位　右鍵＝刪除　滾輪＝縮放</span>
+      <span style="color:#555;font-size:13px;">點擊＝轉向　拖曳＝移位　右鍵＝刪除</span>
       <span style="margin-left:auto;display:flex;gap:6px;">
         <button class="btn-sm" onclick="adjZoom(1.15)">＋</button>
         <button class="btn-sm" onclick="adjZoom(0.87)">－</button>
@@ -381,10 +381,6 @@ function onUp(e){
 const cv=document.getElementById('cv');
 cv.addEventListener('mousedown',onDown);
 cv.addEventListener('touchstart',onDown,{passive:false});
-cv.addEventListener('wheel',e=>{
-  e.preventDefault();
-  adjZoom(e.deltaY<0?1.06:0.94);
-},{passive:false});
 cv.addEventListener('contextmenu',e=>{
   e.preventDefault();
   let idx=hitTest(e.clientX,e.clientY);
