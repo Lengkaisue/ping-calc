@@ -117,7 +117,7 @@ a.back:hover { color:#fff; }
       <span id="bldCountVal" style="font-size:26px;font-weight:bold;min-width:44px;text-align:center;color:#fff;">4</span>
       <button class="btn-sm" onclick="changeCount(1)" style="width:44px;font-size:20px;padding:6px">＋</button>
     </div>
-    <button onclick="initBuildings()">產出到畫布</button>
+    <button onclick="addBuildings()">＋ 加入畫布</button>
   </div>
 
   <div class="container wide">
@@ -126,9 +126,10 @@ a.back:hover { color:#fff; }
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
       <span style="color:#555;font-size:13px;">點擊＝轉向　拖曳＝移位　右鍵＝刪除　滾輪＝縮放</span>
       <span style="margin-left:auto;display:flex;gap:6px;">
-        <button class="btn-sm" onclick="adjZoom(1.3)">＋</button>
-        <button class="btn-sm" onclick="adjZoom(0.77)">－</button>
+        <button class="btn-sm" onclick="adjZoom(1.15)">＋</button>
+        <button class="btn-sm" onclick="adjZoom(0.87)">－</button>
         <button class="btn-sm" onclick="adjZoom(0)" style="font-size:11px">⊙</button>
+        <button class="btn-sm" onclick="clearCanvas()" style="color:#f66;">清空</button>
       </span>
     </div>
 
@@ -225,13 +226,19 @@ function changeCount(d){
   bldCount=Math.max(1,Math.min(20,bldCount+d));
   document.getElementById('bldCountVal').textContent=bldCount;
 }
-function initBuildings(){
-  buildings=[];
+// 追加（不覆蓋），新建築排在現有建築下方
+function addBuildings(){
+  let startY=0;
+  if(buildings.length){
+    buildings.forEach(b=>{ let{bd}=bDims(b); startY=Math.max(startY,b.y+bd); });
+    startY+=Math.round(unitD*0.05); // 小間距
+  }
   let cols=Math.min(bldCount,5);
   for(let i=0;i<bldCount;i++)
-    buildings.push({x:(i%cols)*unitW, y:Math.floor(i/cols)*unitD, state:1});
-  draw(); updLayout();
+    buildings.push({x:(i%cols)*unitW, y:startY+Math.floor(i/cols)*unitD, state:1});
+  _zoom=1; draw(); updLayout();
 }
+function clearCanvas(){ buildings=[]; draw(); updLayout(); }
 
 const PAD=40;
 let _sc=1, _ox=0, _oy=0;
@@ -428,7 +435,7 @@ function calcMats(){
   document.getElementById('matResult').innerHTML=h;
 }
 
-updSizeInfo(); initBuildings();
+updSizeInfo(); draw();
 </script>
 </body>
 </html>
