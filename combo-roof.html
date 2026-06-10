@@ -527,7 +527,7 @@ function calcMats(){
     let pcsPerFace=Math.ceil(pp/wW);
     ts+=pcsPerFace*faces.length;
     if(rType===2) tr+=pp/100;
-    let totalC=faces.reduce((s,f)=>s+f.n,0);
+    let totalC=faces.reduce((s,f)=>s+f.n,0)+2; // +2 封邊
     bldRows.push({bwLabel:`${bw}×${bd}`, faces, totalC, pcsPerFace, perpM:(pp/100).toFixed(2)});
   });
 
@@ -555,7 +555,7 @@ function calcMats(){
         &nbsp;&nbsp;&nbsp;浪板 ${r.pcsPerFace}片　C型鋼：首隻15cm，間距 ${f.space}cm，共 <b style="color:#4da3ff">${f.n}支</b>
       </div>`;
     });
-    h+=`<div style="color:#e8a04a;font-size:12px;padding:2px 0 2px 8px;">小計 C型鋼 ${r.totalC} 支</div>`;
+    h+=`<div style="color:#e8a04a;font-size:12px;padding:2px 0 2px 8px;">封邊 2支　小計 C型鋼 <b>${r.totalC} 支</b>（含封邊）</div>`;
   });
   h+=`<div style="color:#555;font-size:12px;margin-top:8px;">⚠️ 估算值，施工前請現場核對</div>`;
   document.getElementById('matResult').innerHTML=h;
