@@ -567,9 +567,9 @@ function calcMats(){
   // ── helper：產生叫料表格列 ──
   function matLine(name, spec, qty, unit){
     return `<div style="display:grid;grid-template-columns:1fr auto auto;gap:0 12px;padding:7px 0;border-bottom:1px solid #222;align-items:center;">
-      <span style="color:#ddd;font-size:14px;">${name}</span>
-      <span style="color:#888;font-size:13px;text-align:right;">${spec}</span>
-      <span style="color:#4da3ff;font-size:14px;font-weight:bold;text-align:right;min-width:40px;">${qty} ${unit}</span>
+      <span style="color:#eee;font-size:14px;">${name}</span>
+      <span style="color:#aaa;font-size:13px;text-align:right;">${spec}</span>
+      <span style="color:#4da3ff;font-size:15px;font-weight:bold;text-align:right;min-width:40px;">${qty} ${unit}</span>
     </div>`;
   }
   function secHead(icon, title){
@@ -577,7 +577,7 @@ function calcMats(){
   }
 
   // ── 基本資訊（一行摘要）──
-  let h=`<div style="color:#666;font-size:12px;padding:6px 0 10px;border-bottom:1px solid #222;margin-bottom:4px;">
+  let h=`<div style="color:#bbb;font-size:13px;padding:6px 0 10px;border-bottom:1px solid #333;margin-bottom:4px;">
     ${modBuildings.length}間　${slopeDir}　${rType===1?'單斜':'雙斜'}　｜　坡度 1:${sr}（${(rad*180/Math.PI).toFixed(1)}°）　｜　${fm.toFixed(1)} m²（${ping} 坪）　｜　延伸 ${ovNote}
   </div>`;
 
@@ -586,12 +586,12 @@ function calcMats(){
   bldRows.forEach(r=>{
     if(rType===2){
       let f0=r.faces[0], f1=r.faces[1];
-      h += matLine('中脊柱', `${r.ridgeH} cm`, r.ridgeColN, '隻');
-      h += matLine(f0.label, `${f0.flatCm-15} cm`, r.frontN, '隻');
-      h += matLine(f1.label, `${f1.flatCm-15} cm`, r.backN, '隻');
+      h += matLine('中脊柱', `高 ${r.ridgeH} cm`, r.ridgeColN, '隻');
+      h += matLine(f0.label, `${f0.flatCm-15} cm　間距 @${f0.space}cm`, r.frontN, '隻');
+      h += matLine(f1.label, `${f1.flatCm-15} cm　間距 @${f1.space}cm`, r.backN, '隻');
     } else {
       let f0=r.faces[0];
-      h += matLine(f0.label, `${f0.flatCm-15} cm`, f0.n, '隻');
+      h += matLine(f0.label, `${f0.flatCm-15} cm　間距 @${f0.space}cm`, f0.n, '隻');
     }
     h += matLine('橫梁', `${r.perpCm} cm`, r.totalC, '隻');
   });
@@ -635,19 +635,19 @@ function calcMats(){
     h += matLine('梅花頭', '左右各1', 2, '顆');
   }
 
-  // ── 計算參考（折疊）──
+  // ── 計算明細（預設展開）──
   h += `<div style="margin-top:14px;">
     <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
-         style="color:#555;font-size:12px;cursor:pointer;user-select:none;">▶ 計算過程（點開）</div>
-    <div style="display:none;margin-top:8px;">`;
+         style="color:#aaa;font-size:12px;cursor:pointer;user-select:none;padding:6px 0;border-top:1px solid #2a2a2a;">▼ 計算明細（點擊折疊）</div>
+    <div style="display:block;margin-top:8px;">`;
   bldRows.forEach(r=>{
-    h+=`<div style="color:#666;font-size:12px;margin-bottom:8px;">`;
-    h+=`<div style="color:#888;margin-bottom:4px;">📦 ${r.bwLabel} cm　橫梁 ${r.perpM}m</div>`;
+    h+=`<div style="color:#bbb;font-size:12px;margin-bottom:12px;background:#161616;border-radius:6px;padding:8px 10px;">`;
+    h+=`<div style="color:#e0a04a;font-weight:bold;margin-bottom:6px;">📦 ${r.bwLabel} cm　橫梁 ${r.perpM} m</div>`;
     r.faces.forEach(f=>{
-      h+=`<div>　${f.label} 板材${f.flatCm}cm　斜樑${f.flatCm-15}cm　首隻+${f.n-1}=${f.n}隻 @${f.space}cm　浪板${r.pcsPerFace}片</div>`;
+      h+=`<div style="padding:2px 0;">　${f.label}｜板材 <b style="color:#ddd">${f.flatCm} cm</b>　斜樑 <b style="color:#ddd">${f.flatCm-15} cm</b>　首隻+${f.n-1}=<b style="color:#4da3ff">${f.n}隻</b>　間距 <b style="color:#ddd">@${f.space} cm</b>　浪板 <b style="color:#4da3ff">${r.pcsPerFace}片</b></div>`;
     });
     let faceNs=r.faces.map(f=>f.n).join('+');
-    h+=`<div style="color:#555;">　C型鋼 [${faceNs}]+封邊2 = ${r.totalC}隻</div>`;
+    h+=`<div style="color:#888;margin-top:4px;">　C型鋼 [斜樑 ${faceNs}] + 封邊 2 = <b style="color:#aaa">${r.totalC} 隻</b></div>`;
     h+=`</div>`;
   });
   h += `</div></div>`;
