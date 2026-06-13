@@ -587,11 +587,11 @@ function calcMats(){
     if(rType===2){
       let f0=r.faces[0], f1=r.faces[1];
       h += matLine('中脊柱', `高 ${r.ridgeH} cm`, r.ridgeColN, '隻');
-      h += matLine(f0.label, `${f0.flatCm-15} cm　間距 @${f0.space}cm`, r.frontN, '隻');
-      h += matLine(f1.label, `${f1.flatCm-15} cm　間距 @${f1.space}cm`, r.backN, '隻');
+      h += matLine(f0.label, `${f0.flatCm-15} cm　間距 ${f0.space}cm`, r.frontN, '隻');
+      h += matLine(f1.label, `${f1.flatCm-15} cm　間距 ${f1.space}cm`, r.backN, '隻');
     } else {
       let f0=r.faces[0];
-      h += matLine(f0.label, `${f0.flatCm-15} cm　間距 @${f0.space}cm`, f0.n, '隻');
+      h += matLine(f0.label, `${f0.flatCm-15} cm　間距 ${f0.space}cm`, f0.n, '隻');
     }
     h += matLine('橫梁', `${r.perpCm} cm`, r.totalC, '隻');
   });
@@ -651,7 +651,7 @@ function calcMats(){
     h+=`<div style="color:#bbb;font-size:12px;margin-bottom:12px;background:#161616;border-radius:6px;padding:8px 10px;">`;
     h+=`<div style="color:#e0a04a;font-weight:bold;margin-bottom:6px;">📦 ${r.bwLabel} cm　橫梁 ${r.perpM} m</div>`;
     r.faces.forEach(f=>{
-      h+=`<div style="padding:2px 0;">　${f.label}｜板材 <b style="color:#ddd">${f.flatCm} cm</b>　斜樑 <b style="color:#ddd">${f.flatCm-15} cm</b>　首隻+${f.n-1}=<b style="color:#4da3ff">${f.n}隻</b>　間距 <b style="color:#ddd">@${f.space} cm</b>　浪板 <b style="color:#4da3ff">${r.pcsPerFace}片</b></div>`;
+      h+=`<div style="padding:2px 0;">　${f.label}｜板材 <b style="color:#ddd">${f.flatCm} cm</b>　斜樑 <b style="color:#ddd">${f.flatCm-15} cm</b>　首隻+${f.n-1}=<b style="color:#4da3ff">${f.n}隻</b>　間距 <b style="color:#ddd">${f.space} cm</b>　浪板 <b style="color:#4da3ff">${r.pcsPerFace}片</b></div>`;
     });
     let faceNs=r.faces.map(f=>f.n).join('+');
     h+=`<div style="color:#888;margin-top:4px;">　C型鋼 [斜樑 ${faceNs}] + 封邊 2 = <b style="color:#aaa">${r.totalC} 隻</b></div>`;
