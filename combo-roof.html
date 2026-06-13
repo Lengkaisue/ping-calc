@@ -638,12 +638,9 @@ function calcMats(){
   // ── 螺絲 / 釘 ──
   h += secHead('🔧', '螺絲 / 釘');
   let panelScrewSize=panelType==='三合一'?'2"':panelType==='琉璃瓦'?'3.5"':'1.5"';
-  let screwPerCross=wW===75?4:5;
-  let totalPanelScrews=bldRows.reduce((s,r)=>s+r.pcsPerFace*r.totalC*screwPerCross,0);
-  h += matLine(`${panelScrewSize} 白鐵頭自攻螺絲`, `${panelType}浪板　${screwPerCross}支/片/梁`, totalPanelScrews, '支');
-  let totalFrameCPcs=bldRows.reduce((s,r)=>s+r.totalC+r.faces.reduce((fs,f)=>fs+f.n,0),0);
-  h += matLine('1" 自攻螺絲', 'C型鋼架接合', totalFrameCPcs*4, '支');
-  h += matLine('1" 尖釘', '封邊 / 收頭', totalFrameCPcs*2, '支');
+  h += matLine(`${panelScrewSize} 白鐵頭自攻螺絲`, `${panelType}浪板用`, 3, '包');
+  h += matLine('1" 自攻螺絲', 'C型鋼架接合', 1, '包');
+  h += matLine('1" 尖釘', '封邊 / 收頭', 1, '包');
 
   // ── 計算明細（預設展開）──
   h += `<div style="margin-top:14px;">
