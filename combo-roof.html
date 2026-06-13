@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8" />
@@ -228,6 +228,22 @@ a.back:hover { color:#fff; }
       <input type="number" id="slopeR" value="1" min="0.5" step="0.5" inputmode="decimal">
     </div>
     <p style="color:#555;font-size:12px;margin:4px 0 0 90px;">分水:10＝坡度比（例：1:10）</p>
+    <div class="row">
+      <label>C型鋼型號</label>
+      <select id="cType">
+        <option value="75">75型</option>
+        <option value="100">100型</option>
+        <option value="125" selected>125型</option>
+        <option value="150">150型</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>厚度</label>
+      <div style="display:flex;align-items:center;gap:6px;flex:1;">
+        <input type="number" id="cThick" value="2.3" min="1" step="0.1" inputmode="decimal" style="flex:1;">
+        <span style="color:#aaa;font-size:14px;">mm</span>
+      </div>
+    </div>
     <button onclick="calcMats()">計算材料清單</button>
   </div>
 
@@ -484,82 +500,202 @@ function calcMats(){
   let dir=document.getElementById('roofDir').value;
   let panelType=document.getElementById('panelType').value;
   let panelColor=document.getElementById('panelColor').value;
+  let cTypeVal=document.getElementById('cType').value;
+  let cThick=parseFloat(document.getElementById('cThick').value)||2.3;
   let rad=Math.atan(sr/10), sFac=1/Math.cos(rad);
   let ovF=parseInt(document.getElementById('ovF').value)||0;
   let ovB=parseInt(document.getElementById('ovB').value)||0;
   let ovL=parseInt(document.getElementById('ovL').value)||0;
   let ovR=parseInt(document.getElementById('ovR').value)||0;
   let hasOv=ovF||ovB||ovL||ovR;
+  let isLiuli=panelType==='琉璃瓦';
 
-  let ts=0, tr=0, fm=0, rm=0;
+  let ts=0, tr=0, fm=0;
   let bldRows=[];
 
   modBuildings.forEach(b=>{
     let{bw,bd}=bDims(b);
     let extW=bw+ovL+ovR, extD=bd+ovF+ovB;
-    let pp=dir==='col'?extW:extD; // 垂直方向（浪板寬方向）
+    // pp = 橫梁長度方向（垂直於排水方向）
+    let pp=dir==='col'?extW:extD;
     fm+=extW*extD/10000;
-    rm+=(extW*extD/10000)*sFac;
 
-    // 各斜面獨立計算（板材長＝水平跨距，不乘坡度係數）
     let faces=[];
     if(rType===1){
       let sp=Math.round(dir==='col'?extD:extW);
       let{n,space}=bestCSpacing(sp);
-      faces.push({label:'斜面', flatCm:sp, n, space});
+      faces.push({label:'斜樑', flatCm:sp, n, space});
     } else {
       if(dir==='col'){
         let fFlat=Math.round(bd/2+ovF), bFlat=Math.round(bd/2+ovB);
         let fC=bestCSpacing(fFlat), bC=bestCSpacing(bFlat);
-        faces.push({label:'前斜', flatCm:fFlat, n:fC.n, space:fC.space});
-        faces.push({label:'後斜', flatCm:bFlat, n:bC.n, space:bC.space});
+        faces.push({label:'前斜樑', flatCm:fFlat, n:fC.n, space:fC.space});
+        faces.push({label:'後斜樑', flatCm:bFlat, n:bC.n, space:bC.space});
       } else {
         let lFlat=Math.round(bw/2+ovL), rFlat=Math.round(bw/2+ovR);
         let lC=bestCSpacing(lFlat), rC=bestCSpacing(rFlat);
-        faces.push({label:'左斜', flatCm:lFlat, n:lC.n, space:lC.space});
-        faces.push({label:'右斜', flatCm:rFlat, n:rC.n, space:rC.space});
+        faces.push({label:'左斜樑', flatCm:lFlat, n:lC.n, space:lC.space});
+        faces.push({label:'右斜樑', flatCm:rFlat, n:rC.n, space:rC.space});
       }
     }
 
     let pcsPerFace=Math.ceil(pp/wW);
     ts+=pcsPerFace*faces.length;
     if(rType===2) tr+=pp/100;
-    let totalC=faces.reduce((s,f)=>s+f.n,0)+2; // +2 封邊
-    bldRows.push({bwLabel:`${bw}×${bd}`, faces, totalC, pcsPerFace, perpM:(pp/100).toFixed(2)});
+    let totalC=faces.reduce((s,f)=>s+f.n,0)+2;
+
+    // 中脊柱高度：slopeR × 15cm
+    let ridgeH=Math.round(sr*15);
+    // 中脊柱數量 = 後斜（或右斜）的橫梁數，前斜樑扣掉頂端那隻（成為中脊柱）
+    let ridgeColN = rType===2 ? faces[faces.length-1].n : 0;
+    let frontN    = rType===2 ? faces[0].n - 1 : faces[0].n;
+    let backN     = rType===2 ? faces[1].n : 0;
+
+    bldRows.push({
+      bwLabel:`${bw}×${bd}`, faces, totalC, pcsPerFace,
+      perpM:(pp/100).toFixed(2), perpCm:pp,
+      ridgeH, ridgeColN, frontN, backN
+    });
   });
 
   let totalCPcs=bldRows.reduce((s,r)=>s+r.totalC,0);
   let ping=(fm*10000/33057.85).toFixed(1);
   let ovNote=hasOv?`前${ovF}/後${ovB}/左${ovL}/右${ovR} cm`:'無';
   let slopeDir=dir==='col'?'前後斜':'左右斜';
+  let ridgeTotalM=tr.toFixed(2);
 
+  // ── 標題摘要 ──
   let h=`
     <div class="mat-row"><span class="mat-lbl">組合屋</span><span class="mat-val">${modBuildings.length} 間　${slopeDir}　${rType===1?'單斜':'雙斜'}</span></div>
     <div class="mat-row"><span class="mat-lbl">屋頂延伸</span><span class="mat-val">${ovNote}</span></div>
     <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">1:${sr}（${(rad*180/Math.PI).toFixed(1)}°）</span></div>
     <div class="mat-row"><span class="mat-lbl">水平面積</span><span class="mat-val">${fm.toFixed(1)} m²（${ping} 坪）</span></div>
-    <hr style="border-color:#222;margin:6px 0;">
     <div class="mat-row"><span class="mat-lbl">浪板規格</span><span class="mat-val">${panelType}／${panelColor}／${wW}cm寬</span></div>
-    <div class="mat-row"><span class="mat-lbl">🌊 浪板總量</span><span class="mat-val">${ts} 片</span></div>`;
-  if(rType===2) h+=`<div class="mat-row"><span class="mat-lbl">🔺 中脊收邊</span><span class="mat-val">${tr.toFixed(2)} 米</span></div>`;
-  h+=`<hr style="border-color:#222;margin:6px 0;">
-    <div class="mat-row"><span class="mat-lbl">📏 C型鋼總數</span><span class="mat-val">${totalCPcs} 支</span></div>`;
+    <hr style="border-color:#333;margin:10px 0;">`;
+
+  // ── 每棟明細 ──
   bldRows.forEach(r=>{
-    let faceNs=r.faces.map(f=>f.n).join(' + ');
-    let faceTotal=r.faces.reduce((s,f)=>s+f.n,0);
-    h+=`<div style="border:1px solid #333;border-radius:8px;padding:10px;margin:8px 0;">`;
-    h+=`<div style="color:#aaa;font-size:13px;font-weight:bold;margin-bottom:6px;">📦 ${r.bwLabel} cm　C型鋼每支 ${r.perpM}m　浪板每片 ${r.perpM}m</div>`;
+    h+=`<div style="border:1px solid #333;border-radius:8px;padding:12px;margin:8px 0;">`;
+    h+=`<div style="color:#e8a04a;font-size:13px;font-weight:bold;margin-bottom:8px;">📦 ${r.bwLabel} cm　橫梁每支 ${r.perpM}m</div>`;
+
+    // 計算過程
     r.faces.forEach(f=>{
       h+=`<div style="color:#ccc;font-size:13px;margin:4px 0;">
-        ${f.label}：板材長 <b style="color:#4da3ff">${f.flatCm}cm</b>　斜樑 ${f.flatCm}-15=<b style="color:#4da3ff">${f.flatCm-15}cm</b><br>
-        <span style="color:#888;padding-left:8px;">首隻 + ${f.n-1} = <b style="color:#4da3ff">${f.n} 隻</b>（間距 ${f.space} cm）　浪板 ${r.pcsPerFace} 片</span>
+        ${f.label}：板材長 <b style="color:#4da3ff">${f.flatCm}cm</b>　斜樑長 ${f.flatCm}-15=<b style="color:#4da3ff">${f.flatCm-15}cm</b><br>
+        <span style="color:#888;padding-left:8px;">首隻 + ${f.n-1} = ${f.n} 隻（間距 ${f.space} cm）　浪板 ${r.pcsPerFace} 片</span>
       </div>`;
     });
-    h+=`<div style="border-top:1px solid #333;margin-top:8px;padding-top:6px;color:#e8a04a;font-size:13px;">
-      總結算：C型鋼 [${faceNs}] 隻 + 封邊 2 隻 = 總共 <b>${r.totalC} 隻</b>
+
+    let faceNs=r.faces.map(f=>f.n).join(' + ');
+    h+=`<div style="color:#888;font-size:13px;margin-top:4px;">
+      總結算：C型鋼 [${faceNs}] 隻 + 封邊 2 隻 = 總共 ${r.totalC} 隻
     </div>`;
     h+=`</div>`;
   });
+
+  // ── C型鋼材料清單 ──
+  h+=`<div style="background:#141414;border:1px solid #444;border-radius:8px;padding:12px;margin:10px 0;">`;
+  h+=`<div style="color:#fff;font-size:14px;font-weight:bold;margin-bottom:10px;">🔩 C型鋼材料清單　${cTypeVal}型　厚度${cThick}mm</div>`;
+
+  bldRows.forEach(r=>{
+    if(rType===2){
+      // 中脊柱（合併柱）
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">中脊柱 ${r.ridgeH}cm</span>
+        <span class="mat-val">${r.ridgeColN} 組（合併柱，共 ${r.ridgeColN*2} 支）</span>
+      </div>`;
+      // 前斜樑（合併柱，扣掉頂端1隻=中脊柱位）
+      let f0=r.faces[0], f1=r.faces[1];
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">${f0.label} ${f0.flatCm-15}cm</span>
+        <span class="mat-val">${r.frontN} 組（合併柱，共 ${r.frontN*2} 支）</span>
+      </div>`;
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">${f1.label} ${f1.flatCm-15}cm</span>
+        <span class="mat-val">${r.backN} 組（合併柱，共 ${r.backN*2} 支）</span>
+      </div>`;
+    } else {
+      let f0=r.faces[0];
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">${f0.label} ${f0.flatCm-15}cm</span>
+        <span class="mat-val">${f0.n} 隻</span>
+      </div>`;
+    }
+    h+=`<div class="mat-row">
+      <span class="mat-lbl">橫梁 ${r.perpCm}cm</span>
+      <span class="mat-val">${r.totalC} 隻</span>
+    </div>`;
+  });
+  h+=`</div>`;
+
+  // ── 板材 / 配件清單 ──
+  h+=`<div style="background:#141414;border:1px solid #444;border-radius:8px;padding:12px;margin:10px 0;">`;
+  h+=`<div style="color:#fff;font-size:14px;font-weight:bold;margin-bottom:10px;">🌊 板材 / 配件清單</div>`;
+
+  // 浪板（分斜面）
+  bldRows.forEach(r=>{
+    r.faces.forEach(f=>{
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">浪板 ${f.flatCm}cm　${panelType}／${panelColor}</span>
+        <span class="mat-val">${r.pcsPerFace} 片</span>
+      </div>`;
+    });
+  });
+
+  // 包角（板材長+30cm，每斜面左右各1）
+  if(rType===2){
+    bldRows.forEach(r=>{
+      let f0=r.faces[0], f1=r.faces[1];
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">包角 ${f0.flatCm+30}cm（${f0.label}）</span>
+        <span class="mat-val">2 隻</span>
+      </div>`;
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">包角 ${f1.flatCm+30}cm（${f1.label}）</span>
+        <span class="mat-val">2 隻</span>
+      </div>`;
+    });
+  } else {
+    bldRows.forEach(r=>{
+      let f0=r.faces[0];
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">包角 ${f0.flatCm+30}cm</span>
+        <span class="mat-val">2 隻</span>
+      </div>`;
+    });
+  }
+
+  // 中脊（雙斜才有）
+  if(rType===2){
+    let ridgeType=isLiuli?'半圓中脊':'一般中脊';
+    let ridgeM=parseFloat(ridgeTotalM);
+    if(ridgeM<7){
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">${ridgeType}</span>
+        <span class="mat-val">1 隻（${ridgeTotalM}m）</span>
+      </div>`;
+    } else {
+      let halfLen=((ridgeM/2)*100+30).toFixed(0);
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">${ridgeType}（對切）</span>
+        <span class="mat-val">各 1 隻（${halfLen}cm×2）</span>
+      </div>`;
+    }
+  }
+
+  // 琉璃瓦專屬
+  if(isLiuli){
+    h+=`<div class="mat-row">
+      <span class="mat-lbl">筵口瓦</span>
+      <span class="mat-val">${ts} 個（每片1個）</span>
+    </div>`;
+    h+=`<div class="mat-row">
+      <span class="mat-lbl">梅花頭</span>
+      <span class="mat-val">左右各 1 顆（共 2 顆）</span>
+    </div>`;
+  }
+
+  h+=`</div>`;
   h+=`<div style="color:#555;font-size:12px;margin-top:8px;">⚠️ 估算值，施工前請現場核對</div>`;
   document.getElementById('matResult').innerHTML=h;
 }
@@ -568,3 +704,4 @@ updSizeInfo(); draw();
 </script>
 </body>
 </html>
+
