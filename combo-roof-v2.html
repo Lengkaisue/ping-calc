@@ -144,7 +144,8 @@ a.back:hover { color:#fff; }
     <h2>② 平面排列（俯視）</h2>
 
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-      <span style="color:#555;font-size:13px;">點擊＝轉向　拖曳＝移位　右鍵＝刪除　Shift+點擊＝多選　紅色中脊線上點擊＝新增落柱標記(白點)／點白點＝刪除</span>
+      <span style="color:#555;font-size:13px;">點擊＝轉向　拖曳＝移位　右鍵＝刪除　Shift+點擊(電腦)或按下方「多選模式」再點建物(手機)＝多選　紅色中脊線上點擊＝新增落柱標記(白點)／點白點＝刪除</span>
+      <button class="btn-sm" id="btnMultiSelect" onclick="toggleMultiSelect()" style="border-color:#666;">多選模式：關</button>
       <span style="margin-left:auto;display:flex;gap:6px;">
         <button class="btn-sm" onclick="adjZoom(1.15)">＋</button>
         <button class="btn-sm" onclick="adjZoom(0.87)">－</button>
@@ -274,6 +275,10 @@ let _zoom=1;
 // ── 手動分組狀態：selectedIdxs 是目前選取(shift+點擊)的 buildings 索引，
 //   manualGroups 是使用者「強制合併」建立的群組，每組一條可拖曳的中脊線 ──
 let selectedIdxs=new Set();
+// multiSelectMode：手機沒有Shift鍵，開啟這個開關後「單純點擊建物」等同 Shift+點擊，
+//   只做選取(加入/移出 selectedIdxs)，不觸發拖曳/轉向。跟 Shift+點擊共用同一套
+//   selectedIdxs / updateGroupBtn() 邏輯，桌面版 Shift+點擊行為完全不受影響。
+let multiSelectMode=false;
 // manualGroups: {id, ridge:{x1,y1,x2,y2}, ridgeColMarks:[t,...]}
 //   ridgeColMarks 是使用者在中脊線上手動點出的「落柱」標記，每個值是沿中脊線
 //   從端點1到端點2的比例位置(0~1)，用比例而非絕對cm是為了拖曳端點調整中脊線時
@@ -567,6 +572,18 @@ function onDown(e){
     return;
   }
 
+  // 多選模式按鈕(手機用，代替沒有的Shift鍵)：邏輯跟上面Shift+點擊完全一樣，
+  // 共用同一個 selectedIdxs / updateGroupBtn()。開啟時點擊建物只做選取，
+  // 直接return掉，不會往下走到拖曳/轉向的判斷，避免手機使用者誤觸轉向。
+  if(multiSelectMode){
+    let idx=hitTest(x,y);
+    if(idx!==-1 && buildings[idx].type!=='deck'){
+      if(selectedIdxs.has(idx)) selectedIdxs.delete(idx); else selectedIdxs.add(idx);
+      updateGroupBtn(); draw();
+    }
+    return;
+  }
+
   // 中脊線端點優先於一般建物拖曳判斷
   let rh=hitRidgeEndpoint(x,y);
   if(rh){
@@ -669,6 +686,16 @@ function updLayout(){
   let ping=(m2*10000/33057.85).toFixed(2);
   document.getElementById('layoutInfo').innerHTML=
     `共 <b>${buildings.length}</b> 間｜覆蓋面積：<b>${m2.toFixed(1)} m²</b>（${ping} 坪）`;
+}
+
+// 多選模式開關(手機用)：切換文字＋高亮，讓工班師傅一眼看出目前是「開」還是「關」
+function toggleMultiSelect(){
+  multiSelectMode=!multiSelectMode;
+  const btn=document.getElementById('btnMultiSelect');
+  btn.textContent='多選模式：'+(multiSelectMode?'開':'關');
+  btn.style.background=multiSelectMode?'#1a73e8':'';
+  btn.style.color=multiSelectMode?'#fff':'';
+  btn.style.borderColor=multiSelectMode?'#1a73e8':'#666';
 }
 
 // ── 手動分組控制：選取後「強制合併為一組」／「解除分組」，並清理殘餘群組 ──
