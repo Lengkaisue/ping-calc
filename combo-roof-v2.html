@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>組合屋屋頂計算器 v2</title>
+<style>
+body { background:#0d0d0d; color:#fff; font-family:Arial; padding:20px; margin:0; }
+h1  { text-align:center; margin-bottom:30px; }
+
+.main-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:20px;
+  max-width:1400px;
+  margin:0 auto;
+}
+.wide { grid-column:1/-1; }
+
+.container {
+  background:#1a1a1a; padding:20px; border-radius:12px;
+  display:flex; flex-direction:column;
+}
+.container h2 { margin-top:0; border-bottom:2px solid #333; padding-bottom:10px; }
+
+.row { display:flex; margin:8px 0; align-items:center; }
+.row label { width:90px; text-align:right; padding-right:10px; font-size:14px; color:#aaa; }
+.row input,.row select {
+  flex:1; padding:8px; background:#262626; color:#fff;
+  border:1px solid #555; border-radius:6px; text-align:center; font-size:16px;
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+
+button {
+  width:100%; padding:14px; margin-top:12px;
+  background:#1a73e8; color:#fff; border:none; border-radius:8px;
+  font-size:17px; font-weight:bold; cursor:pointer;
+  box-shadow:0 5px 0 #114b9e; transition:all .1s; -webkit-tap-highlight-color:transparent;
+}
+button:active { transform:translateY(5px); box-shadow:0 0 0 #114b9e; background:#155cb8; }
+
+.btn-sm {
+  width:auto; padding:8px 14px; font-size:13px; margin-top:0;
+  background:#333; box-shadow:0 4px 0 #111;
+}
+.btn-sm:active { background:#222; box-shadow:0 0 0 #111; }
+
+.btn-copy {
+  background:#1e7e3e; box-shadow:0 5px 0 #0f4d24;
+}
+.btn-copy:active { background:#196033; box-shadow:0 0 0 #0f4d24; }
+
+.result-box {
+  margin-top:12px; padding:12px; background:#111; border-radius:8px;
+  min-height:24px; line-height:1.8;
+}
+
+.size-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin:8px 0; }
+.sz {
+  padding:10px 4px; background:#262626; border:2px solid #555;
+  border-radius:8px; color:#fff; cursor:pointer; text-align:center;
+  font-size:14px; transition:border-color .15s, background .15s; user-select:none;
+}
+.sz:hover { border-color:#888; }
+.sz.on  { border-color:#1a73e8; background:#1a3a6e; }
+
+#canvasWrap {
+  overflow:auto; margin-top:10px; border:1px solid #333;
+  border-radius:8px; background:#111; padding:10px;
+}
+canvas { display:block; cursor:pointer; touch-action:none; }
+
+.ctrl-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:10px 0; }
+
+.mat-row {
+  display:flex; justify-content:space-between;
+  padding:6px 0; border-bottom:1px solid #222;
+}
+.mat-row:last-child { border-bottom:none; }
+.mat-lbl { color:#aaa; font-size:14px; }
+.mat-val { color:#4da3ff; font-weight:bold; }
+
+a.back { display:inline-block; color:#888; text-decoration:none; font-size:13px; margin-bottom:18px; }
+a.back:hover { color:#fff; }
+
+#copyOk { text-align:center; font-size:13px; color:#4caf50; margin-top:6px; height:18px; }
+</style>
+</head>
+<body>
+
+<a class="back" href="index.html">← 回工程計算器</a>
+<h1>🏗️ 組合屋屋頂計算器</h1>
+
+<div class="main-grid">
+
+  <div class="container">
+    <h2>① 選規格 → 數量 → 產出</h2>
+
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <div class="sz on" id="typeModular" style="flex:1;text-align:center;padding:10px;" onclick="setType('modular',this)">組合屋</div>
+      <div class="sz"    id="typeDeck"    style="flex:1;text-align:center;padding:10px;" onclick="setType('deck',this)">塑木平台</div>
+    </div>
+
+    <div id="panelModular">
+      <div class="size-grid" id="szBtns">
+        <div class="sz on" data-w="300" data-d="600" onclick="pickSz(this)">3×6米<br><small style="color:#888">300×600</small></div>
+        <div class="sz"    data-w="400" data-d="600" onclick="pickSz(this)">4×6米<br><small style="color:#888">400×600</small></div>
+        <div class="sz"    data-w="500" data-d="600" onclick="pickSz(this)">5×6米<br><small style="color:#888">500×600</small></div>
+        <div class="sz"    data-w="300" data-d="700" onclick="pickSz(this)">3×7米<br><small style="color:#888">300×700</small></div>
+        <div class="sz"    data-w="400" data-d="700" onclick="pickSz(this)">4×7米<br><small style="color:#888">400×700</small></div>
+        <div class="sz"    data-w="500" data-d="700" onclick="pickSz(this)">5×7米<br><small style="color:#888">500×700</small></div>
+        <div class="sz"    data-w="300" data-d="800" onclick="pickSz(this)">3×8米<br><small style="color:#888">300×800</small></div>
+        <div class="sz"    data-w="400" data-d="800" onclick="pickSz(this)">4×8米<br><small style="color:#888">400×800</small></div>
+        <div class="sz"    data-w="500" data-d="800" onclick="pickSz(this)">5×8米<br><small style="color:#888">500×800</small></div>
+      </div>
+    </div>
+
+    <div id="panelDeck" style="display:none;">
+      <div class="row">
+        <label>寬（米）</label>
+        <input type="number" id="deckW" value="3" min="0.5" step="0.5" inputmode="decimal" oninput="updSizeInfo()">
+      </div>
+      <div class="row">
+        <label>深（米）</label>
+        <input type="number" id="deckD" value="4" min="0.5" step="0.5" inputmode="decimal" oninput="updSizeInfo()">
+      </div>
+    </div>
+
+    <div class="result-box" id="sizeInfo" style="text-align:center;font-size:15px;margin-top:10px;">
+      3×6米｜300×600 cm｜<b>5.44 坪/間</b>
+    </div>
+
+    <label style="color:#aaa;font-size:13px;display:block;margin-top:14px;">數量</label>
+    <div style="display:flex;align-items:center;gap:10px;margin:8px 0 14px;">
+      <button class="btn-sm" onclick="changeCount(-1)" style="width:44px;font-size:20px;padding:6px">－</button>
+      <span id="bldCountVal" style="font-size:26px;font-weight:bold;min-width:44px;text-align:center;color:#fff;">1</span>
+      <button class="btn-sm" onclick="changeCount(1)" style="width:44px;font-size:20px;padding:6px">＋</button>
+    </div>
+    <button onclick="addBuildings()">＋ 加入畫布</button>
+  </div>
+
+  <div class="container wide">
+    <h2>② 平面排列（俯視）</h2>
+
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+      <span style="color:#555;font-size:13px;">點擊＝轉向　拖曳＝移位　右鍵＝刪除　Shift+點擊＝多選　紅色中脊線上點擊＝新增落柱標記(白點)／點白點＝刪除</span>
+      <span style="margin-left:auto;display:flex;gap:6px;">
+        <button class="btn-sm" onclick="adjZoom(1.15)">＋</button>
+        <button class="btn-sm" onclick="adjZoom(0.87)">－</button>
+        <button class="btn-sm" onclick="adjZoom(0)" style="font-size:11px">⊙</button>
+        <button class="btn-sm" onclick="clearCanvas()" style="color:#f66;">清空</button>
+      </span>
+    </div>
+
+    <div id="canvasWrap"><canvas id="cv"></canvas></div>
+
+    <div id="groupBar" style="display:none;margin-top:8px;align-items:center;gap:8px;">
+      <button class="btn-sm" id="btnGroupAction" onclick="onGroupActionClick()" style="background:#a83232;color:#fff;">強制合併為一組</button>
+      <span style="color:#666;font-size:12px;">已選 <span id="selCount">0</span> 間（紅線＝中脊，可拖端點調整；線上點擊可標記強制落柱點）</span>
+    </div>
+
+    <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:#666;flex-wrap:wrap;">
+      <span>🔵 正向（W×D）</span><span style="color:#c07020">🟠 轉向90°（D×W）</span><span style="color:#4db84d">🟢 塑木平台</span>
+    </div>
+
+    <!-- ▼ 提示：轉向後計算邏輯說明 -->
+    <div style="margin-top:8px;padding:8px 12px;background:#1c1c0a;border-left:3px solid #c07020;border-radius:6px;font-size:13px;color:#aaa;">
+      💡 點擊建築物轉向會直接交換 W／D，材料計算（中脊、斜樑、延伸方向）跟著轉向後的邊重算。
+    </div>
+
+    <div class="result-box" id="layoutInfo" style="text-align:center;margin-top:8px;">
+      點格子設定排列
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>③ 屋頂設定</h2>
+    <div class="row">
+      <label>斜面</label>
+      <select id="roofType">
+        <option value="1">單斜</option>
+        <option value="2">雙斜</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>排水方向</label>
+      <select id="roofDir" onchange="draw()">
+        <option value="col">前後斜（沿D邊）</option>
+        <option value="row">左右斜（沿W邊）</option>
+      </select>
+    </div>
+    <p style="color:#aaa;font-size:13px;margin:12px 0 4px 0;font-weight:bold;">延伸尺寸</p>
+    <div class="row">
+      <label>前 cm</label>
+      <input type="number" id="ovF" value="150" min="0" step="5" inputmode="numeric">
+    </div>
+    <div class="row">
+      <label>後 cm</label>
+      <input type="number" id="ovB" value="50" min="0" step="5" inputmode="numeric">
+    </div>
+    <div class="row">
+      <label>左 cm</label>
+      <input type="number" id="ovL" value="50" min="0" step="5" inputmode="numeric">
+    </div>
+    <div class="row">
+      <label>右 cm</label>
+      <input type="number" id="ovR" value="50" min="0" step="5" inputmode="numeric">
+    </div>
+    <div class="row">
+      <label>浪板類型</label>
+      <select id="panelType">
+        <option value="清版">清版</option>
+        <option value="三合一">三合一</option>
+        <option value="琉璃瓦">琉璃瓦</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>顏色</label>
+      <select id="panelColor">
+        <option value="白色">白色</option>
+        <option value="蘋果綠">蘋果綠</option>
+        <option value="鐵灰">鐵灰</option>
+        <option value="紅色">紅色</option>
+        <option value="黑色">黑色</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>浪板寬</label>
+      <select id="waveW">
+        <option value="75">75 cm（標準）</option>
+        <option value="90">90 cm</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>分水比</label>
+      <input type="number" id="slopeR" value="1" min="0.5" step="0.5" inputmode="decimal">
+    </div>
+    <p style="color:#555;font-size:12px;margin:4px 0 0 90px;">分水:10＝坡度比（例：1:10）</p>
+    <div class="row">
+      <label>C型鋼型號</label>
+      <select id="cType">
+        <option value="75">75型</option>
+        <option value="100">100型</option>
+        <option value="125" selected>125型</option>
+        <option value="150">150型</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>厚度</label>
+      <div style="display:flex;align-items:center;gap:6px;flex:1;">
+        <input type="number" id="cThick" value="2.3" min="1" step="0.1" inputmode="decimal" style="flex:1;">
+        <span style="color:#aaa;font-size:14px;">mm</span>
+      </div>
+    </div>
+    <button onclick="calcMats()">計算材料清單</button>
+  </div>
+
+  <div class="container">
+    <h2>④ 材料清單</h2>
+    <div class="result-box" id="matResult">請先完成 ①②③ 再按計算</div>
+    <button class="btn-copy" id="btnCopy" onclick="copyMats()" style="display:none;">複製清單（傳 LINE）</button>
+    <div id="copyOk"></div>
+  </div>
+
+</div>
+
+<script>
+let unitW=300, unitD=600;
+let bldCount=1;
+let buildings=[];
+let _zoom=1;
+
+// ── 手動分組狀態：selectedIdxs 是目前選取(shift+點擊)的 buildings 索引，
+//   manualGroups 是使用者「強制合併」建立的群組，每組一條可拖曳的中脊線 ──
+let selectedIdxs=new Set();
+// manualGroups: {id, ridge:{x1,y1,x2,y2}, ridgeColMarks:[t,...]}
+//   ridgeColMarks 是使用者在中脊線上手動點出的「落柱」標記，每個值是沿中脊線
+//   從端點1到端點2的比例位置(0~1)，用比例而非絕對cm是為了拖曳端點調整中脊線時
+//   標記點還能跟著線一起等比例移動，不會跑位。有標記點時中脊柱組數改用
+//   標記點數量(calcMats() 判斷)，取代原本跟斜樑支數(faces[0].n)綁定的自動公式。
+let manualGroups=[]; // {id, ridge:{x1,y1,x2,y2}, ridgeColMarks:[t,...]}
+let groupIdSeq=1;
+
+function bDims(b){ return b.state===2?{bw:b.d,bd:b.w}:{bw:b.w,bd:b.d}; }
+
+// 計算一組建物(考慮旋轉後)的最小外框，手動分組的 bounding box 與初始中脊線都靠這個
+function computeBBox(members){
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  members.forEach(b=>{ let{bw,bd}=bDims(b);
+    minX=Math.min(minX,b.x); minY=Math.min(minY,b.y);
+    maxX=Math.max(maxX,b.x+bw); maxY=Math.max(maxY,b.y+bd);
+  });
+  return {minX,minY,maxX,maxY};
+}
+
+let bldType='modular';
+function setType(t,el){
+  bldType=t;
+  document.getElementById('typeModular').classList.toggle('on',t==='modular');
+  document.getElementById('typeDeck').classList.toggle('on',t==='deck');
+  document.getElementById('panelModular').style.display=t==='modular'?'':'none';
+  document.getElementById('panelDeck').style.display=t==='deck'?'':'none';
+  updSizeInfo();
+}
+
+function pickSz(el){
+  document.querySelectorAll('#szBtns .sz').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  unitW=parseInt(el.dataset.w); unitD=parseInt(el.dataset.d);
+  updSizeInfo();
+}
+function updSizeInfo(){
+  if(bldType==='deck'){
+    let w=parseFloat(document.getElementById('deckW').value)||0;
+    let d=parseFloat(document.getElementById('deckD').value)||0;
+    let wcm=Math.round(w*100), dcm=Math.round(d*100);
+    let ping=(wcm*dcm/33057.85).toFixed(2);
+    document.getElementById('sizeInfo').innerHTML=
+      `塑木平台 ${w}×${d}米｜${wcm}×${dcm} cm｜<b>${ping} 坪/間</b>`;
+  } else {
+    let ping=(unitW*unitD/33057.85).toFixed(2);
+    let wm=(unitW/100).toFixed(0), dm=(unitD/100).toFixed(0);
+    document.getElementById('sizeInfo').innerHTML=
+      `組合屋 ${wm}×${dm}米｜${unitW}×${unitD} cm｜<b>${ping} 坪/間</b>`;
+  }
+}
+
+function changeCount(d){
+  bldCount=Math.max(1,Math.min(20,bldCount+d));
+  document.getElementById('bldCountVal').textContent=bldCount;
+}
+function addBuildings(){
+  let w,d,type;
+  if(bldType==='deck'){
+    w=Math.round((parseFloat(document.getElementById('deckW').value)||3)*100);
+    d=Math.round((parseFloat(document.getElementById('deckD').value)||4)*100);
+    type='deck';
+  } else {
+    w=unitW; d=unitD; type='modular';
+  }
+  let startY=0;
+  if(buildings.length){
+    buildings.forEach(b=>{ let{bd}=bDims(b); startY=Math.max(startY,b.y+bd); });
+    startY+=Math.round(d*0.05);
+  }
+  let cols=Math.min(bldCount,5);
+  for(let i=0;i<bldCount;i++)
+    buildings.push({x:(i%cols)*w, y:startY+Math.floor(i/cols)*d, w, d, type, state:1, groupId:null});
+  _zoom=1; draw(); updLayout();
+}
+function clearCanvas(){
+  buildings=[]; selectedIdxs.clear(); manualGroups=[];
+  draw(); updLayout(); updateGroupBtn();
+}
+
+const PAD=40;
+let _sc=1, _ox=0, _oy=0;
+
+function draw(){
+  const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  if(!buildings.length){
+    cv.width=320; cv.height=160;
+    ctx.fillStyle='#111'; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.fillStyle='#555'; ctx.font='14px Arial'; ctx.textAlign='center';
+    ctx.fillText('選規格 → 數量 → 加入畫布',cv.width/2,cv.height/2); return;
+  }
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  buildings.forEach(b=>{ let{bw,bd}=bDims(b);
+    minX=Math.min(minX,b.x); minY=Math.min(minY,b.y);
+    maxX=Math.max(maxX,b.x+bw); maxY=Math.max(maxY,b.y+bd); });
+  const vw=Math.min(window.innerWidth-60,760);
+  let sc=Math.min((vw-PAD*2)/(maxX-minX),(520-PAD*2)/(maxY-minY))*_zoom;
+  _sc=sc; _ox=minX; _oy=minY;
+  cv.width=Math.ceil((maxX-minX)*sc)+PAD*2;
+  cv.height=Math.ceil((maxY-minY)*sc)+PAD*2;
+  ctx.fillStyle='#0e0e0e'; ctx.fillRect(0,0,cv.width,cv.height);
+
+  let gridCm=Math.max(unitW,unitD);
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=0.5;
+  for(let x=0;x<(maxX-minX);x+=gridCm){
+    let px=PAD+x*sc; ctx.beginPath(); ctx.moveTo(px,PAD); ctx.lineTo(px,cv.height-PAD); ctx.stroke();
+  }
+  for(let y=0;y<(maxY-minY);y+=gridCm){
+    let py=PAD+y*sc; ctx.beginPath(); ctx.moveTo(PAD,py); ctx.lineTo(cv.width-PAD,py); ctx.stroke();
+  }
+
+  let dir=document.getElementById('roofDir').value;
+  ctx.save(); ctx.strokeStyle='#ff9500'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  if(dir==='col'){
+    let y=cv.height/2;
+    ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(cv.width-PAD,y); ctx.stroke();
+  } else {
+    let x=cv.width/2;
+    ctx.beginPath(); ctx.moveTo(x,PAD); ctx.lineTo(x,cv.height-PAD); ctx.stroke();
+  }
+  ctx.setLineDash([]); ctx.restore();
+
+  buildings.forEach((b,i)=>{
+    let{bw,bd}=bDims(b);
+    let px=PAD+Math.floor((b.x-minX)*sc);
+    let py=PAD+Math.floor((b.y-minY)*sc);
+    let pw=Math.max(20,Math.floor(bw*sc)), ph=Math.max(16,Math.floor(bd*sc));
+    let isDeck=b.type==='deck';
+    ctx.fillStyle=isDeck?'#1a4a1e':(b.state===2?'#5c3300':'#1a3d6e');
+    ctx.fillRect(px+1,py+1,pw-2,ph-2);
+    ctx.strokeStyle=i===_di?'#fff':(isDeck?'#4db84d':(b.state===2?'#e07800':'#4d8edb'));
+    ctx.lineWidth=i===_di?2.5:1.5;
+    ctx.strokeRect(px+1,py+1,pw-2,ph-2);
+    let fs=Math.min(12,Math.min(pw,ph)/5);
+    if(fs>=7){
+      ctx.fillStyle=isDeck?'#7de87d':(b.state===2?'#f0a040':'#7ab3e8');
+      ctx.font=`${fs}px Arial`; ctx.textAlign='center';
+      // 顯示「原始W×D」，轉向時加箭頭提示
+      let lbl=(isDeck?'木 ':`${b.w}×${b.d}`)+(b.state===2?' ↻':'');
+      ctx.fillText(lbl,px+pw/2,py+ph/2+fs/3);
+    }
+  });
+
+  // 合併偵測預覽：貼齊拼成完整矩形的組合屋，畫一圈亮框標示「這幾間會被當成同一個共用屋頂算料」
+  // （手動分組的 unit 也會落在這裡一起畫框，因為 groupBuildings() 對兩者都會回傳 count>1）
+  let mods=buildings.filter(b=>b.type!=='deck');
+  if(mods.length>1){
+    groupBuildings(mods).filter(u=>u.count>1).forEach(u=>{
+      let gx=Infinity,gy=Infinity;
+      u.members.forEach(b=>{ gx=Math.min(gx,b.x); gy=Math.min(gy,b.y); });
+      let gpx=PAD+Math.floor((gx-minX)*sc), gpy=PAD+Math.floor((gy-minY)*sc);
+      let gpw=Math.floor(u.w*sc), gph=Math.floor(u.d*sc);
+      ctx.save();
+      ctx.strokeStyle='#4dffb8'; ctx.lineWidth=2; ctx.setLineDash([8,4]);
+      ctx.strokeRect(gpx-2,gpy-2,gpw+4,gph+4);
+      ctx.restore();
+    });
+  }
+
+  // 手動群組的中脊線：紅色實線＋兩端可拖曳的圓形把手
+  manualGroups.forEach(g=>{
+    let x1=PAD+(g.ridge.x1-minX)*sc, y1=PAD+(g.ridge.y1-minY)*sc;
+    let x2=PAD+(g.ridge.x2-minX)*sc, y2=PAD+(g.ridge.y2-minY)*sc;
+    ctx.save();
+    ctx.strokeStyle='#ff2d2d'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.fillStyle='#ff2d2d';
+    [[x1,y1],[x2,y2]].forEach(([hx,hy])=>{
+      ctx.beginPath(); ctx.arc(hx,hy,5,0,Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+
+    // 手動落柱標記點：白色實心圓＋黑色描邊，跟紅色中脊線/端點把手區隔
+    (g.ridgeColMarks||[]).forEach(t=>{
+      let mx=x1+(x2-x1)*t, my=y1+(y2-y1)*t;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(mx,my,5,0,Math.PI*2);
+      ctx.fillStyle='#fff'; ctx.fill();
+      ctx.strokeStyle='#000'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.restore();
+    });
+  });
+
+  // 選取中的建物：黃色虛線外框
+  selectedIdxs.forEach(i=>{
+    let b=buildings[i]; if(!b) return;
+    let{bw,bd}=bDims(b);
+    let px=PAD+Math.floor((b.x-minX)*sc), py=PAD+Math.floor((b.y-minY)*sc);
+    let pw=Math.max(20,Math.floor(bw*sc)), ph=Math.max(16,Math.floor(bd*sc));
+    ctx.save();
+    ctx.strokeStyle='#ffe14d'; ctx.lineWidth=3; ctx.setLineDash([5,3]);
+    ctx.strokeRect(px-1,py-1,pw+2,ph+2);
+    ctx.restore();
+  });
+}
+
+function hitTest(ex,ey){
+  const cv=document.getElementById('cv'), rect=cv.getBoundingClientRect();
+  let px=(ex-rect.left)*(cv.width/rect.width)-PAD;
+  let py=(ey-rect.top)*(cv.height/rect.height)-PAD;
+  let cx=px/_sc+_ox, cy=py/_sc+_oy;
+  for(let i=buildings.length-1;i>=0;i--){
+    let b=buildings[i],{bw,bd}=bDims(b);
+    if(cx>=b.x&&cx<=b.x+bw&&cy>=b.y&&cy<=b.y+bd) return i;
+  }
+  return -1;
+}
+
+function snapEdges(idx){
+  let b=buildings[idx], {bw,bd}=bDims(b);
+  const T=Math.max(20,50/_sc);
+  let bestDx=T+1, bestDy=T+1, snapX=null, snapY=null;
+  buildings.forEach((o,i)=>{
+    if(i===idx) return;
+    let{bw:ow,bd:od}=bDims(o);
+    [[b.x,o.x],[b.x,o.x+ow],[b.x+bw,o.x],[b.x+bw,o.x+ow]].forEach(([be,oe])=>{
+      let d=Math.abs(be-oe); if(d<bestDx){bestDx=d;snapX=oe-(be-b.x);}
+    });
+    [[b.y,o.y],[b.y,o.y+od],[b.y+bd,o.y],[b.y+bd,o.y+od]].forEach(([be,oe])=>{
+      let d=Math.abs(be-oe); if(d<bestDy){bestDy=d;snapY=oe-(be-b.y);}
+    });
+  });
+  if(snapX!==null) b.x=snapX;
+  if(snapY!==null) b.y=snapY;
+}
+
+function adjZoom(f){ _zoom=f?Math.min(5,Math.max(0.15,_zoom*f)):1; draw(); }
+
+// 中脊線端點命中測試：座標轉換方式跟 hitTest 一致(螢幕像素→世界座標cm)
+function hitRidgeEndpoint(ex,ey){
+  const cv=document.getElementById('cv'), rect=cv.getBoundingClientRect();
+  let px=(ex-rect.left)*(cv.width/rect.width)-PAD;
+  let py=(ey-rect.top)*(cv.height/rect.height)-PAD;
+  let cx=px/_sc+_ox, cy=py/_sc+_oy;
+  const R=Math.max(15,40/_sc);
+  for(const g of manualGroups){
+    if(Math.hypot(cx-g.ridge.x1,cy-g.ridge.y1)<R) return {groupId:g.id, which:1};
+    if(Math.hypot(cx-g.ridge.x2,cy-g.ridge.y2)<R) return {groupId:g.id, which:2};
+  }
+  return null;
+}
+
+// 中脊線本體命中測試(不含端點)：用來新增／刪除手動落柱標記。
+// 呼叫時機在 onDown 裡排在 hitRidgeEndpoint 之後，所以端點附近的點擊
+// 一定先被當成拖曳把手處理掉，不會誤觸這裡。
+// 回傳 {groupId, markIdx, t}：markIdx>=0 代表點在既有標記點上(用來刪除)，
+// markIdx===-1 代表點在中脊線空白處(用來新增，t 是新標記的比例位置)。
+function hitRidgeLine(ex,ey){
+  const cv=document.getElementById('cv'), rect=cv.getBoundingClientRect();
+  let px=(ex-rect.left)*(cv.width/rect.width)-PAD;
+  let py=(ey-rect.top)*(cv.height/rect.height)-PAD;
+  let cx=px/_sc+_ox, cy=py/_sc+_oy;
+  const LINE_T=Math.max(10,20/_sc);  // 判定「點在線上」的垂直距離容許值(cm)
+  const MARK_R=Math.max(12,30/_sc);  // 判定「點在既有標記點上」的半徑(cm)
+  for(const g of manualGroups){
+    let{x1,y1,x2,y2}=g.ridge;
+    let dx=x2-x1, dy=y2-y1;
+    let lenSq=dx*dx+dy*dy;
+    if(lenSq<1) continue;
+    let t=((cx-x1)*dx+(cy-y1)*dy)/lenSq;
+    if(t<0||t>1) continue; // 落在線段延伸範圍外，不算點在線上
+    let nx=x1+dx*t, ny=y1+dy*t;
+    if(Math.hypot(cx-nx,cy-ny)>LINE_T) continue; // 離線太遠，不算
+
+    let marks=g.ridgeColMarks||[];
+    for(let mi=0;mi<marks.length;mi++){
+      let mx=x1+dx*marks[mi], my=y1+dy*marks[mi];
+      if(Math.hypot(cx-mx,cy-my)<MARK_R) return {groupId:g.id, markIdx:mi, t:marks[mi]};
+    }
+    return {groupId:g.id, markIdx:-1, t};
+  }
+  return null;
+}
+
+let _di=-1, _ds=null, _do=null, _drag=false;
+let _rdrag=null; // 中脊端點拖曳中：{groupId, which}
+const THRESH=6;
+function evXY(e){ return e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY}; }
+
+function onDown(e){
+  e.preventDefault();
+  let{x,y}=evXY(e);
+
+  // Shift+點擊：多選組合屋(不觸發拖曳/轉向)，用來準備「強制合併」
+  if(e.shiftKey){
+    let idx=hitTest(x,y);
+    if(idx!==-1 && buildings[idx].type!=='deck'){
+      if(selectedIdxs.has(idx)) selectedIdxs.delete(idx); else selectedIdxs.add(idx);
+      updateGroupBtn(); draw();
+    }
+    return;
+  }
+
+  // 中脊線端點優先於一般建物拖曳判斷
+  let rh=hitRidgeEndpoint(x,y);
+  if(rh){
+    _rdrag=rh;
+    document.addEventListener('mousemove',onRidgeMove);
+    document.addEventListener('mouseup',onRidgeUp);
+    document.addEventListener('touchmove',onRidgeMove,{passive:false});
+    document.addEventListener('touchend',onRidgeUp);
+    return;
+  }
+
+  // 中脊線本體：點線上空白處＝新增落柱標記，點既有標記＝刪除。
+  // 排在端點判斷之後、一般建物判斷之前，這樣點中脊線不會誤觸底下建物的轉向/拖曳。
+  let rl=hitRidgeLine(x,y);
+  if(rl){
+    let g=manualGroups.find(g=>g.id===rl.groupId);
+    if(g){
+      if(!g.ridgeColMarks) g.ridgeColMarks=[];
+      if(rl.markIdx>=0){
+        g.ridgeColMarks.splice(rl.markIdx,1);
+      } else {
+        g.ridgeColMarks.push(rl.t);
+        g.ridgeColMarks.sort((a,b)=>a-b);
+      }
+      draw();
+    }
+    return;
+  }
+
+  let idx=hitTest(x,y);
+  if(idx===-1){
+    if(selectedIdxs.size){ selectedIdxs.clear(); updateGroupBtn(); draw(); }
+    return;
+  }
+  _di=idx; _ds={x,y}; _do={x:buildings[idx].x,y:buildings[idx].y}; _drag=false;
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('touchend',onUp);
+}
+
+function onRidgeMove(e){
+  if(!_rdrag) return; e.preventDefault();
+  let{x,y}=evXY(e);
+  const cv=document.getElementById('cv'), rect=cv.getBoundingClientRect();
+  let px=(x-rect.left)*(cv.width/rect.width)-PAD;
+  let py=(y-rect.top)*(cv.height/rect.height)-PAD;
+  let cx=px/_sc+_ox, cy=py/_sc+_oy;
+  let g=manualGroups.find(g=>g.id===_rdrag.groupId);
+  if(!g) return;
+  if(_rdrag.which===1){ g.ridge.x1=cx; g.ridge.y1=cy; } else { g.ridge.x2=cx; g.ridge.y2=cy; }
+  draw();
+}
+function onRidgeUp(){
+  document.removeEventListener('mousemove',onRidgeMove);
+  document.removeEventListener('mouseup',onRidgeUp);
+  document.removeEventListener('touchmove',onRidgeMove);
+  document.removeEventListener('touchend',onRidgeUp);
+  _rdrag=null;
+}
+function onMove(e){
+  if(_di===-1) return; e.preventDefault();
+  let{x,y}=evXY(e), dx=x-_ds.x, dy=y-_ds.y;
+  if(!_drag&&Math.hypot(dx,dy)<THRESH) return;
+  _drag=true;
+  const cv=document.getElementById('cv'), r=cv.getBoundingClientRect();
+  let sx=cv.width/r.width, sy=cv.height/r.height;
+  buildings[_di].x=Math.round((_do.x+dx*sx/_sc)/10)*10;
+  buildings[_di].y=Math.round((_do.y+dy*sy/_sc)/10)*10;
+  snapEdges(_di);
+  draw();
+}
+function onUp(e){
+  document.removeEventListener('mousemove',onMove);
+  document.removeEventListener('mouseup',onUp);
+  document.removeEventListener('touchmove',onMove);
+  document.removeEventListener('touchend',onUp);
+  if(_di===-1) return;
+  if(!_drag){ buildings[_di].state=buildings[_di].state===1?2:1; }
+  _di=-1; _drag=false; draw(); updLayout();
+}
+
+const cv=document.getElementById('cv');
+cv.addEventListener('mousedown',onDown);
+cv.addEventListener('touchstart',onDown,{passive:false});
+cv.addEventListener('wheel',e=>e.preventDefault(),{passive:false});
+cv.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  let idx=hitTest(e.clientX,e.clientY);
+  if(idx!==-1){
+    buildings.splice(idx,1);
+    selectedIdxs.clear(); cleanupGroups(); updateGroupBtn();
+    draw(); updLayout();
+  }
+});
+window.addEventListener('resize',draw);
+
+function updLayout(){
+  let m2=buildings.reduce((s,b)=>{ let{bw,bd}=bDims(b); return s+bw*bd/10000; },0);
+  let ping=(m2*10000/33057.85).toFixed(2);
+  document.getElementById('layoutInfo').innerHTML=
+    `共 <b>${buildings.length}</b> 間｜覆蓋面積：<b>${m2.toFixed(1)} m²</b>（${ping} 坪）`;
+}
+
+// ── 手動分組控制：選取後「強制合併為一組」／「解除分組」，並清理殘餘群組 ──
+function updateGroupBtn(){
+  const bar=document.getElementById('groupBar');
+  const btn=document.getElementById('btnGroupAction');
+  document.getElementById('selCount').textContent=selectedIdxs.size;
+  if(selectedIdxs.size===0){ bar.style.display='none'; return; }
+
+  // 判斷選取集合是否「剛好等於」某個既有手動群組的全部成員 → 顯示解除分組
+  // 注意：一定要先確認「選取的每一間」都屬於同一個群組，不能只看非null的groupId種類數，
+  // 否則「已分組的A + 沒分組的C」這種選取，會誤判成A所屬群組已被完整選取而顯示解除分組，
+  // 一按下去連沒被選到的B(A的分組夥伴)都會被牽連解散。
+  let sel=[...selectedIdxs];
+  let gids=new Set(sel.map(i=>buildings[i].groupId).filter(g=>g!=null));
+  if(gids.size===1 && sel.every(i=>buildings[i].groupId===[...gids][0])){
+    let gid=[...gids][0];
+    let fullCount=buildings.filter(b=>b.groupId===gid).length;
+    if(fullCount===sel.length){
+      bar.style.display='flex';
+      btn.textContent='解除分組';
+      btn.dataset.mode='ungroup';
+      btn.dataset.gid=gid;
+      return;
+    }
+  }
+  if(sel.length>=2){
+    bar.style.display='flex';
+    btn.textContent='強制合併為一組';
+    btn.dataset.mode='group';
+  } else {
+    bar.style.display='none';
+  }
+}
+
+function onGroupActionClick(){
+  const btn=document.getElementById('btnGroupAction');
+  if(btn.dataset.mode==='ungroup'){
+    let gid=btn.dataset.gid;
+    buildings.forEach(b=>{ if(String(b.groupId)===String(gid)) b.groupId=null; });
+    manualGroups=manualGroups.filter(g=>String(g.id)!==String(gid));
+    selectedIdxs.clear();
+  } else {
+    let gid=groupIdSeq++;
+    let members=[...selectedIdxs].map(i=>buildings[i]);
+    members.forEach(b=>b.groupId=gid);
+    let{minX,minY,maxX,maxY}=computeBBox(members);
+    // 建議中脊線：沿 bounding box 最長邊方向、通過中點
+    let ridge;
+    if((maxX-minX)>=(maxY-minY)){
+      let midY=(minY+maxY)/2;
+      ridge={x1:minX,y1:midY,x2:maxX,y2:midY};
+    } else {
+      let midX=(minX+maxX)/2;
+      ridge={x1:midX,y1:minY,x2:midX,y2:maxY};
+    }
+    manualGroups.push({id:gid, ridge, ridgeColMarks:[]});
+    selectedIdxs.clear();
+    cleanupGroups();
+  }
+  updateGroupBtn(); draw();
+}
+
+// 合併/刪除動作可能讓某個手動群組只剩不足2間成員，這種殘餘群組要整組解散回自動偵測
+function cleanupGroups(){
+  let counts={};
+  buildings.forEach(b=>{ if(b.groupId!=null) counts[b.groupId]=(counts[b.groupId]||0)+1; });
+  manualGroups=manualGroups.filter(g=>{
+    if((counts[g.id]||0) < 2){
+      buildings.forEach(b=>{ if(String(b.groupId)===String(g.id)) b.groupId=null; });
+      return false;
+    }
+    return true;
+  });
+}
+
+// ── 模組合併偵測：緊鄰且拼成完整矩形的組合屋，視為同一個共用屋頂 ──
+// （組合方式決定計算方式：中間相鄰的模組不該各自重複算出簷/中脊柱，
+//   要先判斷「哪幾間拼在一起」，再把合併後的外框當成一個屋頂去算料）
+// 手動分組(groupId)優先：這些建物直接用 bounding box 當一個 roofUnit，
+// 不再跑面積/矩形判斷；沒手動分組的建物才跑原本的 Union-Find 矩形偵測。
+function groupBuildings(mods){
+  let units=[];
+
+  // ① 手動群組
+  let manualMembers=mods.filter(b=>b.groupId!=null);
+  let byGroup={};
+  manualMembers.forEach(b=>{ (byGroup[b.groupId]=byGroup[b.groupId]||[]).push(b); });
+  Object.keys(byGroup).forEach(gid=>{
+    let members=byGroup[gid];
+    if(members.length<2){
+      // 理論上 cleanupGroups 會清掉這種殘餘，這裡防禦性地當一般單間處理
+      let{bw,bd}=bDims(members[0]);
+      units.push({w:bw, d:bd, count:1, isRect:true, members, manual:false});
+      return;
+    }
+    let{minX,minY,maxX,maxY}=computeBBox(members);
+    let g=manualGroups.find(g=>String(g.id)===String(gid));
+    let gdir, ridgeColMarks=[];
+    if(g){
+      let dx=Math.abs(g.ridge.x2-g.ridge.x1), dy=Math.abs(g.ridge.y2-g.ridge.y1);
+      gdir = dx>=dy ? 'col' : 'row';
+      ridgeColMarks = g.ridgeColMarks || [];
+    } else {
+      // 找不到對應中脊資料(理論上不該發生)，用bbox長邊當保底判斷
+      gdir = (maxX-minX)>=(maxY-minY) ? 'col' : 'row';
+    }
+    units.push({w:maxX-minX, d:maxY-minY, count:members.length, isRect:true, members, manual:true, dir:gdir, ridgeColMarks});
+  });
+
+  // ② 沒手動分組的建物：沿用原本 Union-Find + 矩形判斷邏輯
+  let autoMembers=mods.filter(b=>b.groupId==null);
+  let n=autoMembers.length;
+  if(n>0){
+    let dims=autoMembers.map(b=>{ let{bw,bd}=bDims(b); return {x:b.x,y:b.y,w:bw,d:bd}; });
+    let parent=Array.from({length:n},(_,i)=>i);
+    function find(i){ while(parent[i]!==i){ parent[i]=parent[parent[i]]; i=parent[i]; } return i; }
+    function union(i,j){ let ri=find(i), rj=find(j); if(ri!==rj) parent[ri]=rj; }
+    const EPS=1; // cm，容許貼齊誤差
+    for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+      let a=dims[i], b=dims[j];
+      // 上下貼齊：y相接、x起點與寬度都相同（同一列往深度方向疊）
+      let touchV=(Math.abs(a.y+a.d-b.y)<EPS||Math.abs(b.y+b.d-a.y)<EPS)&&Math.abs(a.x-b.x)<EPS&&Math.abs(a.w-b.w)<EPS;
+      // 左右貼齊：x相接、y起點與深度都相同（同一排往寬度方向排開）
+      let touchH=(Math.abs(a.x+a.w-b.x)<EPS||Math.abs(b.x+b.w-a.x)<EPS)&&Math.abs(a.y-b.y)<EPS&&Math.abs(a.d-b.d)<EPS;
+      if(touchV||touchH) union(i,j);
+    }
+    let map={};
+    for(let i=0;i<n;i++){ let r=find(i); (map[r]=map[r]||[]).push(i); }
+
+    Object.values(map).forEach(idxs=>{
+      if(idxs.length===1){
+        units.push({w:dims[idxs[0]].w, d:dims[idxs[0]].d, count:1, isRect:true, members:[autoMembers[idxs[0]]], manual:false});
+        return;
+      }
+      let minX=Math.min(...idxs.map(i=>dims[i].x)), minY=Math.min(...idxs.map(i=>dims[i].y));
+      let maxX=Math.max(...idxs.map(i=>dims[i].x+dims[i].w)), maxY=Math.max(...idxs.map(i=>dims[i].y+dims[i].d));
+      let area=idxs.reduce((s,i)=>s+dims[i].w*dims[i].d,0);
+      let boxArea=(maxX-minX)*(maxY-minY);
+      let isRect=Math.abs(area-boxArea)<1;
+      if(isRect){
+        units.push({w:maxX-minX, d:maxY-minY, count:idxs.length, isRect:true, members:idxs.map(i=>autoMembers[i]), manual:false});
+      } else {
+        // 貼在一起但拼不成完整矩形（例如L型缺角）：拆回個別單間各自算，避免用外框誤算面積
+        idxs.forEach(i=>units.push({w:dims[i].w, d:dims[i].d, count:1, isRect:true, members:[autoMembers[i]], manual:false}));
+      }
+    });
+  }
+
+  return units;
+}
+
+// ── 最佳 C型鋼間距演算法 ──
+function bestCSpacing(lenCm, edge=15){
+  // 兩端各留 edge(cm) 安裝間隙，中間支數平均分配
+  let usable=lenCm-edge*2;
+  if(usable<=0) return {n:1,space:0};
+  let minSp=lenCm<=200?50:60;
+  for(let n=2;n<100;n++){
+    let sp=usable/(n-1);
+    if(sp>=minSp&&sp<80) return {n,space:+sp.toFixed(1)};
+    if(sp<minSp) break;
+  }
+  let n=Math.ceil(usable/70)+1;
+  return {n,space:+(usable/(n-1)).toFixed(1)};
+}
+
+// ── 儲存純文字叫料單，供複製用 ──
+let _copyText = '';
+
+function calcMats(){
+  let modBuildings=buildings.filter(b=>b.type!=='deck');
+  if(!modBuildings.length){ document.getElementById('matResult').innerHTML='⚠️ 請先加入組合屋'; return; }
+
+  let rType    = parseInt(document.getElementById('roofType').value);
+  let wW       = parseInt(document.getElementById('waveW').value);
+  let sr       = parseFloat(document.getElementById('slopeR').value)||1;
+  let globalDir= document.getElementById('roofDir').value; // 沒手動分組的建物吃這個
+  let panelType= document.getElementById('panelType').value;
+  let panelColor=document.getElementById('panelColor').value;
+  let cTypeVal = document.getElementById('cType').value;
+  let cThick   = parseFloat(document.getElementById('cThick').value)||2.3;
+  let ovF=parseInt(document.getElementById('ovF').value)||0;
+  let ovB=parseInt(document.getElementById('ovB').value)||0;
+  let ovL=parseInt(document.getElementById('ovL').value)||0;
+  let ovR=parseInt(document.getElementById('ovR').value)||0;
+  let hasOv=ovF||ovB||ovL||ovR;
+  let isLiuli=panelType==='琉璃瓦';
+
+  let ts=0, tr=0, fm=0;
+  let bldRows=[];
+  let copyLines=['=== 屋頂叫料單 ===',''];
+
+  let roofUnits=groupBuildings(modBuildings);
+
+  roofUnits.forEach(u=>{
+    let bw=u.w, bd=u.d;
+    // 手動群組用中脊線方向決定的 dir，其餘建物吃全域下拉選單
+    let dir = u.manual ? u.dir : globalDir;
+
+    let extW=bw+ovL+ovR, extD=bd+ovF+ovB;
+    // pp = 橫梁長度（垂直於排水方向）
+    let pp=dir==='col'?extW:extD;
+    fm+=extW*extD/10000;
+
+    let faces=[];
+    if(rType===1){
+      // 單斜：整個斜面
+      let sp=Math.round(dir==='col'?extD:extW);
+      let{n,space}=bestCSpacing(sp);
+      faces.push({label:'斜樑', flatCm:sp, n, space});
+    } else {
+      // 雙斜：前後各半（或左右各半）
+      let flatA, flatB, labelA, labelB;
+      if(dir==='col'){
+        flatA=Math.round(bd/2+ovF); flatB=Math.round(bd/2+ovB);
+        labelA='前斜樑'; labelB='後斜樑';
+      } else {
+        flatA=Math.round(bw/2+ovL); flatB=Math.round(bw/2+ovR);
+        labelA='左斜樑'; labelB='右斜樑';
+      }
+      // 斜樑長(flatA/flatB)用來算橫梁間距：首支扣15，其餘等分
+      // 前後（或左右）支數須一致，橫梁才有對應落腳點，取較大值
+      let n=Math.max(bestCSpacing(flatA).n, bestCSpacing(flatB).n);
+      let spaceA=+((flatA-30)/(n-1)).toFixed(1);
+      let spaceB=+((flatB-30)/(n-1)).toFixed(1);
+      faces.push({label:labelA, flatCm:flatA, n, space:spaceA});
+      faces.push({label:labelB, flatCm:flatB, n, space:spaceB});
+    }
+
+    let pcsPerFace=Math.ceil(pp/wW);
+    ts+=pcsPerFace*faces.length;
+    if(rType===2) tr+=pp/100;
+    let totalC=faces.reduce((s,f)=>s+f.n,0)+2;
+
+    // ▼ 中脊柱高度：只用建物本身尺寸（不含延伸），整數化後 600/2=300 × sr/10
+    let halfWallCm = dir==='col' ? (bd/2) : (bw/2);
+    let ridgeH = rType===2 ? Math.round(halfWallCm * sr / 10) : 0;
+
+    // 狀態標示：單間顯示原本的正向/轉向資訊；合併多間則顯示合併組數（手動合併另外標示，跟自動合併區分）
+    let stateLabel;
+    if(u.count>1){
+      stateLabel = u.manual
+        ? `🔧 手動合併 ${u.count} 間拼成共用屋頂（${dir==='col'?'前後斜':'左右斜'}）`
+        : `🔗 合併 ${u.count} 間拼成共用屋頂`;
+    } else {
+      let b0=u.members[0];
+      stateLabel = b0.state===2 ? `↻轉向（畫布顯示 ${b0.d}×${b0.w}）` : `正向（${b0.w}×${b0.d}）`;
+    }
+
+    // ▼ 中脊柱組數：預設全部跟斜樑支數一致（已強制對稱）。
+    //   但手動分組群組如果使用者在中脊線上手動標了落柱點(ridgeColMarks)，
+    //   代表「交接處必須強制落柱」這種結構例外，改用標記點數量、
+    //   不套用自動公式；沒標記點時維持原本自動公式當預設值。
+    let ridgeColManual = u.manual && u.ridgeColMarks && u.ridgeColMarks.length>0;
+    let ridgeColN = rType===2 ? (ridgeColManual ? u.ridgeColMarks.length : faces[0].n) : 0;
+    let frontN = faces[0].n;
+    let backN  = rType===2 ? faces[1].n : 0;
+
+    bldRows.push({
+      bwLabel:`${bw}×${bd}`, stateLabel,
+      faces, totalC, pcsPerFace,
+      perpM:(pp/100).toFixed(2), perpCm:pp,
+      ridgeH, ridgeColN, ridgeColManual, frontN, backN, dir
+    });
+  });
+
+  let totalCPcs=bldRows.reduce((s,r)=>s+r.totalC,0);
+  let ping=(fm*10000/33057.85).toFixed(1);
+  let ovNote=hasOv?`前${ovF}/後${ovB}/左${ovL}/右${ovR} cm`:'無';
+  let slopeDir=globalDir==='col'?'前後斜（沿D邊）':'左右斜（沿W邊）';
+  let ridgeTotalM=tr.toFixed(2);
+
+  // ── 標題摘要 ──
+  let unitNote = roofUnits.length<modBuildings.length ? `　→ 合併為 ${roofUnits.length} 個共用屋頂` : '';
+  let h=`
+    <div class="mat-row"><span class="mat-lbl">組合屋</span><span class="mat-val">${modBuildings.length} 間${unitNote}　${slopeDir}　${rType===1?'單斜':'雙斜'}</span></div>
+    <div class="mat-row"><span class="mat-lbl">屋頂延伸</span><span class="mat-val">${ovNote}</span></div>
+    <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">1:${sr}（${(Math.atan(sr/10)*180/Math.PI).toFixed(1)}°）</span></div>
+    <div class="mat-row"><span class="mat-lbl">水平面積</span><span class="mat-val">${fm.toFixed(1)} m²（${ping} 坪）</span></div>
+    <div class="mat-row"><span class="mat-lbl">浪板規格</span><span class="mat-val">${panelType}／${panelColor}／${wW}cm寬</span></div>
+    <hr style="border-color:#333;margin:10px 0;">`;
+
+  copyLines.push(`組合屋：${modBuildings.length}間${unitNote}　${slopeDir}　${rType===1?'單斜':'雙斜'}`);
+  copyLines.push(`坡度：1:${sr}　延伸：${ovNote}`);
+  copyLines.push('');
+
+  // ── 每棟明細 ──
+  bldRows.forEach((r,idx)=>{
+    h+=`<div style="border:1px solid #333;border-radius:8px;padding:12px;margin:8px 0;">`;
+    h+=`<div style="color:#e8a04a;font-size:13px;font-weight:bold;margin-bottom:8px;">
+      📦 ${r.bwLabel} cm（${r.stateLabel}）　橫梁每支 ${r.perpM}m
+    </div>`;
+
+    r.faces.forEach(f=>{
+      let slopeCm = f.flatCm - 15;
+      h+=`<div style="color:#ccc;font-size:13px;margin:4px 0;">
+        ${f.label}：板材長 <b style="color:#4da3ff">${f.flatCm}cm</b>
+        斜樑長 ${f.flatCm}−15=<b style="color:#4da3ff">${slopeCm}cm</b><br>
+        <span style="color:#888;padding-left:8px;">首隻 + ${f.n-1} = ${f.n} 隻（間距 ${f.space} cm）　浪板 ${r.pcsPerFace} 片</span>
+      </div>`;
+    });
+
+    if(rType===2){
+      let halfCm = r.dir==='col' ? parseInt(r.bwLabel.split('×')[1])/2
+                                  : parseInt(r.bwLabel.split('×')[0])/2;
+      h+=`<div style="color:#ffcc44;font-size:13px;margin-top:6px;">
+        🏔 中脊柱高 ${r.ridgeH} cm（${halfCm}cm × ${sr}/10）
+      </div>`;
+    }
+
+    let faceNs=r.faces.map(f=>f.n).join(' + ');
+    h+=`<div style="color:#888;font-size:13px;margin-top:4px;">
+      總結算：C型鋼 [${faceNs}] 隻 + 封邊 2 隻 = 總共 ${r.totalC} 隻
+    </div>`;
+    h+=`</div>`;
+
+    copyLines.push(`【第${idx+1}棟】${r.bwLabel} cm (${r.stateLabel})`);
+    r.faces.forEach(f=>{
+      copyLines.push(`  ${f.label} ${f.flatCm-15}cm × ${f.n}隻（間距${f.space}cm）`);
+      copyLines.push(`  浪板 ${f.flatCm}cm × ${r.pcsPerFace}片`);
+    });
+    if(rType===2) copyLines.push(`  中脊柱高 ${r.ridgeH}cm`);
+    copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.totalC}隻`);
+    copyLines.push('');
+  });
+
+  // ── C型鋼材料清單 ──
+  h+=`<div style="background:#141414;border:1px solid #444;border-radius:8px;padding:12px;margin:10px 0;">`;
+  h+=`<div style="color:#fff;font-size:14px;font-weight:bold;margin-bottom:10px;">🔩 C型鋼　${cTypeVal}型　${cThick}mm</div>`;
+
+  copyLines.push(`--- C型鋼 ${cTypeVal}型 ${cThick}mm ---`);
+  bldRows.forEach(r=>{
+    if(rType===2){
+      let ridgeColNote = r.ridgeColManual ? `手動標記 ${r.ridgeColN} 組` : `自動計算 ${r.ridgeColN} 組`;
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">中脊柱 ${r.ridgeH}cm（${ridgeColNote}）</span>
+        <span class="mat-val">${r.ridgeColN} 隻</span>
+      </div>`;
+      copyLines.push(`中脊柱 ${r.ridgeH}cm（${ridgeColNote}）：${r.ridgeColN}隻`);
+
+      let f0=r.faces[0], f1=r.faces[1];
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">${f0.label}</span>
+        <span class="mat-val">${f0.flatCm-15}cm　${r.frontN}隻　間距${f0.space}cm</span>
+      </div>`;
+      copyLines.push(`${f0.label} ${f0.flatCm-15}cm　${r.frontN}隻　間距${f0.space}cm`);
+
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">${f1.label}</span>
+        <span class="mat-val">${f1.flatCm-15}cm　${r.backN}隻　間距${f1.space}cm</span>
+      </div>`;
+      copyLines.push(`${f1.label} ${f1.flatCm-15}cm　${r.backN}隻　間距${f1.space}cm`);
+    } else {
+      let f0=r.faces[0];
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">${f0.label}</span>
+        <span class="mat-val">${f0.flatCm-15}cm　${f0.n}隻　間距${f0.space}cm</span>
+      </div>`;
+      copyLines.push(`${f0.label} ${f0.flatCm-15}cm　${f0.n}隻　間距${f0.space}cm`);
+    }
+    h+=`<div class="mat-row">
+      <span class="mat-lbl">橫梁 ${r.perpCm}cm</span>
+      <span class="mat-val">${r.totalC} 隻</span>
+    </div>`;
+    copyLines.push(`橫梁 ${r.perpCm}cm：${r.totalC}隻`);
+  });
+  h+=`</div>`;
+
+  // ── 板材 / 配件清單 ──
+  h+=`<div style="background:#141414;border:1px solid #444;border-radius:8px;padding:12px;margin:10px 0;">`;
+  h+=`<div style="color:#fff;font-size:14px;font-weight:bold;margin-bottom:10px;">🌊 板材 / 配件</div>`;
+  copyLines.push('--- 板材/配件 ---');
+
+  bldRows.forEach(r=>{
+    r.faces.forEach(f=>{
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">浪板 ${f.flatCm}cm　${panelType}／${panelColor}</span>
+        <span class="mat-val">${r.pcsPerFace} 片</span>
+      </div>`;
+      copyLines.push(`浪板 ${f.flatCm}cm ${panelType}/${panelColor}：${r.pcsPerFace}片`);
+    });
+  });
+
+  // 包角
+  if(rType===2){
+    bldRows.forEach(r=>{
+      r.faces.forEach(f=>{
+        h+=`<div class="mat-row">
+          <span class="mat-lbl">包角 ${f.flatCm+30}cm（${f.label}）</span>
+          <span class="mat-val">2 隻</span>
+        </div>`;
+        copyLines.push(`包角 ${f.flatCm+30}cm（${f.label}）：2隻`);
+      });
+    });
+  } else {
+    bldRows.forEach(r=>{
+      let f0=r.faces[0];
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">包角 ${f0.flatCm+30}cm</span>
+        <span class="mat-val">2 隻</span>
+      </div>`;
+      copyLines.push(`包角 ${f0.flatCm+30}cm：2隻`);
+    });
+  }
+
+  // 中脊（雙斜才有）
+  if(rType===2){
+    let ridgeType=isLiuli?'半圓中脊':'一般中脊';
+    let ridgeM=parseFloat(ridgeTotalM);
+    if(ridgeM<7){
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">${ridgeType}</span>
+        <span class="mat-val">1 隻（${ridgeTotalM}m）</span>
+      </div>`;
+      copyLines.push(`${ridgeType}：1隻（${ridgeTotalM}m）`);
+    } else {
+      let halfLen=((ridgeM/2)*100+30).toFixed(0);
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">${ridgeType}（對切）</span>
+        <span class="mat-val">各 1 隻（${halfLen}cm×2）</span>
+      </div>`;
+      copyLines.push(`${ridgeType}（對切）：各1隻（${halfLen}cm×2）`);
+    }
+  }
+
+  if(isLiuli){
+    h+=`<div class="mat-row"><span class="mat-lbl">筵口瓦</span><span class="mat-val">${ts} 個</span></div>`;
+    h+=`<div class="mat-row"><span class="mat-lbl">梅花頭</span><span class="mat-val">左右各 1 顆（共 2 顆）</span></div>`;
+    copyLines.push(`筵口瓦：${ts}個`);
+    copyLines.push('梅花頭：共2顆');
+  }
+
+  h+=`</div>`;
+  h+=`<div style="color:#555;font-size:12px;margin-top:8px;">⚠️ 估算值，施工前請現場核對</div>`;
+
+  document.getElementById('matResult').innerHTML=h;
+  document.getElementById('btnCopy').style.display='block';
+  document.getElementById('copyOk').textContent='';
+  _copyText=copyLines.join('\n');
+}
+
+function copyMats(){
+  if(!_copyText) return;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(_copyText).then(showCopyOk);
+  } else {
+    let ta=document.createElement('textarea');
+    ta.value=_copyText; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showCopyOk();
+  }
+}
+function showCopyOk(){
+  let el=document.getElementById('copyOk');
+  el.textContent='✓ 已複製，可直接貼到 LINE';
+  setTimeout(()=>{ el.textContent=''; },3000);
+}
+
+updSizeInfo(); draw();
+</script>
+</body>
+</html>
