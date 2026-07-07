@@ -1550,6 +1550,23 @@ function draw3D(){
     let lbl=w2p(ux+uw/2, uy+ud/2, topH);
     ctx.fillStyle='#ccc'; ctx.font='11px Arial'; ctx.textAlign='center';
     ctx.fillText(`${Math.round(uw)}×${Math.round(ud)}`, lbl.px, lbl.py);
+
+    // ▼ 每條邊各自標實際cm數字，直接印在牆體底邊上：斜投影為了畫出「往畫面裡面延伸」的
+    // 立體感，深度(D/uy軸)方向刻意壓縮顯示長度(乘k=0.5)，寬度(W/ux軸)完全不壓縮——這是
+    // 示意圖故意的美術效果，不是量測用途，但畫面上兩條邊「看起來」的長短比例因此會跟真實
+    // cm數字對不起來，光看圖判斷「哪一邊比較長」會被騙。所以兩條邊都直接印真實cm數字，
+    // 不管畫面上壓縮成什麼樣子，數字才是準的。目前正在當「排水方向」的那條邊用橘色跟屋頂同色，
+    // 另一條邊用灰色，一眼就能對出「畫面上翹高的方向」跟「數字上的方向」是不是同一條。
+    function edgeLabel(x1,y1,x2,y2,text,color){
+      let p1=w2p(x1,y1,0), p2=w2p(x2,y2,0);
+      let mx=(p1.px+p2.px)/2, my=(p1.py+p2.py)/2+14;
+      ctx.font='11px Arial'; ctx.textAlign='center';
+      let w=ctx.measureText(text).width;
+      ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(mx-w/2-3,my-11,w+6,14);
+      ctx.fillStyle=color; ctx.fillText(text,mx,my);
+    }
+    edgeLabel(ux,uy,uxx,uy, `W${Math.round(uw)}cm`, dir==='row'?'#ff9500':'#999');
+    edgeLabel(ux,uy,ux,uyy, `D${Math.round(ud)}cm`, dir==='col'?'#ff9500':'#999');
   });
 }
 
