@@ -434,11 +434,28 @@ function draw(){
     if(fs>=7){
       ctx.fillStyle=isDeck?'#7de87d':(b.state===2?'#f0a040':'#7ab3e8');
       ctx.font=`${fs}px Arial`; ctx.textAlign='center';
-      // 顯示「原始W×D」，轉向時加箭頭提示
-      let lbl=(isDeck?'木 ':`${b.w}×${b.d}`)+(b.state===2?' ↻':'');
+      // 顯示「原始W×D」，加上W/D字母避免使用者搞混哪個數字是哪一邊；轉向時加箭頭提示
+      let lbl=(isDeck?'木 ':`W${b.w}×D${b.d}`)+(b.state===2?' ↻':'');
       ctx.fillText(lbl,px+pw/2,py+ph/2+fs/3);
     }
   });
+
+  // 排水方向文字 + 固定座標軸標示：畫在建物之上(z-order在forEach之後)，
+  // 不然會被建物的實心填色蓋住看不到。文字底下墊一塊半透明底色確保在任何顏色建物上都看得清楚。
+  // 避免文字旋轉(容易上下顛倒看不清楚)，兩種情況都用水平文字。
+  function labelWithBg(text,x,y,color){
+    ctx.font='11px Arial'; ctx.textAlign='left';
+    let w=ctx.measureText(text).width;
+    ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(x-3,y-11,w+6,14);
+    ctx.fillStyle=color; ctx.fillText(text,x,y);
+  }
+  labelWithBg('W方向(橫) →', PAD+2, 12, '#ccc');
+  labelWithBg('D方向(直) ↓', PAD+2, 27, '#ccc');
+  if(dir==='col'){
+    labelWithBg('排水沿 D 邊', PAD+4, cv.height/2-6, '#ff9500');
+  } else {
+    labelWithBg('排水沿 W 邊', cv.width/2+6, PAD+12, '#ff9500');
+  }
 
   // 合併偵測預覽：貼齊拼成完整矩形的組合屋，畫一圈亮框標示「這幾間會被當成同一個共用屋頂算料」
   // （手動分組的 unit 也會落在這裡一起畫框，因為 groupBuildings() 對兩者都會回傳 count>1）
