@@ -903,10 +903,11 @@ function calcMats(){
 
     let faces=[];
     if(rType===1){
-      // 單斜：整個斜面
+      // 單斜：整個斜面。斜樑仍＝板材長-15（滴水處板子多出樑15cm），
+      // 這條規則之後要重新設計（含桁條計數、雙包角等），先維持扣15不動
       let sp=Math.round(dir==='col'?extD:extW);
       let{n,space}=bestCSpacing(sp);
-      faces.push({label:'斜樑', flatCm:sp, n, space});
+      faces.push({label:'斜樑', flatCm:sp, n, space, railCm:sp-15});
     } else {
       // 雙斜：前後各半（或左右各半）
       let flatA, flatB, labelA, labelB;
@@ -922,8 +923,8 @@ function calcMats(){
       let n=Math.max(bestCSpacing(flatA).n, bestCSpacing(flatB).n);
       let spaceA=+((flatA-30)/(n-1)).toFixed(1);
       let spaceB=+((flatB-30)/(n-1)).toFixed(1);
-      faces.push({label:labelA, flatCm:flatA, n, space:spaceA});
-      faces.push({label:labelB, flatCm:flatB, n, space:spaceB});
+      faces.push({label:labelA, flatCm:flatA, n, space:spaceA, railCm:flatA-15});
+      faces.push({label:labelB, flatCm:flatB, n, space:spaceB, railCm:flatB-15});
     }
 
     let pcsPerFace=Math.ceil(pp/wW);
@@ -931,9 +932,13 @@ function calcMats(){
     if(rType===2) tr+=pp/100;
     let totalC=faces.reduce((s,f)=>s+f.n,0)+2;
 
-    // ▼ 中脊柱高度：只用建物本身尺寸（不含延伸），整數化後 600/2=300 × sr/10
+    // ▼ 中脊柱高度（雙斜）：只用建物本身尺寸（不含延伸），整數化後 600/2=300 × sr/10
     let halfWallCm = dir==='col' ? (bd/2) : (bw/2);
     let ridgeH = rType===2 ? Math.round(halfWallCm * sr / 10) : 0;
+    // ▼ 高邊墊高（單斜）：單斜沒有中脊，但仍要一邊墊高才有排水坡度，
+    //   用建物本身「整個」跨距（不像雙斜只算一半）× sr/10
+    let fullWallCm = dir==='col' ? bd : bw;
+    let highSideH = rType===1 ? Math.round(fullWallCm * sr / 10) : 0;
 
     // 狀態標示：單間顯示原本的正向/轉向資訊；合併多間則顯示合併組數（手動合併另外標示，跟自動合併區分）
     let stateLabel;
@@ -959,7 +964,7 @@ function calcMats(){
       bwLabel:`${bw}×${bd}`, stateLabel,
       faces, totalC, pcsPerFace,
       perpM:(pp/100).toFixed(2), perpCm:pp,
-      ridgeH, ridgeColN, ridgeColManual, frontN, backN, dir
+      ridgeH, ridgeColN, ridgeColManual, frontN, backN, dir, highSideH, fullWallCm
     });
   });
 
@@ -991,10 +996,10 @@ function calcMats(){
     </div>`;
 
     r.faces.forEach(f=>{
-      let slopeCm = f.flatCm - 15;
+      let railNote = `斜樑長 ${f.flatCm}−15=<b style="color:#4da3ff">${f.railCm}cm</b>`;
       h+=`<div style="color:#ccc;font-size:13px;margin:4px 0;">
         ${f.label}：板材長 <b style="color:#4da3ff">${f.flatCm}cm</b>
-        斜樑長 ${f.flatCm}−15=<b style="color:#4da3ff">${slopeCm}cm</b><br>
+        ${railNote}<br>
         <span style="color:#888;padding-left:8px;">首隻 + ${f.n-1} = ${f.n} 隻（間距 ${f.space} cm）　浪板 ${r.pcsPerFace} 片</span>
       </div>`;
     });
@@ -1004,6 +1009,10 @@ function calcMats(){
                                   : parseInt(r.bwLabel.split('×')[0])/2;
       h+=`<div style="color:#ffcc44;font-size:13px;margin-top:6px;">
         🏔 中脊柱高 ${r.ridgeH} cm（${halfCm}cm × ${sr}/10）
+      </div>`;
+    } else {
+      h+=`<div style="color:#ffcc44;font-size:13px;margin-top:6px;">
+        📐 高邊墊高 ${r.highSideH} cm（${r.fullWallCm}cm × ${sr}/10，無中脊但仍需墊高排水）
       </div>`;
     }
 
@@ -1015,10 +1024,11 @@ function calcMats(){
 
     copyLines.push(`【第${idx+1}棟】${r.bwLabel} cm (${r.stateLabel})`);
     r.faces.forEach(f=>{
-      copyLines.push(`  ${f.label} ${f.flatCm-15}cm × ${f.n}隻（間距${f.space}cm）`);
+      copyLines.push(`  ${f.label} ${f.railCm}cm × ${f.n}隻（間距${f.space}cm）`);
       copyLines.push(`  浪板 ${f.flatCm}cm × ${r.pcsPerFace}片`);
     });
     if(rType===2) copyLines.push(`  中脊柱高 ${r.ridgeH}cm`);
+    else copyLines.push(`  高邊墊高 ${r.highSideH}cm`);
     copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.totalC}隻`);
     copyLines.push('');
   });
@@ -1040,22 +1050,22 @@ function calcMats(){
       let f0=r.faces[0], f1=r.faces[1];
       h+=`<div class="mat-row">
         <span class="mat-lbl">${f0.label}</span>
-        <span class="mat-val">${f0.flatCm-15}cm　${r.frontN}隻　間距${f0.space}cm</span>
+        <span class="mat-val">${f0.railCm}cm　${r.frontN}隻　間距${f0.space}cm</span>
       </div>`;
-      copyLines.push(`${f0.label} ${f0.flatCm-15}cm　${r.frontN}隻　間距${f0.space}cm`);
+      copyLines.push(`${f0.label} ${f0.railCm}cm　${r.frontN}隻　間距${f0.space}cm`);
 
       h+=`<div class="mat-row">
         <span class="mat-lbl">${f1.label}</span>
-        <span class="mat-val">${f1.flatCm-15}cm　${r.backN}隻　間距${f1.space}cm</span>
+        <span class="mat-val">${f1.railCm}cm　${r.backN}隻　間距${f1.space}cm</span>
       </div>`;
-      copyLines.push(`${f1.label} ${f1.flatCm-15}cm　${r.backN}隻　間距${f1.space}cm`);
+      copyLines.push(`${f1.label} ${f1.railCm}cm　${r.backN}隻　間距${f1.space}cm`);
     } else {
       let f0=r.faces[0];
       h+=`<div class="mat-row">
-        <span class="mat-lbl">${f0.label}</span>
-        <span class="mat-val">${f0.flatCm-15}cm　${f0.n}隻　間距${f0.space}cm</span>
+        <span class="mat-lbl">${f0.label}（${r.fullWallCm}cm×${sr}/10高邊墊高${r.highSideH}cm）</span>
+        <span class="mat-val">${f0.railCm}cm　${f0.n}隻　間距${f0.space}cm</span>
       </div>`;
-      copyLines.push(`${f0.label} ${f0.flatCm-15}cm　${f0.n}隻　間距${f0.space}cm`);
+      copyLines.push(`${f0.label} ${f0.railCm}cm（高邊墊高${r.highSideH}cm）　${f0.n}隻　間距${f0.space}cm`);
     }
     h+=`<div class="mat-row">
       <span class="mat-lbl">橫梁 ${r.perpCm}cm</span>
