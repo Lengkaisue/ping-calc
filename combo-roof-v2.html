@@ -928,10 +928,10 @@ function calcMats(){
       // 單斜：整個斜面。斜樑長＝板材長-15（滴水處板子多出樑15cm）
       let sp=Math.round(dir==='col'?extD:extW);
       let railCm=sp-15;
-      // ⚠️ 斜樑支數公式尚未跟用戶核對確認(候選:對齊模組牆/跟中柱數綁定/固定間距，
-      //   無法只憑一個案場反推定案)，先沿用舊公式當估算值，畫面會標示「未確認」
-      let{n,space}=bestCSpacing(sp);
-      faces.push({label:'斜樑', flatCm:sp, n, space, railCm, rafterUnconfirmed:true});
+      // 斜樑支數：雙C合併，左右各一組（2組×2支＝4支），不是沿斜面等分的公式。
+      // 支數固定4支，跟跨距/坡度無關；「間距」對這種端點配置沒有意義，改標「雙C合併」。
+      // 中柱(墊高支撐柱)跟斜樑用同一套規則：雙C合併，左右各一組＝4支。
+      faces.push({label:'斜樑', flatCm:sp, n:4, space:null, railCm, doubleC:true});
 
       // 橫梁(桁條)：沿斜面配置，首隻貼高側邊緣(不縮15)、尾隻在斜樑末端(railCm處，
       // 即滴水側板材懸出15cm的起點)。可用配置長=railCm，只扣滴水單邊15，不是兩端各扣。
@@ -975,6 +975,8 @@ function calcMats(){
     //   4米(400cm)單斜，1分水＝40cm、0.5分水＝20cm，都是整個400cm跨距算出來的）
     let fullWallCm = dir==='col' ? bd : bw;
     let highSideH = rType===1 ? Math.round(fullWallCm * sr / 10) : 0;
+    // 中柱支數（單斜）：跟斜樑同一套規則，雙C合併，左右各一組＝4支
+    let highSideColN = rType===1 ? 4 : 0;
 
     // 狀態標示：單間顯示原本的正向/轉向資訊；合併多間則顯示合併組數（手動合併另外標示，跟自動合併區分）
     let stateLabel;
@@ -1001,7 +1003,7 @@ function calcMats(){
       faces, totalC, pcsPerFace,
       perpM:(pp/100).toFixed(2), perpCm:pp,
       ridgeH, ridgeColN, ridgeColManual, frontN, backN, dir, highSideH, halfWallCm, fullWallCm,
-      purlinN, purlinSpace
+      purlinN, purlinSpace, highSideColN
     });
   });
 
@@ -1034,11 +1036,13 @@ function calcMats(){
 
     r.faces.forEach(f=>{
       let railNote = `斜樑長 ${f.flatCm}−15=<b style="color:#4da3ff">${f.railCm}cm</b>`;
-      let unconfirmedNote = f.rafterUnconfirmed ? '　<span style="color:#e85d5d;">⚠️支數公式未確認,施工前務必現場核對</span>' : '';
+      let countNote = f.doubleC
+        ? `雙C合併，左右各一組（2組×2支）＝ ${f.n} 隻`
+        : `首隻 + ${f.n-1} = ${f.n} 隻（間距 ${f.space} cm）`;
       h+=`<div style="color:#ccc;font-size:13px;margin:4px 0;">
         ${f.label}：板材長 <b style="color:#4da3ff">${f.flatCm}cm</b>
         ${railNote}<br>
-        <span style="color:#888;padding-left:8px;">首隻 + ${f.n-1} = ${f.n} 隻（間距 ${f.space} cm）　浪板 ${r.pcsPerFace} 片${unconfirmedNote}</span>
+        <span style="color:#888;padding-left:8px;">${countNote}　浪板 ${r.pcsPerFace} 片</span>
       </div>`;
     });
 
@@ -1057,7 +1061,7 @@ function calcMats(){
     if(rType===1){
       h+=`<div style="color:#888;font-size:13px;margin-top:4px;">
         橫梁(桁條)：首隻 + ${r.purlinN-1} = ${r.purlinN} 隻（間距 ${r.purlinSpace} cm）＋ 滴水側收邊 1 隻<br>
-        總結算：斜樑 ${r.faces[0].n} 隻 ＋ 橫梁 ${r.totalC} 隻 = C型鋼共 ${r.faces[0].n+r.totalC} 隻
+        總結算：斜樑 ${r.faces[0].n} 隻 ＋ 中柱 ${r.highSideColN} 隻 ＋ 橫梁 ${r.totalC} 隻 = C型鋼共 ${r.faces[0].n+r.highSideColN+r.totalC} 隻
       </div>`;
     } else {
       let faceNs=r.faces.map(f=>f.n).join(' + ');
@@ -1069,14 +1073,15 @@ function calcMats(){
 
     copyLines.push(`【第${idx+1}棟】${r.bwLabel} cm (${r.stateLabel})`);
     r.faces.forEach(f=>{
-      copyLines.push(`  ${f.label} ${f.railCm}cm × ${f.n}隻（間距${f.space}cm）${f.rafterUnconfirmed?'⚠️支數未確認':''}`);
+      let countTxt = f.doubleC ? `雙C合併左右各一組 × ${f.n}隻` : `${f.n}隻（間距${f.space}cm）`;
+      copyLines.push(`  ${f.label} ${f.railCm}cm × ${countTxt}`);
       copyLines.push(`  浪板 ${f.flatCm}cm × ${r.pcsPerFace}片`);
     });
     if(rType===2){
       copyLines.push(`  中柱高 ${r.ridgeH}cm`);
       copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.totalC}隻`);
     } else {
-      copyLines.push(`  中柱高 ${r.highSideH}cm`);
+      copyLines.push(`  中柱高 ${r.highSideH}cm × ${r.highSideColN}隻（雙C合併左右各一組）`);
       copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.purlinN}隻（間距${r.purlinSpace}cm）＋滴水側收邊1隻＝共${r.totalC}隻`);
     }
     copyLines.push('');
@@ -1111,10 +1116,16 @@ function calcMats(){
     } else {
       let f0=r.faces[0];
       h+=`<div class="mat-row">
-        <span class="mat-lbl">${f0.label}（${r.fullWallCm}cm×${sr}/10中柱高${r.highSideH}cm）⚠️支數未確認</span>
-        <span class="mat-val">${f0.railCm}cm　${f0.n}隻　間距${f0.space}cm</span>
+        <span class="mat-lbl">中柱 ${r.highSideH}cm（${r.fullWallCm}cm×${sr}/10，雙C合併左右各一組）</span>
+        <span class="mat-val">${r.highSideColN} 隻</span>
       </div>`;
-      copyLines.push(`${f0.label} ${f0.railCm}cm（中柱高${r.highSideH}cm，支數未確認）　${f0.n}隻　間距${f0.space}cm`);
+      copyLines.push(`中柱 ${r.highSideH}cm（雙C合併左右各一組）：${r.highSideColN}隻`);
+
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">${f0.label}（雙C合併左右各一組）</span>
+        <span class="mat-val">${f0.railCm}cm　${f0.n}隻</span>
+      </div>`;
+      copyLines.push(`${f0.label} ${f0.railCm}cm（雙C合併左右各一組）　${f0.n}隻`);
     }
     if(rType===1){
       h+=`<div class="mat-row">
