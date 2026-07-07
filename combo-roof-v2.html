@@ -65,7 +65,7 @@ button:active { transform:translateY(5px); box-shadow:0 0 0 #114b9e; background:
 .sz:hover { border-color:#888; }
 .sz.on  { border-color:#1a73e8; background:#1a3a6e; }
 
-#canvasWrap {
+#canvasWrap, #canvasWrap3d {
   overflow:auto; margin-top:10px; border:1px solid #333;
   border-radius:8px; background:#111; padding:10px;
 }
@@ -156,6 +156,11 @@ a.back:hover { color:#fff; }
 
     <div id="canvasWrap"><canvas id="cv"></canvas></div>
 
+    <div class="ctrl-bar">
+      <button class="btn-sm" id="btn3dToggle" onclick="toggle3DView()">顯示3D示意圖</button>
+    </div>
+    <div id="canvasWrap3d" style="display:none;"><canvas id="cv3d"></canvas></div>
+
     <div id="groupBar" style="display:none;margin-top:8px;align-items:center;gap:8px;">
       <button class="btn-sm" id="btnGroupAction" onclick="onGroupActionClick()" style="background:#a83232;color:#fff;">強制合併為一組</button>
       <span style="color:#666;font-size:12px;">已選 <span id="selCount">0</span> 間（紅線＝中脊，可拖端點調整；線上點擊可標記強制落柱點）</span>
@@ -183,14 +188,14 @@ a.back:hover { color:#fff; }
     <h2>③ 屋頂設定</h2>
     <div class="row">
       <label>斜面</label>
-      <select id="roofType">
+      <select id="roofType" onchange="redraw3DIfActive()">
         <option value="1">單斜</option>
         <option value="2">雙斜</option>
       </select>
     </div>
     <div class="row">
       <label>排水方向</label>
-      <select id="roofDir" onchange="draw()">
+      <select id="roofDir" onchange="draw(); redraw3DIfActive()">
         <option value="col">前後斜（沿D邊）</option>
         <option value="row">左右斜（沿W邊）</option>
       </select>
@@ -198,19 +203,23 @@ a.back:hover { color:#fff; }
     <p style="color:#aaa;font-size:13px;margin:12px 0 4px 0;font-weight:bold;">延伸尺寸</p>
     <div class="row">
       <label>前 cm</label>
-      <input type="number" id="ovF" value="150" min="0" step="5" inputmode="numeric">
+      <input type="number" id="ovF" value="150" min="0" step="5" inputmode="numeric" oninput="redraw3DIfActive()">
     </div>
     <div class="row">
       <label>後 cm</label>
-      <input type="number" id="ovB" value="50" min="0" step="5" inputmode="numeric">
+      <input type="number" id="ovB" value="50" min="0" step="5" inputmode="numeric" oninput="redraw3DIfActive()">
     </div>
     <div class="row">
       <label>左 cm</label>
-      <input type="number" id="ovL" value="50" min="0" step="5" inputmode="numeric">
+      <input type="number" id="ovL" value="50" min="0" step="5" inputmode="numeric" oninput="redraw3DIfActive()">
     </div>
     <div class="row">
       <label>右 cm</label>
-      <input type="number" id="ovR" value="50" min="0" step="5" inputmode="numeric">
+      <input type="number" id="ovR" value="50" min="0" step="5" inputmode="numeric" oninput="redraw3DIfActive()">
+    </div>
+    <div class="row">
+      <label>牆高(僅3D示意用)</label>
+      <input type="number" id="wallH" value="250" min="0" step="10" inputmode="numeric" oninput="redraw3DIfActive()">
     </div>
     <div class="row">
       <label>浪板類型</label>
@@ -253,7 +262,7 @@ a.back:hover { color:#fff; }
     </div>
     <div class="row">
       <label>分水比</label>
-      <input type="number" id="slopeR" value="1" min="0.5" step="0.5" inputmode="decimal">
+      <input type="number" id="slopeR" value="1" min="0.5" step="0.5" inputmode="decimal" oninput="redraw3DIfActive()">
     </div>
     <p style="color:#555;font-size:12px;margin:4px 0 0 90px;">分水:10＝坡度比（例：1:10）</p>
     <div class="row">
@@ -729,7 +738,7 @@ cv.addEventListener('contextmenu',e=>{
     draw(); updLayout();
   }
 });
-window.addEventListener('resize',draw);
+window.addEventListener('resize',()=>{ draw(); redraw3DIfActive(); });
 
 function updLayout(){
   let m2=buildings.reduce((s,b)=>{ let{bw,bd}=bDims(b); return s+bw*bd/10000; },0);
@@ -1305,6 +1314,166 @@ function showCopyOk(){
   let el=document.getElementById('copyOk');
   el.textContent='✓ 已複製，可直接貼到 LINE';
   setTimeout(()=>{ el.textContent=''; },3000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ── 3D 示意圖（斜投影 cavalier projection，純示意用，不用於材料計算）──
+// 完全獨立於 calcMats()：不呼叫 calcMats()、不共用其內部變數，
+// 只重新讀取 UI 設定 + 呼叫 groupBuildings() 拿 roofUnits，自己算一份
+// 簡化版的「牆高＋中柱高/中脊高」尺寸給畫圖用。
+// ══════════════════════════════════════════════════════════════════
+let is3DView=false;
+
+// 斜投影公式：y(深度/D方向)往右上角斜移模擬「往畫面裡面延伸」，
+// z(高度)單純往上(不斜移)。這樣牆的垂直邊在畫面上看起來就是真的垂直，
+// 符合直覺的「越高看起來越往上」，不會把高度誤看成深度。
+// angle=30°、係數0.5是手動微調出來的視覺參數，純示意用，沒有工程精度意義。
+function project3D(x,y,z){
+  const angle=Math.PI/6, k=0.5;
+  return {sx: x + y*Math.cos(angle)*k, sy: y*Math.sin(angle)*k - z};
+}
+
+// 簡化版屋頂高度計算：邏輯抄自 calcMats() 的 highSideH／ridgeH 公式，
+// 但這是獨立的一份程式碼，calcMats() 本身一行都沒被動到。
+function calc3DUnitDims(u, globalDir, rType, sr){
+  let bw=u.w, bd=u.d;
+  let dir = u.manual ? u.dir : globalDir; // 手動分組吃 u.dir，不猜方向
+  let fullWallCm = dir==='col' ? bd : bw;         // 單斜：整個跨距
+  let halfWallCm = dir==='col' ? (bd/2) : (bw/2); // 雙斜：半跨距
+  let highSideH = rType===1 ? Math.round(fullWallCm*sr/10) : 0;
+  let ridgeH    = rType===2 ? Math.round(halfWallCm*sr/10) : 0;
+  return {dir, highSideH, ridgeH};
+}
+
+function toggle3DView(){
+  is3DView=!is3DView;
+  document.getElementById('canvasWrap').style.display = is3DView ? 'none' : '';
+  document.getElementById('canvasWrap3d').style.display = is3DView ? '' : 'none';
+  document.getElementById('btn3dToggle').textContent = is3DView ? '顯示2D俯視圖' : '顯示3D示意圖';
+  if(is3DView) draw3D();
+}
+function redraw3DIfActive(){ if(is3DView) draw3D(); }
+
+function draw3D(){
+  const cv=document.getElementById('cv3d'), ctx=cv.getContext('2d');
+  const modBuildings=buildings.filter(b=>b.type!=='deck');
+
+  if(!buildings.length){
+    cv.width=320; cv.height=160;
+    ctx.fillStyle='#111'; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.fillStyle='#555'; ctx.font='14px Arial'; ctx.textAlign='center';
+    ctx.fillText('請先新增建物',cv.width/2,cv.height/2);
+    return;
+  }
+  if(!modBuildings.length){
+    cv.width=320; cv.height=160;
+    ctx.fillStyle='#111'; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.fillStyle='#555'; ctx.font='14px Arial'; ctx.textAlign='center';
+    ctx.fillText('目前只有塑木平台，無屋頂可顯示',cv.width/2,cv.height/2);
+    return;
+  }
+
+  let rType    = parseInt(document.getElementById('roofType').value);
+  let sr       = parseFloat(document.getElementById('slopeR').value)||1;
+  let globalDir= document.getElementById('roofDir').value;
+  let wallH    = parseFloat(document.getElementById('wallH').value)||250;
+
+  let roofUnits=groupBuildings(modBuildings);
+
+  // 整體外框(cm)：跟2D俯視圖一樣用「全部」建物(含塑木平台)算，
+  // 讓3D示意圖裡各棟的相對位置跟2D俯視圖一致
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  buildings.forEach(b=>{ let{bw,bd}=bDims(b);
+    minX=Math.min(minX,b.x); minY=Math.min(minY,b.y);
+    maxX=Math.max(maxX,b.x+bw); maxY=Math.max(maxY,b.y+bd);
+  });
+
+  let units=roofUnits.map(u=>{
+    let bbox=computeBBox(u.members); // 沿用既有的 computeBBox，不重新發明
+    let g=calc3DUnitDims(u,globalDir,rType,sr);
+    return {u, bbox, dir:g.dir, highSideH:g.highSideH, ridgeH:g.ridgeH};
+  });
+  let maxRoofH=Math.max(0, ...units.map(g=>Math.max(g.highSideH,g.ridgeH)));
+  let maxTotalH=wallH+maxRoofH;
+
+  // 直接投影整體外框的8個角點取min/max，不手動推導留白公式，
+  // 換投影公式時比較不容易算錯(y深度skew、z高度不skew，兩者都要留空間)
+  let projMinX=Infinity,projMaxX=-Infinity,projMinY=Infinity,projMaxY=-Infinity;
+  [minX,maxX].forEach(xx=>[minY,maxY].forEach(yy=>[0,maxTotalH].forEach(zz=>{
+    let{sx,sy}=project3D(xx,yy,zz);
+    projMinX=Math.min(projMinX,sx); projMaxX=Math.max(projMaxX,sx);
+    projMinY=Math.min(projMinY,sy); projMaxY=Math.max(projMaxY,sy);
+  })));
+
+  const vw=Math.min(window.innerWidth-60,760);
+  let sc=Math.min((vw-PAD*2)/Math.max(1,(projMaxX-projMinX)), (520-PAD*2)/Math.max(1,(projMaxY-projMinY)));
+  if(!isFinite(sc)||sc<=0) sc=0.1;
+
+  cv.width=Math.ceil((projMaxX-projMinX)*sc)+PAD*2;
+  cv.height=Math.ceil((projMaxY-projMinY)*sc)+PAD*2;
+
+  function w2p(x,y,z){
+    let{sx,sy}=project3D(x,y,z);
+    return {px:PAD+(sx-projMinX)*sc, py:PAD+(sy-projMinY)*sc};
+  }
+  function drawQuad(pts,fillStyle,strokeStyle){
+    let pp=pts.map(([x,y,z])=>w2p(x,y,z));
+    ctx.beginPath();
+    pp.forEach((p,i)=>{ i===0?ctx.moveTo(p.px,p.py):ctx.lineTo(p.px,p.py); });
+    ctx.closePath();
+    if(fillStyle){ ctx.fillStyle=fillStyle; ctx.fill(); }
+    if(strokeStyle){ ctx.strokeStyle=strokeStyle; ctx.stroke(); }
+  }
+
+  ctx.fillStyle='#0e0e0e'; ctx.fillRect(0,0,cv.width,cv.height);
+
+  units.forEach(({u,bbox,dir,highSideH,ridgeH})=>{
+    let{minX:ux,minY:uy,maxX:uxx,maxY:uyy}=bbox;
+    let uw=uxx-ux, ud=uyy-uy;
+
+    // ── 牆體立方體外框：用建物本身尺寸(bw/bd，不含延伸)，高度用「牆高」欄位 ──
+    let baseCorners=[[ux,uy,0],[uxx,uy,0],[uxx,uyy,0],[ux,uyy,0]];
+    let topCorners =[[ux,uy,wallH],[uxx,uy,wallH],[uxx,uyy,wallH],[ux,uyy,wallH]];
+    let base0=baseCorners.map(([x,y,z])=>w2p(x,y,z));
+    let baseH=topCorners.map(([x,y,z])=>w2p(x,y,z));
+
+    ctx.lineWidth=1.5; ctx.strokeStyle='#4d8edb';
+    ctx.beginPath(); base0.forEach((p,i)=>{ i===0?ctx.moveTo(p.px,p.py):ctx.lineTo(p.px,p.py); }); ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); baseH.forEach((p,i)=>{ i===0?ctx.moveTo(p.px,p.py):ctx.lineTo(p.px,p.py); }); ctx.closePath(); ctx.stroke();
+    for(let i=0;i<4;i++){
+      ctx.beginPath(); ctx.moveTo(base0[i].px,base0[i].py); ctx.lineTo(baseH[i].px,baseH[i].py); ctx.stroke();
+    }
+
+    // ── 屋頂面：架在牆頂之上(wallH + 中柱高/中脊高)，半透明色塊 ──
+    let roofFill='rgba(255,149,0,0.35)', roofStroke='rgba(255,149,0,0.9)';
+    if(rType===1){
+      // 單斜：低邊=牆高，高邊=牆高+highSideH。
+      // dir='col'→沿D方向傾斜(低邊在uy，高邊在uyy，用bd)；
+      // dir='row'→沿W方向傾斜(低邊在ux，高邊在uxx，用bw)
+      if(dir==='col'){
+        drawQuad([[ux,uy,wallH],[uxx,uy,wallH],[uxx,uyy,wallH+highSideH],[ux,uyy,wallH+highSideH]],roofFill,roofStroke);
+      } else {
+        drawQuad([[ux,uy,wallH],[ux,uyy,wallH],[uxx,uyy,wallH+highSideH],[uxx,uy,wallH+highSideH]],roofFill,roofStroke);
+      }
+    } else {
+      // 雙斜：中脊在牆高+ridgeH，兩側落到牆高
+      if(dir==='col'){
+        let midY=(uy+uyy)/2;
+        drawQuad([[ux,uy,wallH],[uxx,uy,wallH],[uxx,midY,wallH+ridgeH],[ux,midY,wallH+ridgeH]],roofFill,roofStroke);
+        drawQuad([[ux,midY,wallH+ridgeH],[uxx,midY,wallH+ridgeH],[uxx,uyy,wallH],[ux,uyy,wallH]],roofFill,roofStroke);
+      } else {
+        let midX=(ux+uxx)/2;
+        drawQuad([[ux,uy,wallH],[ux,uyy,wallH],[midX,uyy,wallH+ridgeH],[midX,uy,wallH+ridgeH]],roofFill,roofStroke);
+        drawQuad([[midX,uy,wallH+ridgeH],[midX,uyy,wallH+ridgeH],[uxx,uyy,wallH],[uxx,uy,wallH]],roofFill,roofStroke);
+      }
+    }
+
+    // 標示尺寸，方便跟2D俯視圖對照是哪一棟/哪一組
+    let topH=wallH+(rType===1?highSideH:ridgeH)+15;
+    let lbl=w2p(ux+uw/2, uy+ud/2, topH);
+    ctx.fillStyle='#ccc'; ctx.font='11px Arial'; ctx.textAlign='center';
+    ctx.fillText(`${Math.round(uw)}×${Math.round(ud)}`, lbl.px, lbl.py);
+  });
 }
 
 updSizeInfo(); draw();
