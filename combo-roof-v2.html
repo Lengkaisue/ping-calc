@@ -958,9 +958,10 @@ function calcMats(){
     let halfWallCm = dir==='col' ? (bd/2) : (bw/2);
     let ridgeH = rType===2 ? Math.round(halfWallCm * sr / 10) : 0;
     // ▼ 中柱高（單斜）：單斜沒有中脊配件，但仍要一邊墊高（中柱）才有排水坡度，
-    //   跟雙斜共用同一套公式（半跨距 × sr/10，不是整個跨距——已用實際案場數字核對過：
-    //   400cm跨距、坡度1分→20cm，坡度2分→40cm，都是半跨距200cm算出來的，不是整個400cm）
-    let highSideH = rType===1 ? Math.round(halfWallCm * sr / 10) : 0;
+    //   用「整個」跨距 × sr/10（不是雙斜那樣半跨距——用戶已用明確數字核對定案：
+    //   4米(400cm)單斜，1分水＝40cm、0.5分水＝20cm，都是整個400cm跨距算出來的）
+    let fullWallCm = dir==='col' ? bd : bw;
+    let highSideH = rType===1 ? Math.round(fullWallCm * sr / 10) : 0;
 
     // 狀態標示：單間顯示原本的正向/轉向資訊；合併多間則顯示合併組數（手動合併另外標示，跟自動合併區分）
     let stateLabel;
@@ -986,7 +987,7 @@ function calcMats(){
       bwLabel:`${bw}×${bd}`, stateLabel,
       faces, totalC, pcsPerFace,
       perpM:(pp/100).toFixed(2), perpCm:pp,
-      ridgeH, ridgeColN, ridgeColManual, frontN, backN, dir, highSideH, halfWallCm
+      ridgeH, ridgeColN, ridgeColManual, frontN, backN, dir, highSideH, halfWallCm, fullWallCm
     });
   });
 
@@ -1034,7 +1035,7 @@ function calcMats(){
       </div>`;
     } else {
       h+=`<div style="color:#ffcc44;font-size:13px;margin-top:6px;">
-        📐 中柱高 ${r.highSideH} cm（${r.halfWallCm}cm × ${sr}/10，單斜無中脊板但仍需中柱墊高排水）
+        📐 中柱高 ${r.highSideH} cm（${r.fullWallCm}cm × ${sr}/10，單斜無中脊板但仍需中柱墊高排水）
       </div>`;
     }
 
@@ -1084,7 +1085,7 @@ function calcMats(){
     } else {
       let f0=r.faces[0];
       h+=`<div class="mat-row">
-        <span class="mat-lbl">${f0.label}（${r.halfWallCm}cm×${sr}/10中柱高${r.highSideH}cm）</span>
+        <span class="mat-lbl">${f0.label}（${r.fullWallCm}cm×${sr}/10中柱高${r.highSideH}cm）</span>
         <span class="mat-val">${f0.railCm}cm　${f0.n}隻　間距${f0.space}cm</span>
       </div>`;
       copyLines.push(`${f0.label} ${f0.railCm}cm（中柱高${r.highSideH}cm）　${f0.n}隻　間距${f0.space}cm`);
