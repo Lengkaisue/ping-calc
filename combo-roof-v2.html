@@ -1063,6 +1063,14 @@ function calcMats(){
 
     let faces=[];
     let purlinN=0, purlinSpace=0, purlinTotal=0;  // 單斜專用：橫梁(桁條)支數/間距/含滴水收邊的總支數
+    // ▼ 中脊柱組數(雙斜)：手動群組有落柱標記(ridgeColMarks)就用標記數量(交接處強制落柱這種
+    //   結構例外)，沒標記時固定2組(雙C合併左右各一組，比照單斜同一套慣例，見下面highSideColN)。
+    //   要提到「雙斜」的斜樑支數，一定要用這同一個數字，不能另外用bestCSpacing算——
+    //   之前這裡各自獨立算(斜樑bestCSpacing可能7支、中柱卻固定2組)，被用戶抓到
+    //   「斜樑確實是依照中脊的隻數來決定」，兩者本來就該是同一件事(每組中脊柱就是
+    //   一支斜樑落腳的地方)，不是巧合對得上的兩個數字。
+    let ridgeColManual = u.manual && u.ridgeColMarks && u.ridgeColMarks.length>0;
+    let ridgeColN = rType===2 ? (ridgeColManual ? u.ridgeColMarks.length : 2) : 0;
     if(rType===1){
       // 單斜：整個斜面。斜樑長＝板材長-15（滴水處板子多出樑15cm）
       let sp=Math.round(dir==='col'?extD:extW);
@@ -1089,11 +1097,11 @@ function calcMats(){
         flatA=Math.round(bw/2+ovL); flatB=Math.round(bw/2+ovR);
         labelA='左斜樑'; labelB='右斜樑';
       }
-      // 斜樑長(flatA/flatB)用來算橫梁間距：首支扣15，其餘等分
-      // 前後（或左右）支數須一致，橫梁才有對應落腳點，取較大值
-      let n=Math.max(bestCSpacing(flatA).n, bestCSpacing(flatB).n);
-      let spaceA=+((flatA-30)/(n-1)).toFixed(1);
-      let spaceB=+((flatB-30)/(n-1)).toFixed(1);
+      // 斜樑支數＝中脊柱組數(上面已經算好的ridgeColN)，不是另外用bestCSpacing算；
+      // 斜樑長(flatA/flatB)只用來算橫梁間距：首支扣15，其餘等分
+      let n=ridgeColN;
+      let spaceA=n>1?+((flatA-30)/(n-1)).toFixed(1):null;
+      let spaceB=n>1?+((flatB-30)/(n-1)).toFixed(1):null;
       faces.push({label:labelA, flatCm:flatA, n, space:spaceA, railCm:flatA-15});
       faces.push({label:labelB, flatCm:flatB, n, space:spaceB, railCm:flatB-15});
     }
@@ -1128,14 +1136,7 @@ function calcMats(){
       stateLabel = b0.state===2 ? `↻轉向（畫布顯示 ${b0.d}×${b0.w}）` : `正向（${b0.w}×${b0.d}）`;
     }
 
-    // ▼ 中脊柱組數：預設固定2組(左右各一組)，跟單斜的中柱、斜樑同一套慣例——
-    //   之前這裡預設「跟斜樑支數一致」(bestCSpacing算出來的，可能是7組甚至更多)，
-    //   用戶看了3D示意圖直接點出「一組組合屋的中柱一般都兩組，畫太多了」，這是
-    //   現場實務的真實數字，不是視覺化本身的問題，糾正回2組。手動分組群組如果
-    //   使用者在中脊線上手動標了落柱點(ridgeColMarks)，代表「交接處必須強制落柱」
-    //   這種結構例外，改用標記點數量；沒標記點時固定2組當預設值。
-    let ridgeColManual = u.manual && u.ridgeColMarks && u.ridgeColMarks.length>0;
-    let ridgeColN = rType===2 ? (ridgeColManual ? u.ridgeColMarks.length : 2) : 0;
+    // ridgeColN/ridgeColManual 已經在上面(faces建立之前)算好，faces[0].n本來就等於ridgeColN
     let frontN = faces[0].n;
     let backN  = rType===2 ? faces[1].n : 0;
 
