@@ -1128,12 +1128,14 @@ function calcMats(){
       stateLabel = b0.state===2 ? `↻轉向（畫布顯示 ${b0.d}×${b0.w}）` : `正向（${b0.w}×${b0.d}）`;
     }
 
-    // ▼ 中脊柱組數：預設全部跟斜樑支數一致（已強制對稱）。
-    //   但手動分組群組如果使用者在中脊線上手動標了落柱點(ridgeColMarks)，
-    //   代表「交接處必須強制落柱」這種結構例外，改用標記點數量、
-    //   不套用自動公式；沒標記點時維持原本自動公式當預設值。
+    // ▼ 中脊柱組數：預設固定2組(左右各一組)，跟單斜的中柱、斜樑同一套慣例——
+    //   之前這裡預設「跟斜樑支數一致」(bestCSpacing算出來的，可能是7組甚至更多)，
+    //   用戶看了3D示意圖直接點出「一組組合屋的中柱一般都兩組，畫太多了」，這是
+    //   現場實務的真實數字，不是視覺化本身的問題，糾正回2組。手動分組群組如果
+    //   使用者在中脊線上手動標了落柱點(ridgeColMarks)，代表「交接處必須強制落柱」
+    //   這種結構例外，改用標記點數量；沒標記點時固定2組當預設值。
     let ridgeColManual = u.manual && u.ridgeColMarks && u.ridgeColMarks.length>0;
-    let ridgeColN = rType===2 ? (ridgeColManual ? u.ridgeColMarks.length : faces[0].n) : 0;
+    let ridgeColN = rType===2 ? (ridgeColManual ? u.ridgeColMarks.length : 2) : 0;
     let frontN = faces[0].n;
     let backN  = rType===2 ? faces[1].n : 0;
 
@@ -1432,26 +1434,20 @@ function rotate3D(deltaDeg, reset){
 
 // 簡化版屋頂高度計算：邏輯抄自 calcMats() 的 highSideH／ridgeH 公式，
 // 但這是獨立的一份程式碼，calcMats() 本身一行都沒被動到。
-function calc3DUnitDims(u, unitDefaultDir, rType, sr, ovF, ovB, ovL, ovR){
+function calc3DUnitDims(u, unitDefaultDir, rType, sr){
   let bw=u.w, bd=u.d;
   let dir = u.manual ? u.dir : unitDefaultDir; // 手動分組吃 u.dir，不猜方向；否則吃呼叫端傳入的該群組代表棟自己的dir
   let fullWallCm = dir==='col' ? bd : bw;         // 單斜：整個跨距
   let halfWallCm = dir==='col' ? (bd/2) : (bw/2); // 雙斜：半跨距
   let highSideH = rType===1 ? Math.round(fullWallCm*sr/10) : 0;
   let ridgeH    = rType===2 ? Math.round(halfWallCm*sr/10) : 0;
-  // ▼ 中脊柱組數：邏輯抄自calcMats()同一段(flatA/flatB用bestCSpacing算n)，
-  // 手動群組如果有落柱標記(ridgeColMarks)就用標記數量，否則用跟calcMats()一樣的公式，
-  // 這樣3D畫出來的紅柱數量才會跟材料清單「中柱...共X組」的數字一致，不是另外亂猜。
+  // ▼ 中脊柱組數：邏輯抄自calcMats()同一段，預設固定2組(左右各一組)，
+  // 手動群組如果有落柱標記(ridgeColMarks)就用標記數量——這樣3D畫出來的紅柱
+  // 數量才會跟材料清單「中柱...共X組」的數字一致，不是另外亂猜。
   let ridgeColN=0;
   if(rType===2){
-    if(u.manual && u.ridgeColMarks && u.ridgeColMarks.length>0){
-      ridgeColN = u.ridgeColMarks.length;
-    } else {
-      let flatA, flatB;
-      if(dir==='col'){ flatA=Math.round(bd/2+ovF); flatB=Math.round(bd/2+ovB); }
-      else { flatA=Math.round(bw/2+ovL); flatB=Math.round(bw/2+ovR); }
-      ridgeColN = Math.max(bestCSpacing(flatA).n, bestCSpacing(flatB).n);
-    }
+    ridgeColN = (u.manual && u.ridgeColMarks && u.ridgeColMarks.length>0)
+      ? u.ridgeColMarks.length : 2;
   }
   return {dir, highSideH, ridgeH, ridgeColN};
 }
@@ -1488,10 +1484,6 @@ function draw3D(){
   let rType    = parseInt(document.getElementById('roofType').value);
   let sr       = parseFloat(document.getElementById('slopeR').value)||1;
   let wallH    = parseFloat(document.getElementById('wallH').value)||250;
-  let ovF=parseInt(document.getElementById('ovF').value)||0;
-  let ovB=parseInt(document.getElementById('ovB').value)||0;
-  let ovL=parseInt(document.getElementById('ovL').value)||0;
-  let ovR=parseInt(document.getElementById('ovR').value)||0;
 
   let roofUnits=groupBuildings(modBuildings);
 
@@ -1505,7 +1497,7 @@ function draw3D(){
 
   let units=roofUnits.map(u=>{
     let bbox=computeBBox(u.members); // 沿用既有的 computeBBox，不重新發明
-    let g=calc3DUnitDims(u,(u.members[0].dir||'col'),rType,sr,ovF,ovB,ovL,ovR);
+    let g=calc3DUnitDims(u,(u.members[0].dir||'col'),rType,sr);
     return {u, bbox, dir:g.dir, highSideH:g.highSideH, ridgeH:g.ridgeH, ridgeColN:g.ridgeColN};
   });
   let maxRoofH=Math.max(0, ...units.map(g=>Math.max(g.highSideH,g.ridgeH)));
