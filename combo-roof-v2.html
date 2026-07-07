@@ -1097,13 +1097,17 @@ function calcMats(){
         flatA=Math.round(bw/2+ovL); flatB=Math.round(bw/2+ovR);
         labelA='左斜樑'; labelB='右斜樑';
       }
-      // 斜樑支數＝中脊柱組數(上面已經算好的ridgeColN)，不是另外用bestCSpacing算；
-      // 斜樑長(flatA/flatB)只用來算橫梁間距：首支扣15，其餘等分
+      // 斜樑支數＝中脊柱組數(上面已經算好的ridgeColN)，不是另外用bestCSpacing算。
+      // 斜樑的位置＝中柱的位置（中柱撐起斜樑，斜樑才讓橫梁擺得上去——不是斜樑自己
+      // 沿板材長獨立算間距）。所以斜樑的「間距」該用中柱沿中脊線分布的那個維度
+      // (ridgeSpanCm，跟3D紅柱ridgeStart→ridgeEnd同一條線、同一個算法)，不是
+      // flatA/flatB(那是斜面板材的跑道長，方向整個不對，之前混用是bug)。
+      // 手動落柱標記位置不一定等分，這種情況不給單一間距數字，避免誤導成勻分。
       let n=ridgeColN;
-      let spaceA=n>1?+((flatA-30)/(n-1)).toFixed(1):null;
-      let spaceB=n>1?+((flatB-30)/(n-1)).toFixed(1):null;
-      faces.push({label:labelA, flatCm:flatA, n, space:spaceA, railCm:flatA-15});
-      faces.push({label:labelB, flatCm:flatB, n, space:spaceB, railCm:flatB-15});
+      let ridgeSpanCm = dir==='col' ? bw : bd;
+      let railSpace = (!ridgeColManual && n>1) ? +(ridgeSpanCm/(n-1)).toFixed(1) : null;
+      faces.push({label:labelA, flatCm:flatA, n, space:railSpace, railCm:flatA-15});
+      faces.push({label:labelB, flatCm:flatB, n, space:railSpace, railCm:flatB-15});
     }
 
     let pcsPerFace=Math.ceil(pp/wW);
@@ -1186,7 +1190,9 @@ function calcMats(){
       let railNote = `斜樑長 ${f.flatCm}−15=<b style="color:#4da3ff">${f.railCm}cm</b>`;
       let countNote = f.doubleC
         ? `雙C合併，左右各一組（2組×2支）＝ ${f.n} 隻`
-        : `首隻 + ${f.n-1} = ${f.n} 隻（間距 ${f.space} cm）`;
+        : (f.space!=null
+            ? `與中柱同組數 ＝ ${f.n} 隻（位置對齊中柱，間距 ${f.space} cm）`
+            : `與中柱同組數 ＝ ${f.n} 隻（依手動落柱位置，非等分）`);
       h+=`<div style="color:#ccc;font-size:13px;margin:4px 0;">
         ${f.label}：板材長 <b style="color:#4da3ff">${f.flatCm}cm</b>
         ${railNote}<br>
@@ -1221,7 +1227,9 @@ function calcMats(){
 
     copyLines.push(`【第${idx+1}棟】${r.bwLabel} cm (${r.stateLabel})　${r.dir==='col'?'前後斜':'左右斜'}`);
     r.faces.forEach(f=>{
-      let countTxt = f.doubleC ? `雙C合併左右各一組 × ${f.n}隻` : `${f.n}隻（間距${f.space}cm）`;
+      let countTxt = f.doubleC
+        ? `雙C合併左右各一組 × ${f.n}隻`
+        : (f.space!=null ? `${f.n}隻（與中柱同位置，間距${f.space}cm）` : `${f.n}隻（依手動落柱位置）`);
       copyLines.push(`  ${f.label} ${f.railCm}cm × ${countTxt}`);
       copyLines.push(`  浪板 ${f.flatCm}cm × ${r.pcsPerFace}片`);
     });
@@ -1253,17 +1261,19 @@ function calcMats(){
       copyLines.push(`中柱 ${r.ridgeH}cm（${ridgeColNote}，雙C合併每組2支）：${ridgeColPcs}隻`);
 
       let f0=r.faces[0], f1=r.faces[1];
+      let f0SpaceTxt = f0.space!=null ? `間距${f0.space}cm` : '依手動落柱位置';
+      let f1SpaceTxt = f1.space!=null ? `間距${f1.space}cm` : '依手動落柱位置';
       h+=`<div class="mat-row">
         <span class="mat-lbl">${f0.label}</span>
-        <span class="mat-val">${f0.railCm}cm　${r.frontN}隻　間距${f0.space}cm</span>
+        <span class="mat-val">${f0.railCm}cm　${r.frontN}隻　${f0SpaceTxt}</span>
       </div>`;
-      copyLines.push(`${f0.label} ${f0.railCm}cm　${r.frontN}隻　間距${f0.space}cm`);
+      copyLines.push(`${f0.label} ${f0.railCm}cm　${r.frontN}隻　${f0SpaceTxt}`);
 
       h+=`<div class="mat-row">
         <span class="mat-lbl">${f1.label}</span>
-        <span class="mat-val">${f1.railCm}cm　${r.backN}隻　間距${f1.space}cm</span>
+        <span class="mat-val">${f1.railCm}cm　${r.backN}隻　${f1SpaceTxt}</span>
       </div>`;
-      copyLines.push(`${f1.label} ${f1.railCm}cm　${r.backN}隻　間距${f1.space}cm`);
+      copyLines.push(`${f1.label} ${f1.railCm}cm　${r.backN}隻　${f1SpaceTxt}`);
     } else {
       let f0=r.faces[0];
       h+=`<div class="mat-row">
