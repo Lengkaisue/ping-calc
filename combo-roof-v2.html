@@ -409,15 +409,6 @@ function draw(){
   }
 
   let dir=document.getElementById('roofDir').value;
-  ctx.save(); ctx.strokeStyle='#ff9500'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
-  if(dir==='col'){
-    let y=cv.height/2;
-    ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(cv.width-PAD,y); ctx.stroke();
-  } else {
-    let x=cv.width/2;
-    ctx.beginPath(); ctx.moveTo(x,PAD); ctx.lineTo(x,cv.height-PAD); ctx.stroke();
-  }
-  ctx.setLineDash([]); ctx.restore();
 
   buildings.forEach((b,i)=>{
     let{bw,bd}=bDims(b);
@@ -440,9 +431,13 @@ function draw(){
     }
   });
 
-  // 排水方向文字 + 固定座標軸標示：畫在建物之上(z-order在forEach之後)，
+  // 排水方向指示 + 固定座標軸標示：畫在建物之上(z-order在forEach之後)，
   // 不然會被建物的實心填色蓋住看不到。文字底下墊一塊半透明底色確保在任何顏色建物上都看得清楚。
-  // 避免文字旋轉(容易上下顛倒看不清楚)，兩種情況都用水平文字。
+  //
+  // 注意：這個排水方向是「全域設定」，不會跟著單一建物的旋轉(點擊轉向)改變——
+  // 之前用「沿D邊/沿W邊」文字描述，但轉向後的建物D/W方向跟畫面方向不一致，看起來
+  // 「怎麼轉都沒變」，其實是設定本來就沒跟著建物轉，不是bug。改用直接畫箭頭表示
+  // 「水實際往哪個畫面方向流」，不用再對照文字，一看就懂。
   function labelWithBg(text,x,y,color){
     ctx.font='11px Arial'; ctx.textAlign='left';
     let w=ctx.measureText(text).width;
@@ -451,11 +446,29 @@ function draw(){
   }
   labelWithBg('W方向(橫) →', PAD+2, 12, '#ccc');
   labelWithBg('D方向(直) ↓', PAD+2, 27, '#ccc');
-  if(dir==='col'){
-    labelWithBg('排水沿 D 邊', PAD+4, cv.height/2-6, '#ff9500');
-  } else {
-    labelWithBg('排水沿 W 邊', cv.width/2+6, PAD+12, '#ff9500');
+
+  // 排水方向大箭頭：畫在畫布正中央，垂直於中脊參考線(橘色虛線)，
+  // 雙頭箭頭代表「水沿這個畫面方向流下去」，不主張哪一端是高/低
+  // (單斜的高低邊由延伸尺寸決定，因建物而異，這裡只標示軸線方向)
+  ctx.save();
+  ctx.strokeStyle='#ff9500'; ctx.fillStyle='#ff9500'; ctx.lineWidth=2.5;
+  let cx2=cv.width/2, cy2=cv.height/2, armLen=Math.min(50,(Math.min(cv.width,cv.height)-PAD*2)/2-5);
+  function arrowHead(x,y,angle){
+    ctx.beginPath();
+    ctx.moveTo(x,y);
+    ctx.lineTo(x-8*Math.cos(angle-0.4),y-8*Math.sin(angle-0.4));
+    ctx.lineTo(x-8*Math.cos(angle+0.4),y-8*Math.sin(angle+0.4));
+    ctx.closePath(); ctx.fill();
   }
+  if(dir==='col'){
+    ctx.beginPath(); ctx.moveTo(cx2,cy2-armLen); ctx.lineTo(cx2,cy2+armLen); ctx.stroke();
+    arrowHead(cx2,cy2-armLen,-Math.PI/2); arrowHead(cx2,cy2+armLen,Math.PI/2);
+  } else {
+    ctx.beginPath(); ctx.moveTo(cx2-armLen,cy2); ctx.lineTo(cx2+armLen,cy2); ctx.stroke();
+    arrowHead(cx2-armLen,cy2,Math.PI); arrowHead(cx2+armLen,cy2,0);
+  }
+  ctx.restore();
+  labelWithBg('排水方向', cx2+8, cy2-armLen-4, '#ff9500');
 
   // 合併偵測預覽：貼齊拼成完整矩形的組合屋，畫一圈亮框標示「這幾間會被當成同一個共用屋頂算料」
   // （手動分組的 unit 也會落在這裡一起畫框，因為 groupBuildings() 對兩者都會回傳 count>1）
