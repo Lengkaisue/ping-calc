@@ -234,6 +234,13 @@ a.back:hover { color:#fff; }
       </select>
     </div>
     <div class="row">
+      <label>包角材質</label>
+      <select id="trimMaterial">
+        <option value="白鐵烤漆">白鐵烤漆</option>
+        <option value="一般">一般</option>
+      </select>
+    </div>
+    <div class="row">
       <label>分水比</label>
       <input type="number" id="slopeR" value="1" min="0.5" step="0.5" inputmode="decimal">
     </div>
@@ -876,6 +883,7 @@ function calcMats(){
   let globalDir= document.getElementById('roofDir').value; // 沒手動分組的建物吃這個
   let panelType= document.getElementById('panelType').value;
   let panelColor=document.getElementById('panelColor').value;
+  let trimMaterial=document.getElementById('trimMaterial').value;
   let cTypeVal = document.getElementById('cType').value;
   let cThick   = parseFloat(document.getElementById('cThick').value)||2.3;
   let ovF=parseInt(document.getElementById('ovF').value)||0;
@@ -1095,20 +1103,20 @@ function calcMats(){
     bldRows.forEach(r=>{
       r.faces.forEach(f=>{
         h+=`<div class="mat-row">
-          <span class="mat-lbl">包角 ${f.flatCm+30}cm（${f.label}）</span>
+          <span class="mat-lbl">包角（${trimMaterial}）${f.flatCm+30}cm（${f.label}）</span>
           <span class="mat-val">2 隻</span>
         </div>`;
-        copyLines.push(`包角 ${f.flatCm+30}cm（${f.label}）：2隻`);
+        copyLines.push(`包角（${trimMaterial}）${f.flatCm+30}cm（${f.label}）：2隻`);
       });
     });
   } else {
     bldRows.forEach(r=>{
       let f0=r.faces[0];
       h+=`<div class="mat-row">
-        <span class="mat-lbl">包角 ${f0.flatCm+30}cm</span>
+        <span class="mat-lbl">包角（${trimMaterial}）${f0.flatCm+30}cm</span>
         <span class="mat-val">2 隻</span>
       </div>`;
-      copyLines.push(`包角 ${f0.flatCm+30}cm：2隻`);
+      copyLines.push(`包角（${trimMaterial}）${f0.flatCm+30}cm：2隻`);
     });
   }
 
