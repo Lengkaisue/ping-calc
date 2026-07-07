@@ -1624,13 +1624,32 @@ function draw3D(){
     // 拿掉字母只留數字後，這個問題不會再發生：不管有沒有轉向，這條邊印的cm數字
     // 永遠是這條邊本身的真實長度，不需要透過「這是W還是D」去換算。橘色＝目前排水方向
     // 對應的那條邊(跟屋頂同色)，灰色＝另一條，靠顏色分辨方向，不靠字母。
+    // 加一條跟邊平行、兩端有箭頭的尺寸線(建築圖常見的標尺畫法)，偏移方向用「遠離
+    // 建物中心」自動判斷，不管是哪一條邊都會往外偏移，不會疊到牆體線本身上面。
+    // 偏移量在世界座標(cm)上算好才投影，不管轉到哪個角度、哪種旋轉都still正確對齊那條邊。
     function edgeLabel(x1,y1,x2,y2,text,color){
-      let p1=w2p(x1,y1,0), p2=w2p(x2,y2,0);
-      let mx=(p1.px+p2.px)/2, my=(p1.py+p2.py)/2+14;
+      let cx=(ux+uxx)/2, cy=(uy+uyy)/2;
+      let mx0=(x1+x2)/2, my0=(y1+y2)/2;
+      let dx=mx0-cx, dy=my0-cy, dlen=Math.hypot(dx,dy)||1, offCm=30;
+      let ox=dx/dlen*offCm, oy=dy/dlen*offCm;
+      let p1=w2p(x1+ox,y1+oy,0), p2=w2p(x2+ox,y2+oy,0);
+      let ang=Math.atan2(p2.py-p1.py, p2.px-p1.px);
+      ctx.save();
+      ctx.strokeStyle=color; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(p1.px,p1.py); ctx.lineTo(p2.px,p2.py); ctx.stroke();
+      [[p1,ang+Math.PI],[p2,ang]].forEach(([pt,arrowAng])=>{
+        ctx.beginPath();
+        ctx.moveTo(pt.px,pt.py);
+        ctx.lineTo(pt.px-6*Math.cos(arrowAng-0.4), pt.py-6*Math.sin(arrowAng-0.4));
+        ctx.lineTo(pt.px-6*Math.cos(arrowAng+0.4), pt.py-6*Math.sin(arrowAng+0.4));
+        ctx.closePath(); ctx.fillStyle=color; ctx.fill();
+      });
+      ctx.restore();
+      let mx=(p1.px+p2.px)/2, my=(p1.py+p2.py)/2;
       ctx.font='11px Arial'; ctx.textAlign='center';
       let w=ctx.measureText(text).width;
       ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(mx-w/2-3,my-11,w+6,14);
-      ctx.fillStyle=color; ctx.fillText(text,mx,my);
+      ctx.fillStyle=color; ctx.fillText(text,mx,my-2);
     }
     edgeLabel(ux,uy,uxx,uy, `${Math.round(uw)}cm`, dir==='row'?'#ff9500':'#999');
     edgeLabel(ux,uy,ux,uyy, `${Math.round(ud)}cm`, dir==='col'?'#ff9500':'#999');
