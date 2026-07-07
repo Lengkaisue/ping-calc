@@ -923,12 +923,23 @@ function calcMats(){
     fm+=extW*extD/10000;
 
     let faces=[];
+    let purlinN=0, purlinSpace=0, purlinTotal=0;  // 單斜專用：橫梁(桁條)支數/間距/含滴水收邊的總支數
     if(rType===1){
-      // 單斜：整個斜面。斜樑仍＝板材長-15（滴水處板子多出樑15cm），
-      // 這條規則之後要重新設計（含桁條計數、雙包角等），先維持扣15不動
+      // 單斜：整個斜面。斜樑長＝板材長-15（滴水處板子多出樑15cm）
       let sp=Math.round(dir==='col'?extD:extW);
+      let railCm=sp-15;
+      // ⚠️ 斜樑支數公式尚未跟用戶核對確認(候選:對齊模組牆/跟中柱數綁定/固定間距，
+      //   無法只憑一個案場反推定案)，先沿用舊公式當估算值，畫面會標示「未確認」
       let{n,space}=bestCSpacing(sp);
-      faces.push({label:'斜樑', flatCm:sp, n, space, railCm:sp-15});
+      faces.push({label:'斜樑', flatCm:sp, n, space, railCm, rafterUnconfirmed:true});
+
+      // 橫梁(桁條)：沿斜面配置，首隻貼高側邊緣(不縮15)、尾隻在斜樑末端(railCm處，
+      // 即滴水側板材懸出15cm的起點)。可用配置長=railCm，只扣滴水單邊15，不是兩端各扣。
+      // 再加1支滴水側收邊料，承接包角包住外露板材——只加低(滴水)側，高側不用加，
+      // 這就是用戶說「單斜橫梁只有單邊」的來源，不是雙斜那種兩端對稱各補1支。
+      purlinN=Math.max(2, Math.ceil(railCm/80)+1);
+      purlinSpace=+(railCm/(purlinN-1)).toFixed(1);
+      purlinTotal=purlinN+1;
     } else {
       // 雙斜：前後各半（或左右各半）
       let flatA, flatB, labelA, labelB;
@@ -951,7 +962,9 @@ function calcMats(){
     let pcsPerFace=Math.ceil(pp/wW);
     ts+=pcsPerFace*faces.length;
     if(rType===2) tr+=pp/100;
-    let totalC=faces.reduce((s,f)=>s+f.n,0)+2;
+    // 單斜的「橫梁」支數改用桁條公式(purlinTotal)，不是斜樑支數+2；
+    // 雙斜維持原本「斜樑支數加總+2支封邊」的邏輯不變
+    let totalC=rType===1 ? purlinTotal : faces.reduce((s,f)=>s+f.n,0)+2;
 
     // ▼ 中柱高度（雙斜）：只用建物本身尺寸（不含延伸），整數化後 600/2=300 × sr/10
     //   「中柱」＝墊高用的支撐柱（結構材），跟「中脊」（雙斜屋脊收邊配件，isLiuli/ridgeType那段）是兩回事，命名不要混用
@@ -987,7 +1000,8 @@ function calcMats(){
       bwLabel:`${bw}×${bd}`, stateLabel,
       faces, totalC, pcsPerFace,
       perpM:(pp/100).toFixed(2), perpCm:pp,
-      ridgeH, ridgeColN, ridgeColManual, frontN, backN, dir, highSideH, halfWallCm, fullWallCm
+      ridgeH, ridgeColN, ridgeColManual, frontN, backN, dir, highSideH, halfWallCm, fullWallCm,
+      purlinN, purlinSpace
     });
   });
 
@@ -1020,10 +1034,11 @@ function calcMats(){
 
     r.faces.forEach(f=>{
       let railNote = `斜樑長 ${f.flatCm}−15=<b style="color:#4da3ff">${f.railCm}cm</b>`;
+      let unconfirmedNote = f.rafterUnconfirmed ? '　<span style="color:#e85d5d;">⚠️支數公式未確認,施工前務必現場核對</span>' : '';
       h+=`<div style="color:#ccc;font-size:13px;margin:4px 0;">
         ${f.label}：板材長 <b style="color:#4da3ff">${f.flatCm}cm</b>
         ${railNote}<br>
-        <span style="color:#888;padding-left:8px;">首隻 + ${f.n-1} = ${f.n} 隻（間距 ${f.space} cm）　浪板 ${r.pcsPerFace} 片</span>
+        <span style="color:#888;padding-left:8px;">首隻 + ${f.n-1} = ${f.n} 隻（間距 ${f.space} cm）　浪板 ${r.pcsPerFace} 片${unconfirmedNote}</span>
       </div>`;
     });
 
@@ -1039,20 +1054,31 @@ function calcMats(){
       </div>`;
     }
 
-    let faceNs=r.faces.map(f=>f.n).join(' + ');
-    h+=`<div style="color:#888;font-size:13px;margin-top:4px;">
-      總結算：C型鋼 [${faceNs}] 隻 + 封邊 2 隻 = 總共 ${r.totalC} 隻
-    </div>`;
+    if(rType===1){
+      h+=`<div style="color:#888;font-size:13px;margin-top:4px;">
+        橫梁(桁條)：首隻 + ${r.purlinN-1} = ${r.purlinN} 隻（間距 ${r.purlinSpace} cm）＋ 滴水側收邊 1 隻<br>
+        總結算：斜樑 ${r.faces[0].n} 隻 ＋ 橫梁 ${r.totalC} 隻 = C型鋼共 ${r.faces[0].n+r.totalC} 隻
+      </div>`;
+    } else {
+      let faceNs=r.faces.map(f=>f.n).join(' + ');
+      h+=`<div style="color:#888;font-size:13px;margin-top:4px;">
+        總結算：C型鋼 [${faceNs}] 隻 + 封邊 2 隻 = 總共 ${r.totalC} 隻
+      </div>`;
+    }
     h+=`</div>`;
 
     copyLines.push(`【第${idx+1}棟】${r.bwLabel} cm (${r.stateLabel})`);
     r.faces.forEach(f=>{
-      copyLines.push(`  ${f.label} ${f.railCm}cm × ${f.n}隻（間距${f.space}cm）`);
+      copyLines.push(`  ${f.label} ${f.railCm}cm × ${f.n}隻（間距${f.space}cm）${f.rafterUnconfirmed?'⚠️支數未確認':''}`);
       copyLines.push(`  浪板 ${f.flatCm}cm × ${r.pcsPerFace}片`);
     });
-    if(rType===2) copyLines.push(`  中柱高 ${r.ridgeH}cm`);
-    else copyLines.push(`  中柱高 ${r.highSideH}cm`);
-    copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.totalC}隻`);
+    if(rType===2){
+      copyLines.push(`  中柱高 ${r.ridgeH}cm`);
+      copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.totalC}隻`);
+    } else {
+      copyLines.push(`  中柱高 ${r.highSideH}cm`);
+      copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.purlinN}隻（間距${r.purlinSpace}cm）＋滴水側收邊1隻＝共${r.totalC}隻`);
+    }
     copyLines.push('');
   });
 
@@ -1085,16 +1111,24 @@ function calcMats(){
     } else {
       let f0=r.faces[0];
       h+=`<div class="mat-row">
-        <span class="mat-lbl">${f0.label}（${r.fullWallCm}cm×${sr}/10中柱高${r.highSideH}cm）</span>
+        <span class="mat-lbl">${f0.label}（${r.fullWallCm}cm×${sr}/10中柱高${r.highSideH}cm）⚠️支數未確認</span>
         <span class="mat-val">${f0.railCm}cm　${f0.n}隻　間距${f0.space}cm</span>
       </div>`;
-      copyLines.push(`${f0.label} ${f0.railCm}cm（中柱高${r.highSideH}cm）　${f0.n}隻　間距${f0.space}cm`);
+      copyLines.push(`${f0.label} ${f0.railCm}cm（中柱高${r.highSideH}cm，支數未確認）　${f0.n}隻　間距${f0.space}cm`);
     }
-    h+=`<div class="mat-row">
-      <span class="mat-lbl">橫梁 ${r.perpCm}cm</span>
-      <span class="mat-val">${r.totalC} 隻</span>
-    </div>`;
-    copyLines.push(`橫梁 ${r.perpCm}cm：${r.totalC}隻`);
+    if(rType===1){
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">橫梁(桁條) ${r.perpCm}cm　＋滴水側收邊1隻</span>
+        <span class="mat-val">${r.purlinN}+1＝${r.totalC} 隻　間距${r.purlinSpace}cm</span>
+      </div>`;
+      copyLines.push(`橫梁 ${r.perpCm}cm：${r.purlinN}隻(間距${r.purlinSpace}cm)＋滴水側收邊1隻＝${r.totalC}隻`);
+    } else {
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">橫梁 ${r.perpCm}cm</span>
+        <span class="mat-val">${r.totalC} 隻</span>
+      </div>`;
+      copyLines.push(`橫梁 ${r.perpCm}cm：${r.totalC}隻`);
+    }
   });
   h+=`</div>`;
 
@@ -1125,13 +1159,32 @@ function calcMats(){
       });
     });
   } else {
+    // 單斜包角分兩種：左右包角(沿斜面兩側，板材長+10)、橫向包角(水平邊，橫梁長+20，
+    // 超過600cm門檻對切成2隻)——不是雙斜那種單一類別，兩種公式跟門檻都不共用雙斜的
     bldRows.forEach(r=>{
       let f0=r.faces[0];
+      let sideCm=f0.flatCm+10;
       h+=`<div class="mat-row">
-        <span class="mat-lbl">包角（${trimMaterial}）${f0.flatCm+30}cm</span>
+        <span class="mat-lbl">左右包角（${trimMaterial}）${sideCm}cm</span>
         <span class="mat-val">2 隻</span>
       </div>`;
-      copyLines.push(`包角（${trimMaterial}）${f0.flatCm+30}cm：2隻`);
+      copyLines.push(`左右包角（${trimMaterial}）${sideCm}cm：2隻`);
+
+      let hLen=r.perpCm+20;
+      if(hLen>600){
+        let half=Math.round(hLen/2);
+        h+=`<div class="mat-row">
+          <span class="mat-lbl">橫向包角（${trimMaterial}，超過600cm對切）${half}cm</span>
+          <span class="mat-val">2 隻</span>
+        </div>`;
+        copyLines.push(`橫向包角（${trimMaterial}，對切）${half}cm：2隻`);
+      } else {
+        h+=`<div class="mat-row">
+          <span class="mat-lbl">橫向包角（${trimMaterial}）${hLen}cm</span>
+          <span class="mat-val">1 隻</span>
+        </div>`;
+        copyLines.push(`橫向包角（${trimMaterial}）${hLen}cm：1隻`);
+      }
     });
   }
 
