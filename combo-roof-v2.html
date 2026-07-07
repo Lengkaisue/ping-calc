@@ -1531,11 +1531,38 @@ function draw3D(){
       // 單斜：低邊=牆高，高邊=牆高+highSideH。
       // dir='col'→沿D方向傾斜(低邊在uy，高邊在uyy，用bd)；
       // dir='row'→沿W方向傾斜(低邊在ux，高邊在uxx，用bw)
+      let lowMid, highMid, runCm;
       if(dir==='col'){
         drawQuad([[ux,uy,wallH],[uxx,uy,wallH],[uxx,uyy,wallH+highSideH],[ux,uyy,wallH+highSideH]],roofFill,roofStroke);
+        lowMid=[(ux+uxx)/2, uy, wallH]; highMid=[(ux+uxx)/2, uyy, wallH+highSideH]; runCm=ud;
       } else {
         drawQuad([[ux,uy,wallH],[ux,uyy,wallH],[uxx,uyy,wallH+highSideH],[uxx,uy,wallH+highSideH]],roofFill,roofStroke);
+        lowMid=[ux, (uy+uyy)/2, wallH]; highMid=[uxx, (uy+uyy)/2, wallH+highSideH]; runCm=uw;
       }
+      // ▼ 低邊→高邊畫一條箭頭線，直接印在屋頂斜面上，跟坡道方向重疊——
+      // 用戶反應「圖上明明是4米那邊翹高，中柱怎麼還是算600cm那邊」，根源是：
+      // 屋頂「翹起來的那條邊」(眼睛看到、覺得被墊高的邊)跟「決定中柱高的那個距離」
+      // (從低邊走到高邊的水平跑道，兩者剛好互相垂直)是兩件不同的事——翹高的邊本身
+      // 長度不影響公式，真正決定中柱高的是低邊走到高邊的那段距離。光靠底邊W/D標籤
+      // 沒辦法讓人一眼看穿這個垂直關係，所以直接在斜面上畫一條箭頭+數字，
+      // 跟著真正的爬升方向走，文字用跟2D俯視圖同一套「跑道→中柱」語法，別再各講各的。
+      let p1=w2p(...lowMid), p2=w2p(...highMid);
+      ctx.save();
+      ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(p1.px,p1.py); ctx.lineTo(p2.px,p2.py); ctx.stroke();
+      let ang=Math.atan2(p2.py-p1.py, p2.px-p1.px);
+      ctx.beginPath();
+      ctx.moveTo(p2.px,p2.py);
+      ctx.lineTo(p2.px-8*Math.cos(ang-0.4), p2.py-8*Math.sin(ang-0.4));
+      ctx.lineTo(p2.px-8*Math.cos(ang+0.4), p2.py-8*Math.sin(ang+0.4));
+      ctx.closePath(); ctx.fillStyle='#fff'; ctx.fill();
+      ctx.restore();
+      let runText=`跑道${Math.round(runCm)}→中柱${highSideH}cm`;
+      let rmx=(p1.px+p2.px)/2, rmy=(p1.py+p2.py)/2-6;
+      ctx.font='bold 12px Arial'; ctx.textAlign='center';
+      let rtw=ctx.measureText(runText).width;
+      ctx.fillStyle='rgba(0,0,0,0.75)'; ctx.fillRect(rmx-rtw/2-4,rmy-13,rtw+8,16);
+      ctx.fillStyle='#fff'; ctx.fillText(runText, rmx, rmy);
     } else {
       // 雙斜：中脊在牆高+ridgeH，兩側落到牆高
       if(dir==='col'){
