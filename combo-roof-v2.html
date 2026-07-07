@@ -1604,18 +1604,26 @@ function draw3D(){
       }
     }
 
-    // 標示尺寸，方便跟2D俯視圖對照是哪一棟/哪一組
+    // 標示尺寸，方便跟2D俯視圖對照是哪一棟/哪一組。單一建物優先顯示「原始w×d」
+    // (不受轉向影響，永遠是規格上選的那個400×600)，不是轉向後的bbox尺寸(uw×ud)——
+    // 後者轉向一次順序就會整個倒過來(400×600變600×400)，沒有字母還是會讓人以為
+    // 尺寸本身變了。多棟合併沒有單一「原始尺寸」可用，才退回顯示合併後的bbox。
     let topH=wallH+(rType===1?highSideH:ridgeH)+15;
     let lbl=w2p(ux+uw/2, uy+ud/2, topH);
+    let sizeLabel = u.members.length===1
+      ? `${u.members[0].w}×${u.members[0].d}`
+      : `${Math.round(uw)}×${Math.round(ud)}`;
     ctx.fillStyle='#ccc'; ctx.font='11px Arial'; ctx.textAlign='center';
-    ctx.fillText(`${Math.round(uw)}×${Math.round(ud)}`, lbl.px, lbl.py);
+    ctx.fillText(sizeLabel, lbl.px, lbl.py);
 
-    // ▼ 每條邊各自標實際cm數字，直接印在牆體底邊上：斜投影為了畫出「往畫面裡面延伸」的
-    // 立體感，深度(D/uy軸)方向刻意壓縮顯示長度(乘k=0.5)，寬度(W/ux軸)完全不壓縮——這是
-    // 示意圖故意的美術效果，不是量測用途，但畫面上兩條邊「看起來」的長短比例因此會跟真實
-    // cm數字對不起來，光看圖判斷「哪一邊比較長」會被騙。所以兩條邊都直接印真實cm數字，
-    // 不管畫面上壓縮成什麼樣子，數字才是準的。目前正在當「排水方向」的那條邊用橘色跟屋頂同色，
-    // 另一條邊用灰色，一眼就能對出「畫面上翹高的方向」跟「數字上的方向」是不是同一條。
+    // ▼ 每條邊各自標實際cm數字，直接印在牆體底邊上，只印數字不印W/D字母——
+    // 之前這裡印過「W600cm」「D600cm」這種帶字母的標示，但uw/ud是「轉向後」的bbox尺寸，
+    // 建物轉向(state=2)時bw/bd會互換，於是同一棟建物轉向前後，字母「W」對應到的
+    // 實際cm數字會整個換掉，跟原本Fable5一開始診斷出的「同一個字母W/D在畫面上/下拉選單
+    // 裡指的是不同東西」是同一種陷阱，等於自己重新踩了一次一開始要避開的坑。
+    // 拿掉字母只留數字後，這個問題不會再發生：不管有沒有轉向，這條邊印的cm數字
+    // 永遠是這條邊本身的真實長度，不需要透過「這是W還是D」去換算。橘色＝目前排水方向
+    // 對應的那條邊(跟屋頂同色)，灰色＝另一條，靠顏色分辨方向，不靠字母。
     function edgeLabel(x1,y1,x2,y2,text,color){
       let p1=w2p(x1,y1,0), p2=w2p(x2,y2,0);
       let mx=(p1.px+p2.px)/2, my=(p1.py+p2.py)/2+14;
@@ -1624,8 +1632,8 @@ function draw3D(){
       ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(mx-w/2-3,my-11,w+6,14);
       ctx.fillStyle=color; ctx.fillText(text,mx,my);
     }
-    edgeLabel(ux,uy,uxx,uy, `W${Math.round(uw)}cm`, dir==='row'?'#ff9500':'#999');
-    edgeLabel(ux,uy,ux,uyy, `D${Math.round(ud)}cm`, dir==='col'?'#ff9500':'#999');
+    edgeLabel(ux,uy,uxx,uy, `${Math.round(uw)}cm`, dir==='row'?'#ff9500':'#999');
+    edgeLabel(ux,uy,ux,uyy, `${Math.round(ud)}cm`, dir==='col'?'#ff9500':'#999');
   });
 }
 
