@@ -160,6 +160,10 @@ a.back:hover { color:#fff; }
       <button class="btn-sm" id="btnGroupAction" onclick="onGroupActionClick()" style="background:#a83232;color:#fff;">強制合併為一組</button>
       <span style="color:#666;font-size:12px;">已選 <span id="selCount">0</span> 間（紅線＝中脊，可拖端點調整；線上點擊可標記強制落柱點）</span>
     </div>
+    <div id="ridgeMarkBar" style="display:none;margin-top:8px;">
+      <button class="btn-sm" onclick="addEndMarks()" style="background:#2a6b2a;color:#fff;">兩端加中柱標記</button>
+      <span style="color:#666;font-size:12px;">手機在端點附近點擊容易誤觸拖曳把手，用這個按鈕直接在兩端加標記</span>
+    </div>
 
     <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:#666;flex-wrap:wrap;">
       <span>🔵 正向（W×D）</span><span style="color:#c07020">🟠 轉向90°（D×W）</span><span style="color:#4db84d">🟢 塑木平台</span>
@@ -487,6 +491,8 @@ function draw(){
     ctx.strokeRect(px-1,py-1,pw+2,ph+2);
     ctx.restore();
   });
+
+  document.getElementById('ridgeMarkBar').style.display = manualGroups.length ? 'block' : 'none';
 }
 
 function hitTest(ex,ey){
@@ -779,6 +785,22 @@ function onGroupActionClick(){
 }
 
 // 合併/刪除動作可能讓某個手動群組只剩不足2間成員，這種殘餘群組要整組解散回自動偵測
+// 手機在中脊線兩端點附近點擊，容易被端點拖曳把手(hitRidgeEndpoint)搶走，
+// 導致使用者想加落柱標記卻變成不小心拖動整條線(回報「一直亂跑」)。
+// 斜樑/中柱本來就常見「左右各一組」，所以直接給一個按鈕在兩端內縮一點的
+// 位置(t=0.03/0.97，避開端點把手判定範圍)自動加標記，不用精準點擊。
+function addEndMarks(){
+  manualGroups.forEach(g=>{
+    if(!g.ridgeColMarks) g.ridgeColMarks=[];
+    [0.03,0.97].forEach(t=>{
+      let already=g.ridgeColMarks.some(m=>Math.abs(m-t)<0.02);
+      if(!already) g.ridgeColMarks.push(t);
+    });
+    g.ridgeColMarks.sort((a,b)=>a-b);
+  });
+  draw();
+}
+
 function cleanupGroups(){
   let counts={};
   buildings.forEach(b=>{ if(b.groupId!=null) counts[b.groupId]=(counts[b.groupId]||0)+1; });
@@ -1094,12 +1116,15 @@ function calcMats(){
   copyLines.push(`--- C型鋼 ${cTypeVal}型 ${cThick}mm ---`);
   bldRows.forEach(r=>{
     if(rType===2){
+      // 中柱雙C合併：每組落柱位置用2支C型鋼拼接（鋼構常見的加強做法），
+      // 隻數＝組數×2，不是1組1支
       let ridgeColNote = r.ridgeColManual ? `手動標記 ${r.ridgeColN} 組` : `自動計算 ${r.ridgeColN} 組`;
+      let ridgeColPcs = r.ridgeColN*2;
       h+=`<div class="mat-row">
-        <span class="mat-lbl">中柱 ${r.ridgeH}cm（${ridgeColNote}）</span>
-        <span class="mat-val">${r.ridgeColN} 隻</span>
+        <span class="mat-lbl">中柱 ${r.ridgeH}cm（${ridgeColNote}，雙C合併每組2支）</span>
+        <span class="mat-val">${ridgeColPcs} 隻</span>
       </div>`;
-      copyLines.push(`中柱 ${r.ridgeH}cm（${ridgeColNote}）：${r.ridgeColN}隻`);
+      copyLines.push(`中柱 ${r.ridgeH}cm（${ridgeColNote}，雙C合併每組2支）：${ridgeColPcs}隻`);
 
       let f0=r.faces[0], f1=r.faces[1];
       h+=`<div class="mat-row">
