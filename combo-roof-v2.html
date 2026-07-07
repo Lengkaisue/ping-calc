@@ -762,6 +762,11 @@ function onGroupActionClick(){
     manualGroups.push({id:gid, ridge, ridgeColMarks:[]});
     selectedIdxs.clear();
     cleanupGroups();
+    // 分組成功後自動關閉多選模式：手機使用者選完建物按下合併後，
+    // 下一步是點中脊線加落柱標記，多選模式開著會擋掉點中脊線的動作
+    // （點下去只會被當成選取判斷、命中不到任何建物就整個吃掉沒反應），
+    // 忘記手動關掉的話會誤以為「中柱落點功能壞了」。
+    if(multiSelectMode) toggleMultiSelect();
   }
   updateGroupBtn(); draw();
 }
@@ -940,10 +945,11 @@ function calcMats(){
     if(rType===2) tr+=pp/100;
     let totalC=faces.reduce((s,f)=>s+f.n,0)+2;
 
-    // ▼ 中脊柱高度（雙斜）：只用建物本身尺寸（不含延伸），整數化後 600/2=300 × sr/10
+    // ▼ 中柱高度（雙斜）：只用建物本身尺寸（不含延伸），整數化後 600/2=300 × sr/10
+    //   「中柱」＝墊高用的支撐柱（結構材），跟「中脊」（雙斜屋脊收邊配件，isLiuli/ridgeType那段）是兩回事，命名不要混用
     let halfWallCm = dir==='col' ? (bd/2) : (bw/2);
     let ridgeH = rType===2 ? Math.round(halfWallCm * sr / 10) : 0;
-    // ▼ 高邊墊高（單斜）：單斜沒有中脊，但仍要一邊墊高才有排水坡度，
+    // ▼ 中柱高（單斜）：單斜沒有中脊配件，但仍要一邊墊高（中柱）才有排水坡度，
     //   用建物本身「整個」跨距（不像雙斜只算一半）× sr/10
     let fullWallCm = dir==='col' ? bd : bw;
     let highSideH = rType===1 ? Math.round(fullWallCm * sr / 10) : 0;
@@ -1016,11 +1022,11 @@ function calcMats(){
       let halfCm = r.dir==='col' ? parseInt(r.bwLabel.split('×')[1])/2
                                   : parseInt(r.bwLabel.split('×')[0])/2;
       h+=`<div style="color:#ffcc44;font-size:13px;margin-top:6px;">
-        🏔 中脊柱高 ${r.ridgeH} cm（${halfCm}cm × ${sr}/10）
+        🏔 中柱高 ${r.ridgeH} cm（${halfCm}cm × ${sr}/10）
       </div>`;
     } else {
       h+=`<div style="color:#ffcc44;font-size:13px;margin-top:6px;">
-        📐 高邊墊高 ${r.highSideH} cm（${r.fullWallCm}cm × ${sr}/10，無中脊但仍需墊高排水）
+        📐 中柱高 ${r.highSideH} cm（${r.fullWallCm}cm × ${sr}/10，單斜無中脊板但仍需中柱墊高排水）
       </div>`;
     }
 
@@ -1035,8 +1041,8 @@ function calcMats(){
       copyLines.push(`  ${f.label} ${f.railCm}cm × ${f.n}隻（間距${f.space}cm）`);
       copyLines.push(`  浪板 ${f.flatCm}cm × ${r.pcsPerFace}片`);
     });
-    if(rType===2) copyLines.push(`  中脊柱高 ${r.ridgeH}cm`);
-    else copyLines.push(`  高邊墊高 ${r.highSideH}cm`);
+    if(rType===2) copyLines.push(`  中柱高 ${r.ridgeH}cm`);
+    else copyLines.push(`  中柱高 ${r.highSideH}cm`);
     copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.totalC}隻`);
     copyLines.push('');
   });
@@ -1050,10 +1056,10 @@ function calcMats(){
     if(rType===2){
       let ridgeColNote = r.ridgeColManual ? `手動標記 ${r.ridgeColN} 組` : `自動計算 ${r.ridgeColN} 組`;
       h+=`<div class="mat-row">
-        <span class="mat-lbl">中脊柱 ${r.ridgeH}cm（${ridgeColNote}）</span>
+        <span class="mat-lbl">中柱 ${r.ridgeH}cm（${ridgeColNote}）</span>
         <span class="mat-val">${r.ridgeColN} 隻</span>
       </div>`;
-      copyLines.push(`中脊柱 ${r.ridgeH}cm（${ridgeColNote}）：${r.ridgeColN}隻`);
+      copyLines.push(`中柱 ${r.ridgeH}cm（${ridgeColNote}）：${r.ridgeColN}隻`);
 
       let f0=r.faces[0], f1=r.faces[1];
       h+=`<div class="mat-row">
@@ -1070,10 +1076,10 @@ function calcMats(){
     } else {
       let f0=r.faces[0];
       h+=`<div class="mat-row">
-        <span class="mat-lbl">${f0.label}（${r.fullWallCm}cm×${sr}/10高邊墊高${r.highSideH}cm）</span>
+        <span class="mat-lbl">${f0.label}（${r.fullWallCm}cm×${sr}/10中柱高${r.highSideH}cm）</span>
         <span class="mat-val">${f0.railCm}cm　${f0.n}隻　間距${f0.space}cm</span>
       </div>`;
-      copyLines.push(`${f0.label} ${f0.railCm}cm（高邊墊高${r.highSideH}cm）　${f0.n}隻　間距${f0.space}cm`);
+      copyLines.push(`${f0.label} ${f0.railCm}cm（中柱高${r.highSideH}cm）　${f0.n}隻　間距${f0.space}cm`);
     }
     h+=`<div class="mat-row">
       <span class="mat-lbl">橫梁 ${r.perpCm}cm</span>
