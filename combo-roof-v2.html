@@ -159,6 +159,12 @@ a.back:hover { color:#fff; }
     <div class="ctrl-bar">
       <button class="btn-sm" id="btn3dToggle" onclick="toggle3DView()">顯示3D示意圖</button>
     </div>
+    <div id="ctrl3dBar" class="ctrl-bar" style="display:none;">
+      <button class="btn-sm" onclick="rotate3D(-90)">↺ 轉90°</button>
+      <button class="btn-sm" onclick="rotate3D(90)">轉90° ↻</button>
+      <button class="btn-sm" onclick="rotate3D(0,true)">重置角度</button>
+      <span style="color:#666;font-size:12px;">每次轉90°(從另一面看)，比例保證不會跑掉；紅色短柱＝中柱實際落點</span>
+    </div>
     <div id="canvasWrap3d" style="display:none;"><canvas id="cv3d"></canvas></div>
 
     <div id="groupBar" style="display:none;margin-top:8px;align-items:center;gap:8px;">
@@ -1401,22 +1407,27 @@ function showCopyOk(){
 // 簡化版的「牆高＋中柱高/中脊高」尺寸給畫圖用。
 // ══════════════════════════════════════════════════════════════════
 let is3DView=false;
+let _view3DAngle=0; // 使用者用「轉90°」按鈕手動調整的視角(度)，繞Z軸轉，0=預設視角，只允許90°的倍數
 
-// 斜投影公式：y(深度/D方向)往右上角斜移模擬「往畫面裡面延伸」，
-// z(高度)單純往上(不斜移)。這樣牆的垂直邊在畫面上看起來就是真的垂直，
-// 符合直覺的「越高看起來越往上」，不會把高度誤看成深度。
-// x(寬度/W方向)跟y(深度/D方向)刻意套「同一個」k係數壓縮——原本x完全不壓縮、只有y乘k，
-// 導致真實比較長的D邊在螢幕上反而可能畫得比W邊短(每cm的螢幕長度x:y是2:1不對稱)，
-// 使用者光看圖判斷「哪邊比較長」會被騙，這是2026-07-08找出的真正根因。
-// 兩軸套同一個k之後，任兩邊的螢幕長度比例=真實cm比例，圖本身就不會誤導；
-// 角度/k本身還是純美術參數(視覺斜度)，沒有工程精度意義，但軸與軸之間的相對比例是準的。
-// angle原本30°：D邊的300px長度裡有150px是「往上爬」、只有260px是「往右延伸」，
-// 視覺上斜線看起來像在爬升而不是在延伸，即使數學上比較長，肉眼比較還是覺得「不夠長」、
-// 不舒服。angle改小到20°：同樣300px長度變成282px橫向/103px縱向，橫向占比更高，
-// 兩條邊放在一起用眼睛掃過去就能直接感覺出D比W長，3D深度感還在(不是拉成純平面)。
+// 斜投影公式：先把(x,y)繞Z軸轉_view3DAngle度，轉完的(rx,ry)再套用「x/y乘同一個k」的斜投影。
+// 實測過：這個投影公式只有在旋轉角度剛好是90°倍數時，W邊跟D邊的螢幕長度比例才會精確等於
+// 真實cm比例(0°/90°/180°/270°都驗證過)；轉到任意角度(例如45°)比例會跑掉——這是斜投影
+// (不是真等角投影)的數學限制，不是公式沒寫對：只要視角在傾斜(z軸不轉、xy軸有轉)，
+// 螢幕上「同一份長度」在不同方向會被壓縮成不同比例，除非整個換成真等角投影(camera角度另外
+// 選到讓xyz三軸都等比例壓縮)，但那樣連45°對角線方向都還是會跟軸方向不成比例(等角投影只保證
+// 三個座標軸方向等比例，不保證任意方向)。所以按鈕限制成只能90°跳，不做任意角度的自由旋轉，
+// 保證使用者按出來的每一個角度，比例都是對的，不是「大概對」。
+// z(高度)單純往上(不斜移)，旋轉不影響z，牆的垂直邊在任何視角下都還是真的垂直。
 function project3D(x,y,z){
-  const angle=Math.PI/9, k=0.5;
-  return {sx: x*k + y*Math.cos(angle)*k, sy: y*Math.sin(angle)*k - z};
+  const tilt=Math.PI/9, k=0.5;
+  const rot=_view3DAngle*Math.PI/180;
+  let rx = x*Math.cos(rot) - y*Math.sin(rot);
+  let ry = x*Math.sin(rot) + y*Math.cos(rot);
+  return {sx: rx*k + ry*Math.cos(tilt)*k, sy: ry*Math.sin(tilt)*k - z};
+}
+function rotate3D(deltaDeg, reset){
+  _view3DAngle = reset ? 0 : (_view3DAngle + deltaDeg + 360) % 360;
+  draw3D();
 }
 
 // 簡化版屋頂高度計算：邏輯抄自 calcMats() 的 highSideH／ridgeH 公式，
@@ -1435,6 +1446,7 @@ function toggle3DView(){
   is3DView=!is3DView;
   document.getElementById('canvasWrap').style.display = is3DView ? 'none' : '';
   document.getElementById('canvasWrap3d').style.display = is3DView ? '' : 'none';
+  document.getElementById('ctrl3dBar').style.display = is3DView ? '' : 'none';
   document.getElementById('btn3dToggle').textContent = is3DView ? '顯示2D俯視圖' : '顯示3D示意圖';
   if(is3DView) draw3D();
 }
@@ -1535,14 +1547,26 @@ function draw3D(){
       // 單斜：低邊=牆高，高邊=牆高+highSideH。
       // dir='col'→沿D方向傾斜(低邊在uy，高邊在uyy，用bd)；
       // dir='row'→沿W方向傾斜(低邊在ux，高邊在uxx，用bw)
-      let lowMid, highMid, runCm;
+      let lowMid, highMid, runCm, postEnds;
       if(dir==='col'){
         drawQuad([[ux,uy,wallH],[uxx,uy,wallH],[uxx,uyy,wallH+highSideH],[ux,uyy,wallH+highSideH]],roofFill,roofStroke);
         lowMid=[(ux+uxx)/2, uy, wallH]; highMid=[(ux+uxx)/2, uyy, wallH+highSideH]; runCm=ud;
+        postEnds=[[ux,uyy],[uxx,uyy]]; // 高邊的左右兩端＝中柱落點(雙C合併左右各一組)
       } else {
         drawQuad([[ux,uy,wallH],[ux,uyy,wallH],[uxx,uyy,wallH+highSideH],[uxx,uy,wallH+highSideH]],roofFill,roofStroke);
         lowMid=[ux, (uy+uyy)/2, wallH]; highMid=[uxx, (uy+uyy)/2, wallH+highSideH]; runCm=uw;
+        postEnds=[[uxx,uy],[uxx,uyy]];
       }
+      // ▼ 中柱落點：畫在「高邊」的左右兩端，從牆高(wallH)往上頂到牆高+中柱高，
+      // 對應材料清單「中柱...雙C合併左右各一組」的實際位置——不是隨便畫在屋頂中間，
+      // 是真的落在高邊兩端(斜樑落腳處)，讓使用者能直接對照現場要在哪裡立柱。
+      postEnds.forEach(([px,py])=>{
+        let pb=w2p(px,py,wallH), pt=w2p(px,py,wallH+highSideH);
+        ctx.save();
+        ctx.strokeStyle='#ff3b3b'; ctx.lineWidth=4;
+        ctx.beginPath(); ctx.moveTo(pb.px,pb.py); ctx.lineTo(pt.px,pt.py); ctx.stroke();
+        ctx.restore();
+      });
       // ▼ 低邊→高邊畫一條箭頭線，直接印在屋頂斜面上，跟坡道方向重疊——
       // 用戶反應「圖上明明是4米那邊翹高，中柱怎麼還是算600cm那邊」，根源是：
       // 屋頂「翹起來的那條邊」(眼睛看到、覺得被墊高的邊)跟「決定中柱高的那個距離」
