@@ -1432,14 +1432,28 @@ function rotate3D(deltaDeg, reset){
 
 // 簡化版屋頂高度計算：邏輯抄自 calcMats() 的 highSideH／ridgeH 公式，
 // 但這是獨立的一份程式碼，calcMats() 本身一行都沒被動到。
-function calc3DUnitDims(u, unitDefaultDir, rType, sr){
+function calc3DUnitDims(u, unitDefaultDir, rType, sr, ovF, ovB, ovL, ovR){
   let bw=u.w, bd=u.d;
   let dir = u.manual ? u.dir : unitDefaultDir; // 手動分組吃 u.dir，不猜方向；否則吃呼叫端傳入的該群組代表棟自己的dir
   let fullWallCm = dir==='col' ? bd : bw;         // 單斜：整個跨距
   let halfWallCm = dir==='col' ? (bd/2) : (bw/2); // 雙斜：半跨距
   let highSideH = rType===1 ? Math.round(fullWallCm*sr/10) : 0;
   let ridgeH    = rType===2 ? Math.round(halfWallCm*sr/10) : 0;
-  return {dir, highSideH, ridgeH};
+  // ▼ 中脊柱組數：邏輯抄自calcMats()同一段(flatA/flatB用bestCSpacing算n)，
+  // 手動群組如果有落柱標記(ridgeColMarks)就用標記數量，否則用跟calcMats()一樣的公式，
+  // 這樣3D畫出來的紅柱數量才會跟材料清單「中柱...共X組」的數字一致，不是另外亂猜。
+  let ridgeColN=0;
+  if(rType===2){
+    if(u.manual && u.ridgeColMarks && u.ridgeColMarks.length>0){
+      ridgeColN = u.ridgeColMarks.length;
+    } else {
+      let flatA, flatB;
+      if(dir==='col'){ flatA=Math.round(bd/2+ovF); flatB=Math.round(bd/2+ovB); }
+      else { flatA=Math.round(bw/2+ovL); flatB=Math.round(bw/2+ovR); }
+      ridgeColN = Math.max(bestCSpacing(flatA).n, bestCSpacing(flatB).n);
+    }
+  }
+  return {dir, highSideH, ridgeH, ridgeColN};
 }
 
 function toggle3DView(){
@@ -1474,6 +1488,10 @@ function draw3D(){
   let rType    = parseInt(document.getElementById('roofType').value);
   let sr       = parseFloat(document.getElementById('slopeR').value)||1;
   let wallH    = parseFloat(document.getElementById('wallH').value)||250;
+  let ovF=parseInt(document.getElementById('ovF').value)||0;
+  let ovB=parseInt(document.getElementById('ovB').value)||0;
+  let ovL=parseInt(document.getElementById('ovL').value)||0;
+  let ovR=parseInt(document.getElementById('ovR').value)||0;
 
   let roofUnits=groupBuildings(modBuildings);
 
@@ -1487,8 +1505,8 @@ function draw3D(){
 
   let units=roofUnits.map(u=>{
     let bbox=computeBBox(u.members); // 沿用既有的 computeBBox，不重新發明
-    let g=calc3DUnitDims(u,(u.members[0].dir||'col'),rType,sr);
-    return {u, bbox, dir:g.dir, highSideH:g.highSideH, ridgeH:g.ridgeH};
+    let g=calc3DUnitDims(u,(u.members[0].dir||'col'),rType,sr,ovF,ovB,ovL,ovR);
+    return {u, bbox, dir:g.dir, highSideH:g.highSideH, ridgeH:g.ridgeH, ridgeColN:g.ridgeColN};
   });
   let maxRoofH=Math.max(0, ...units.map(g=>Math.max(g.highSideH,g.ridgeH)));
   let maxTotalH=wallH+maxRoofH;
@@ -1524,7 +1542,7 @@ function draw3D(){
 
   ctx.fillStyle='#0e0e0e'; ctx.fillRect(0,0,cv.width,cv.height);
 
-  units.forEach(({u,bbox,dir,highSideH,ridgeH})=>{
+  units.forEach(({u,bbox,dir,highSideH,ridgeH,ridgeColN})=>{
     let{minX:ux,minY:uy,maxX:uxx,maxY:uyy}=bbox;
     let uw=uxx-ux, ud=uyy-uy;
 
@@ -1593,14 +1611,31 @@ function draw3D(){
       ctx.fillStyle='#fff'; ctx.fillText(runText, rmx, rmy);
     } else {
       // 雙斜：中脊在牆高+ridgeH，兩側落到牆高
+      let ridgeStart, ridgeEnd;
       if(dir==='col'){
         let midY=(uy+uyy)/2;
         drawQuad([[ux,uy,wallH],[uxx,uy,wallH],[uxx,midY,wallH+ridgeH],[ux,midY,wallH+ridgeH]],roofFill,roofStroke);
         drawQuad([[ux,midY,wallH+ridgeH],[uxx,midY,wallH+ridgeH],[uxx,uyy,wallH],[ux,uyy,wallH]],roofFill,roofStroke);
+        ridgeStart=[ux,midY]; ridgeEnd=[uxx,midY];
       } else {
         let midX=(ux+uxx)/2;
         drawQuad([[ux,uy,wallH],[ux,uyy,wallH],[midX,uyy,wallH+ridgeH],[midX,uy,wallH+ridgeH]],roofFill,roofStroke);
         drawQuad([[midX,uy,wallH+ridgeH],[midX,uyy,wallH+ridgeH],[uxx,uyy,wallH],[uxx,uy,wallH]],roofFill,roofStroke);
+        ridgeStart=[midX,uy]; ridgeEnd=[midX,uyy];
+      }
+      // ▼ 中脊柱落點：沿中脊線(從一端到另一端)平均分布ridgeColN組，從牆高頂到牆高+ridgeH——
+      // 組數用跟calcMats()同一套公式(見calc3DUnitDims)，不是另外亂猜，紅柱數量要能跟材料
+      // 清單「中柱...共X組」對得起來。單斜之前只做了左右各一組(固定2支)的紅柱，雙斜這裡補上。
+      let ncol=Math.max(2,ridgeColN);
+      for(let i=0;i<ncol;i++){
+        let t=ncol===1?0.5:i/(ncol-1);
+        let px=ridgeStart[0]+(ridgeEnd[0]-ridgeStart[0])*t;
+        let py=ridgeStart[1]+(ridgeEnd[1]-ridgeStart[1])*t;
+        let pb=w2p(px,py,wallH), pt=w2p(px,py,wallH+ridgeH);
+        ctx.save();
+        ctx.strokeStyle='#ff3b3b'; ctx.lineWidth=4;
+        ctx.beginPath(); ctx.moveTo(pb.px,pb.py); ctx.lineTo(pt.px,pt.py); ctx.stroke();
+        ctx.restore();
       }
     }
 
