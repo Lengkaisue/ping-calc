@@ -217,6 +217,13 @@ a.back:hover { color:#fff; }
       </select>
     </div>
     <div class="row">
+      <label>浪板材質</label>
+      <select id="panelMaterial">
+        <option value="白鐵烤漆">白鐵烤漆</option>
+        <option value="一般">一般</option>
+      </select>
+    </div>
+    <div class="row">
       <label>顏色</label>
       <select id="panelColor">
         <option value="白色">白色</option>
@@ -887,6 +894,7 @@ function calcMats(){
   let sr       = parseFloat(document.getElementById('slopeR').value)||1;
   let globalDir= document.getElementById('roofDir').value; // 沒手動分組的建物吃這個
   let panelType= document.getElementById('panelType').value;
+  let panelMaterial=document.getElementById('panelMaterial').value;
   let panelColor=document.getElementById('panelColor').value;
   let trimMaterial=document.getElementById('trimMaterial').value;
   let cTypeVal = document.getElementById('cType').value;
@@ -995,7 +1003,7 @@ function calcMats(){
     <div class="mat-row"><span class="mat-lbl">屋頂延伸</span><span class="mat-val">${ovNote}</span></div>
     <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">1:${sr}（${(Math.atan(sr/10)*180/Math.PI).toFixed(1)}°）</span></div>
     <div class="mat-row"><span class="mat-lbl">水平面積</span><span class="mat-val">${fm.toFixed(1)} m²（${ping} 坪）</span></div>
-    <div class="mat-row"><span class="mat-lbl">浪板規格</span><span class="mat-val">${panelType}／${panelColor}／${wW}cm寬</span></div>
+    <div class="mat-row"><span class="mat-lbl">浪板規格</span><span class="mat-val">${panelType}（${panelMaterial}）／${panelColor}／${wW}cm寬</span></div>
     <hr style="border-color:#333;margin:10px 0;">`;
 
   copyLines.push(`組合屋：${modBuildings.length}間${unitNote}　${slopeDir}　${rType===1?'單斜':'雙斜'}`);
@@ -1097,10 +1105,10 @@ function calcMats(){
   bldRows.forEach(r=>{
     r.faces.forEach(f=>{
       h+=`<div class="mat-row">
-        <span class="mat-lbl">浪板 ${f.flatCm}cm　${panelType}／${panelColor}</span>
+        <span class="mat-lbl">浪板 ${f.flatCm}cm　${panelType}（${panelMaterial}）／${panelColor}</span>
         <span class="mat-val">${r.pcsPerFace} 片</span>
       </div>`;
-      copyLines.push(`浪板 ${f.flatCm}cm ${panelType}/${panelColor}：${r.pcsPerFace}片`);
+      copyLines.push(`浪板 ${f.flatCm}cm ${panelType}(${panelMaterial})/${panelColor}：${r.pcsPerFace}片`);
     });
   });
 
