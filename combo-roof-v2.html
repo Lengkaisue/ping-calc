@@ -1378,6 +1378,21 @@ function calcMats(){
   }
 
   h+=`</div>`;
+
+  // ── 螺絲 / 釘（v1 舊版已定案的固定包數規則，v2 建置時漏搬過來，2026-07-08補上，
+  //   單斜雙斜共用同一套，不分rType） ──
+  h+=`<div style="background:#141414;border:1px solid #444;border-radius:8px;padding:12px;margin:10px 0;">`;
+  h+=`<div style="color:#fff;font-size:14px;font-weight:bold;margin-bottom:10px;">🔧 螺絲 / 釘</div>`;
+  let panelScrewSize = panelType==='琉璃瓦' ? '3.5"' : '2"';
+  h+=`<div class="mat-row"><span class="mat-lbl">${panelScrewSize} 白鐵頭自攻螺絲（${panelType}浪板用）</span><span class="mat-val">3 包</span></div>`;
+  h+=`<div class="mat-row"><span class="mat-lbl">1" 自攻螺絲（C型鋼架接合）</span><span class="mat-val">1 包</span></div>`;
+  h+=`<div class="mat-row"><span class="mat-lbl">1" 尖釘（封邊/收頭）</span><span class="mat-val">1 包</span></div>`;
+  h+=`</div>`;
+  copyLines.push('--- 螺絲/釘 ---');
+  copyLines.push(`${panelScrewSize} 白鐵頭自攻螺絲（${panelType}浪板用）：3包`);
+  copyLines.push('1" 自攻螺絲（C型鋼架接合）：1包');
+  copyLines.push('1" 尖釘（封邊/收頭）：1包');
+
   h+=`<div style="color:#555;font-size:12px;margin-top:8px;">⚠️ 估算值，施工前請現場核對</div>`;
 
   document.getElementById('matResult').innerHTML=h;
