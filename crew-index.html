@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>出工分工表 歷史紀錄</title>
+<style>
+  :root{
+    --paper:#F5F2EC; --ink:#24211D; --ink-soft:#5A554C; --line:#DAD3C6; --card:#FFFFFF;
+    --accent:#E2571C;
+    --shadow: 0 1px 2px rgba(36,33,29,.06), 0 4px 14px rgba(36,33,29,.06);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:-apple-system,"Segoe UI",system-ui,"PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.5;}
+  .wrap{max-width:680px;margin:0 auto;padding:24px 16px 60px;}
+  h1{font-size:clamp(20px,5vw,26px);font-weight:800;margin:0 0 6px;}
+  p.sub{color:var(--ink-soft);font-size:14px;margin:0 0 24px;}
+  ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+  li{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);
+     padding:14px 16px;display:flex;flex-direction:column;gap:4px;}
+  .date{font-weight:800;font-size:15px;}
+  .job{color:var(--ink-soft);font-size:13.5px;}
+  a.link{color:var(--accent);font-weight:700;font-size:13.5px;text-decoration:none;margin-top:4px;}
+  a.link:hover{text-decoration:underline;}
+  footer{margin-top:28px;font-size:12.5px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>出工分工表 歷史紀錄</h1>
+  <p class="sub">每天出工的材料分工表，手機直接開，不用登入。</p>
+  <ul>
+    <li>
+      <span class="date">7/15（三）</span>
+      <span class="job">4×6 組合屋一組 · 稜凱／楊善／志豪／鈞洋／皓皓</span>
+      <a class="link" href="crew-2026-07-15.html">開啟當天分工表 →</a>
+    </li>
+  </ul>
+  <footer>
+    之後每天做新的分工表，這頁會補上新的一行。
+  </footer>
+</div>
+</body>
+</html>
