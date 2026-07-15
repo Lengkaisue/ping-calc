@@ -1,0 +1,801 @@
+<title>7/16 斜屋頂材料出工 分工表</title>
+<style>
+  :root{
+    --paper:#F5F2EC;
+    --ink:#24211D;
+    --ink-soft:#5A554C;
+    --line:#DAD3C6;
+    --card:#FFFFFF;
+    --accent:#E2571C;
+    --steel:#4C5B66;
+    --khaki:#8A6D3B;
+    --warn:#B23A2E;
+    --ok:#3F7A4E;
+    --shadow: 0 1px 2px rgba(36,33,29,.06), 0 4px 14px rgba(36,33,29,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#1B1917;
+      --ink:#EDE8E0;
+      --ink-soft:#B4ACA0;
+      --line:#3A362F;
+      --card:#242019;
+      --accent:#FF7A3D;
+      --steel:#8FA6B8;
+      --khaki:#C9A15C;
+      --warn:#E2685A;
+      --ok:#7FC28E;
+      --shadow: 0 1px 2px rgba(0,0,0,.35), 0 4px 18px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#1B1917; --ink:#EDE8E0; --ink-soft:#B4ACA0; --line:#3A362F; --card:#242019;
+    --accent:#FF7A3D; --steel:#8FA6B8; --khaki:#C9A15C;
+    --warn:#E2685A; --ok:#7FC28E;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 4px 18px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --paper:#F5F2EC; --ink:#24211D; --ink-soft:#5A554C; --line:#DAD3C6; --card:#FFFFFF;
+    --accent:#E2571C; --steel:#4C5B66; --khaki:#8A6D3B;
+    --warn:#B23A2E; --ok:#3F7A4E;
+    --shadow: 0 1px 2px rgba(36,33,29,.06), 0 4px 14px rgba(36,33,29,.06);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,"Segoe UI",system-ui,"PingFang TC","Microsoft JhengHei",sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:20px 16px 64px;}
+
+  header.job{
+    padding:22px 20px;
+    border-radius:14px;
+    background:var(--card);
+    box-shadow:var(--shadow);
+    border:1px solid var(--line);
+    margin-bottom:18px;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
+    margin:0 0 6px;
+  }
+  h1{
+    margin:0 0 10px;
+    font-size:clamp(22px,6vw,28px);
+    font-weight:800;
+    letter-spacing:-.01em;
+    text-wrap:balance;
+  }
+  .job-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 18px;
+    font-size:14px;
+    color:var(--ink-soft);
+  }
+  .job-meta b{color:var(--ink);font-weight:600;}
+
+  .draft-note{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    padding:12px 14px;
+    border-radius:10px;
+    background:color-mix(in srgb, var(--accent) 12%, var(--card));
+    border:1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin-bottom:18px;
+  }
+  .draft-note b{color:var(--ink);}
+
+  .duty-card{
+    padding:14px 16px;
+    border-radius:12px;
+    background:var(--card);
+    border:1px solid var(--line);
+    box-shadow:var(--shadow);
+    margin-bottom:18px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .duty-icon{font-size:20px;}
+  .duty-text{flex:1;min-width:180px;font-size:14px;}
+  .duty-text b{font-size:15px;}
+  .duty-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .duty-check{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13.5px;
+    font-weight:700;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .duty-check input{width:20px;height:20px;accent-color:var(--ok);}
+  .duty-done{color:var(--ok);}
+
+  .progress{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:22px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .progress .bar{
+    flex:1;
+    height:8px;
+    border-radius:99px;
+    background:var(--line);
+    overflow:hidden;
+  }
+  .progress .bar > i{
+    display:block;
+    height:100%;
+    width:0%;
+    background:var(--accent);
+    transition:width .25s ease;
+  }
+  .progress .count{font-variant-numeric:tabular-nums;white-space:nowrap;}
+
+  .whoami{
+    padding:14px 16px;
+    border-radius:12px;
+    background:var(--card);
+    border:1px solid var(--line);
+    box-shadow:var(--shadow);
+    margin-bottom:18px;
+  }
+  .whoami-label{
+    display:block;
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+  .whoami-chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    font:inherit;
+    font-size:14.5px;
+    font-weight:700;
+    padding:9px 16px;
+    border-radius:99px;
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .chip:hover{border-color:var(--accent);}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .whoami-current{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:14px;
+    color:var(--ink-soft);
+  }
+  .whoami-current b{color:var(--ink);font-size:15px;}
+  .switch-btn{
+    font:inherit;
+    font-size:12.5px;
+    font-weight:700;
+    padding:5px 12px;
+    border-radius:99px;
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .switch-btn:hover{border-color:var(--accent);color:var(--ink);}
+  .lock-hint{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+
+  section.person{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    margin-bottom:16px;
+    overflow:hidden;
+  }
+  .person-head{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 18px;
+    border-left:5px solid var(--accent-p);
+  }
+  .avatar{
+    width:36px;height:36px;border-radius:10px;
+    background:var(--accent-p);
+    color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:15px;
+    flex-shrink:0;
+  }
+  .person-name{font-size:17px;font-weight:800;}
+  .person-role{font-size:12.5px;color:var(--ink-soft);}
+  .person-count{
+    margin-left:auto;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+  .status-badge{
+    font-size:11px;
+    font-weight:700;
+    padding:2px 9px;
+    border-radius:99px;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    margin-left:8px;
+    white-space:nowrap;
+  }
+  .status-badge.badge-submitted{color:var(--ok);border-color:color-mix(in srgb, var(--ok) 55%, var(--line));}
+  .status-badge.badge-missing{color:var(--warn);border-color:color-mix(in srgb, var(--warn) 55%, var(--line));}
+
+  ul.items{list-style:none;margin:0;padding:6px 8px 12px;}
+  ul.items li{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:9px 10px;
+    border-radius:9px;
+  }
+  ul.items li:hover{background:color-mix(in srgb, var(--ink) 4%, transparent);}
+  ul.items input[type="checkbox"]{
+    width:20px;height:20px;
+    flex-shrink:0;
+    accent-color:var(--accent-p);
+    border-radius:5px;
+  }
+  ul.items label{flex:1;font-size:15px;cursor:pointer;}
+  ul.items .qty{
+    font-size:13px;
+    font-variant-numeric:tabular-nums;
+    color:var(--ink-soft);
+    background:color-mix(in srgb, var(--accent-p) 12%, transparent);
+    padding:2px 8px;
+    border-radius:99px;
+    white-space:nowrap;
+  }
+  li.checked label{text-decoration:line-through;color:var(--ink-soft);}
+
+  section.person.locked{opacity:.5;}
+  section.person.locked .items{pointer-events:none;}
+  section.person.locked .submit-area{opacity:.5;pointer-events:none;}
+  section.person.submitted .items{opacity:.7;}
+
+  .submit-area{
+    padding:12px 16px 16px;
+    border-top:1px solid var(--line);
+  }
+  .submit-btn{
+    width:100%;
+    font:inherit;
+    font-weight:800;
+    font-size:15px;
+    padding:12px;
+    border-radius:10px;
+    border:none;
+    background:var(--accent-p);
+    color:#fff;
+    cursor:pointer;
+  }
+  .submit-btn:hover{filter:brightness(1.06);}
+  .submit-result{margin-top:2px;}
+  .submit-status{
+    font-size:13.5px;
+    font-weight:700;
+    margin:2px 0 8px;
+    color:var(--ok);
+  }
+  .submit-status.has-missing{color:var(--warn);}
+  .missing-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:10px;
+  }
+  .missing-list span{
+    font-size:12.5px;
+    padding:3px 9px;
+    border-radius:99px;
+    background:color-mix(in srgb, var(--warn) 15%, transparent);
+    color:var(--warn);
+    white-space:nowrap;
+  }
+  .submit-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .copy-btn,.reedit-btn{
+    font:inherit;
+    font-size:12.5px;
+    font-weight:700;
+    padding:7px 14px;
+    border-radius:99px;
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .copy-btn:hover,.reedit-btn:hover{border-color:var(--accent);color:var(--ink);}
+
+  footer{
+    margin-top:24px;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+
+  section.person:nth-of-type(1){--accent-p:var(--accent);}
+  section.person:nth-of-type(2){--accent-p:var(--steel);}
+  section.person:nth-of-type(3){--accent-p:var(--khaki);}
+
+  a{color:var(--accent);}
+</style>
+
+<div class="wrap">
+
+  <header class="job">
+    <p class="eyebrow">明日出工 · 斜屋頂材料</p>
+    <h1>斜屋頂工程 材料出工分工表</h1>
+    <div class="job-meta">
+      <span>地點 <b>先到漢將載料</b></span>
+      <span>人力 <b>3 人</b></span>
+      <span>日期 <b id="jobDateLabel">7/16（四）</b></span>
+    </div>
+  </header>
+
+  <div class="draft-note">
+    <span>📋</span>
+    <span><b>皓皓、鈞洋另外去路竹</b>（卡扣地板／矽利康／庫板縫收邊），今天這張只列漢將載料這三人的分工，要調整隨時跟我說。</span>
+  </div>
+
+  <div class="duty-card">
+    <span class="duty-icon">🔑</span>
+    <div class="duty-text">
+      <div>今日工具室關門值日生：<b id="dutyName">—</b></div>
+      <div class="duty-sub">輪流制，每天自動換下一位</div>
+    </div>
+    <label class="duty-check">
+      <input type="checkbox" id="dutyCheckbox">
+      <span id="dutyCheckLabel">已檢查關門</span>
+    </label>
+  </div>
+
+  <div class="whoami" id="whoamiBar">
+    <span class="whoami-label" id="whoamiLabel">你是哪一位？選了才能勾自己那組，避免亂按到別人的。</span>
+    <div class="whoami-chips" id="whoamiChips">
+      <button type="button" class="chip" data-who="lengkai">稜凱</button>
+      <button type="button" class="chip" data-who="yangshan">楊善</button>
+      <button type="button" class="chip" data-who="zhihao">志豪</button>
+    </div>
+    <div class="whoami-current" id="whoamiCurrent" hidden>
+      <span>目前身份：<b id="whoamiCurrentName"></b>（其他組唯讀）</span>
+      <button type="button" class="switch-btn" id="switchBtn">切換身份</button>
+    </div>
+  </div>
+
+  <div class="progress">
+    <span class="count" id="progressCount">0 / 39</span>
+    <div class="bar"><i id="progressBar"></i></div>
+  </div>
+
+  <section class="person" data-person="lengkai">
+    <div class="person-head">
+      <div class="avatar">稜</div>
+      <div>
+        <div class="person-name">稜凱</div>
+        <div class="person-role">電料組</div>
+      </div>
+      <div class="person-count" data-count></div>
+      <span class="status-badge" hidden></span>
+    </div>
+    <ul class="items">
+      <li><input type="checkbox"><label>40W</label><span class="qty">2顆</span></li>
+      <li><input type="checkbox"><label>開關</label><span class="qty">1盒</span></li>
+      <li><input type="checkbox"><label>插座</label><span class="qty">2盒</span></li>
+      <li><input type="checkbox"><label>盲蓋</label><span class="qty">3盒</span></li>
+      <li><input type="checkbox"><label>壓條</label><span class="qty">1箱</span></li>
+      <li><input type="checkbox"><label>聯明盒</label><span class="qty">1箱</span></li>
+      <li><input type="checkbox"><label>四分CD管（管夾）</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>彈擊棒</label><span class="qty">1</span></li>
+      <li><input type="checkbox"><label>電箱</label><span class="qty">1</span></li>
+      <li><input type="checkbox"><label>紅白色線</label><span class="qty">各2</span></li>
+      <li><input type="checkbox"><label>地線</label><span class="qty">2</span></li>
+      <li><input type="checkbox"><label>配電螺絲盒</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>Breaker 2P-50A</label><span class="qty">1顆</span></li>
+      <li><input type="checkbox"><label>Breaker 2P-20A</label><span class="qty">1顆</span></li>
+      <li><input type="checkbox"><label>Breaker 1P-20A</label><span class="qty">2顆</span></li>
+      <li><input type="checkbox"><label>5.5平方絞線</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>端子</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>壓接鉗</label><span class="qty">一式</span></li>
+    </ul>
+    <div class="submit-area">
+      <button type="button" class="submit-btn">檢查完送出</button>
+      <div class="submit-result" hidden>
+        <p class="submit-status"></p>
+        <div class="missing-list"></div>
+        <div class="submit-actions">
+          <button type="button" class="copy-btn">複製清單傳LINE</button>
+          <button type="button" class="reedit-btn">重新編輯</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="person" data-person="zhihao">
+    <div class="person-head">
+      <div class="avatar">志</div>
+      <div>
+        <div class="person-name">志豪</div>
+        <div class="person-role">C型鋼＋白鐵板材／五金組</div>
+      </div>
+      <div class="person-count" data-count></div>
+      <span class="status-badge" hidden></span>
+    </div>
+    <ul class="items">
+      <li><input type="checkbox"><label>C型鋼100型2.3（4650mm）</label><span class="qty">4隻</span></li>
+      <li><input type="checkbox"><label>C型鋼100型2.3（200mm）</label><span class="qty">4隻</span></li>
+      <li><input type="checkbox"><label>C型鋼100型2.3（6600mm）</label><span class="qty">8隻</span></li>
+      <li><input type="checkbox"><label>五溝清版（白鐵烤漆）鐵灰色（4800mm）</label><span class="qty">9片</span></li>
+      <li><input type="checkbox"><label>包角（白鐵烤漆）鐵灰色（3400mm）</label><span class="qty">2</span></li>
+      <li><input type="checkbox"><label>包角（白鐵烤漆）鐵灰色（4900mm）</label><span class="qty">2</span></li>
+      <li><input type="checkbox"><label>白鐵自攻牙2.5"</label><span class="qty">2包</span></li>
+      <li><input type="checkbox"><label>白鐵自攻牙1"</label><span class="qty">1包</span></li>
+      <li><input type="checkbox"><label>白鐵尖釘1"</label><span class="qty">1包</span></li>
+    </ul>
+    <div class="submit-area">
+      <button type="button" class="submit-btn">檢查完送出</button>
+      <div class="submit-result" hidden>
+        <p class="submit-status"></p>
+        <div class="missing-list"></div>
+        <div class="submit-actions">
+          <button type="button" class="copy-btn">複製清單傳LINE</button>
+          <button type="button" class="reedit-btn">重新編輯</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="person" data-person="yangshan">
+    <div class="person-head">
+      <div class="avatar">楊</div>
+      <div>
+        <div class="person-name">楊善</div>
+        <div class="person-role">屋頂／天花板／工具其他組</div>
+      </div>
+      <div class="person-count" data-count></div>
+      <span class="status-badge" hidden></span>
+    </div>
+    <ul class="items">
+      <li><input type="checkbox"><label>屋頂</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>天花板</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>封口板</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>鐵灰矽利康</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>固定座C鋼</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>內扣阿</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>電鑽</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>壁虎</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>電焊機</label><span class="qty">2組</span></li>
+      <li><input type="checkbox"><label>屋頂用短方管</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>門（鎖頭）</label><span class="qty">2個</span></li>
+      <li><input type="checkbox"><label>窗戶</label><span class="qty">2個</span></li>
+    </ul>
+    <div class="submit-area">
+      <button type="button" class="submit-btn">檢查完送出</button>
+      <div class="submit-result" hidden>
+        <p class="submit-status"></p>
+        <div class="missing-list"></div>
+        <div class="submit-actions">
+          <button type="button" class="copy-btn">複製清單傳LINE</button>
+          <button type="button" class="reedit-btn">重新編輯</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    勾選只存在「這支手機的瀏覽器」裡，重新整理不會消失，但不會即時同步給其他人的手機看到；換裝置或清瀏覽器資料會歸零。身份鎖定是防手滑用，不是帳號密碼那種保護，選錯了按「切換身份」就能改。<br>
+    每組檢查完按「檢查完送出」：沒勾的項目會列成缺料清單、按「複製清單傳LINE」貼到工班群組；送出後那組會鎖定不能再改，要改要按「重新編輯」。缺料清單只反映這支手機自己勾過的紀錄。<br>
+    工具室關門值日生是五人輪流制（稜凱→楊善→志豪→鈞洋→皓皓→稜凱...），每天換下一位，跟這天出工名單無關；勾「已檢查關門」只會記在這支手機上。
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var STORAGE_KEY = 'crew-2026-07-16-items-v1';
+  var WHOAMI_KEY = 'ping-calc-crew-whoami-v1';
+  var SUBMIT_KEY = 'crew-2026-07-16-submit-v1';
+  var PERSON_NAMES = {
+    lengkai:'稜凱', yangshan:'楊善', zhihao:'志豪', junyang:'鈞洋', haohao:'皓皓'
+  };
+  var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.items input[type="checkbox"]'));
+
+  function itemKey(cb){
+    var section = cb.closest('section.person');
+    var label = cb.nextElementSibling.textContent.trim();
+    return section.dataset.person + '::' + label;
+  }
+
+  function load(){
+    try{
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    }catch(e){ return {}; }
+  }
+
+  function save(state){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function updateProgress(){
+    var total = checkboxes.length;
+    var done = checkboxes.filter(function(cb){ return cb.checked; }).length;
+    document.getElementById('progressCount').textContent = done + ' / ' + total;
+    document.getElementById('progressBar').style.width = (total ? (done/total*100) : 0) + '%';
+
+    document.querySelectorAll('section.person').forEach(function(section){
+      var items = Array.prototype.slice.call(section.querySelectorAll('input[type="checkbox"]'));
+      var d = items.filter(function(cb){ return cb.checked; }).length;
+      section.querySelector('[data-count]').textContent = d + ' / ' + items.length;
+    });
+  }
+
+  var state = load();
+  checkboxes.forEach(function(cb){
+    var key = itemKey(cb);
+    if(state[key]){
+      cb.checked = true;
+      cb.closest('li').classList.add('checked');
+    }
+    cb.addEventListener('change', function(){
+      var k = itemKey(cb);
+      state[k] = cb.checked;
+      save(state);
+      cb.closest('li').classList.toggle('checked', cb.checked);
+      updateProgress();
+    });
+  });
+
+  updateProgress();
+
+  // ---- 身份鎖定：選了才能勾自己那組，其他組唯讀，防止亂按 ----
+  var chipsEl = document.getElementById('whoamiChips');
+  var currentEl = document.getElementById('whoamiCurrent');
+  var currentNameEl = document.getElementById('whoamiCurrentName');
+  var labelEl = document.getElementById('whoamiLabel');
+  var switchBtn = document.getElementById('switchBtn');
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section.person'));
+  var jobDateLabel = (document.getElementById('jobDateLabel') || {}).textContent || '';
+
+  var submits = (function(){
+    try{ return JSON.parse(localStorage.getItem(SUBMIT_KEY) || '{}'); }catch(e){ return {}; }
+  })();
+  function saveSubmits(s){
+    localStorage.setItem(SUBMIT_KEY, JSON.stringify(s));
+  }
+
+  function updateBadge(section){
+    var person = section.dataset.person;
+    var badge = section.querySelector('.status-badge');
+    var sub = submits[person];
+    if(sub){
+      badge.hidden = false;
+      badge.textContent = sub.missing.length
+        ? ('已送出・缺' + sub.missing.length + '項')
+        : ('已送出・齊全');
+      badge.className = 'status-badge ' + (sub.missing.length ? 'badge-missing' : 'badge-submitted');
+    } else if(section.classList.contains('locked')){
+      badge.hidden = false;
+      badge.textContent = '唯讀';
+      badge.className = 'status-badge';
+    } else {
+      badge.hidden = true;
+    }
+  }
+
+  function renderSubmitResult(section, missing, time){
+    var resultEl = section.querySelector('.submit-result');
+    var statusEl = section.querySelector('.submit-status');
+    var listEl = section.querySelector('.missing-list');
+    listEl.innerHTML = '';
+    if(missing.length === 0){
+      statusEl.textContent = '已送出（' + time + '）全部帶齊，沒有缺料。';
+      statusEl.classList.remove('has-missing');
+    } else {
+      statusEl.textContent = '已送出（' + time + '）還有 ' + missing.length + ' 項沒帶／沒完成：';
+      statusEl.classList.add('has-missing');
+      missing.forEach(function(m){
+        var tag = document.createElement('span');
+        tag.textContent = m;
+        listEl.appendChild(tag);
+      });
+    }
+    resultEl.hidden = false;
+    section.querySelector('.submit-btn').hidden = true;
+  }
+
+  function timeNow(){
+    var d = new Date();
+    return d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
+  }
+
+  function collectMissing(section){
+    var missing = [];
+    section.querySelectorAll('.items > li').forEach(function(li){
+      var cb = li.querySelector('input[type="checkbox"]');
+      if(!cb || cb.checked) return;
+      var label = li.querySelector('label').textContent.trim();
+      var qty = li.querySelector('.qty').textContent.trim();
+      missing.push(label + '（' + qty + '）');
+    });
+    return missing;
+  }
+
+  function copyText(section){
+    var person = section.dataset.person;
+    var sub = submits[person];
+    if(!sub) return;
+    var personName = PERSON_NAMES[person] || person;
+    var text = jobDateLabel + ' ' + personName + '\n' +
+      (sub.missing.length ? '還沒帶：\n- ' + sub.missing.join('\n- ') : '全部帶齊，沒有缺料');
+    var btn = section.querySelector('.copy-btn');
+    var reset = function(){ btn.textContent = '複製清單傳LINE'; };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        btn.textContent = '已複製 ✓';
+        setTimeout(reset, 1600);
+      });
+    }
+  }
+
+  sections.forEach(function(section){
+    var submitBtn = section.querySelector('.submit-btn');
+    var copyBtn = section.querySelector('.copy-btn');
+    var reeditBtn = section.querySelector('.reedit-btn');
+
+    submitBtn.addEventListener('click', function(){
+      var missing = collectMissing(section);
+      var time = timeNow();
+      section.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ cb.disabled = true; });
+      section.classList.add('submitted');
+      submits[section.dataset.person] = { time: time, missing: missing };
+      saveSubmits(submits);
+      renderSubmitResult(section, missing, time);
+      updateBadge(section);
+    });
+
+    copyBtn.addEventListener('click', function(){ copyText(section); });
+
+    reeditBtn.addEventListener('click', function(){
+      delete submits[section.dataset.person];
+      saveSubmits(submits);
+      section.classList.remove('submitted');
+      section.querySelector('.submit-result').hidden = true;
+      section.querySelector('.submit-btn').hidden = false;
+      updateBadge(section);
+      applyLock(localStorage.getItem(WHOAMI_KEY));
+    });
+
+    var existing = submits[section.dataset.person];
+    if(existing){
+      section.classList.add('submitted');
+      section.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ cb.disabled = true; });
+      renderSubmitResult(section, existing.missing, existing.time);
+    }
+    updateBadge(section);
+  });
+
+  function applyLock(who){
+    sections.forEach(function(section){
+      var mine = who && section.dataset.person === who;
+      var isSubmitted = section.classList.contains('submitted');
+      section.classList.toggle('locked', !mine);
+      section.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
+        cb.disabled = !mine || isSubmitted;
+      });
+      updateBadge(section);
+    });
+  }
+
+  function renderWhoami(who){
+    if(who){
+      chipsEl.hidden = true;
+      currentEl.hidden = false;
+      currentNameEl.textContent = PERSON_NAMES[who] || who;
+      labelEl.hidden = true;
+    } else {
+      chipsEl.hidden = false;
+      currentEl.hidden = true;
+      labelEl.hidden = false;
+    }
+  }
+
+  function setWhoami(who){
+    localStorage.setItem(WHOAMI_KEY, who);
+    renderWhoami(who);
+    applyLock(who);
+  }
+
+  chipsEl.addEventListener('click', function(e){
+    var btn = e.target.closest('.chip');
+    if(!btn) return;
+    setWhoami(btn.dataset.who);
+  });
+
+  switchBtn.addEventListener('click', function(){
+    localStorage.removeItem(WHOAMI_KEY);
+    renderWhoami(null);
+    applyLock(null);
+  });
+
+  var savedWho = localStorage.getItem(WHOAMI_KEY);
+  // 若之前存的身份今天沒出工（不在名單裡），視同未選
+  if(savedWho && !PERSON_NAMES.hasOwnProperty(savedWho)){ savedWho = null; }
+  if(savedWho && !document.querySelector('section.person[data-person="' + savedWho + '"]')){ savedWho = null; }
+  renderWhoami(savedWho);
+  applyLock(savedWho);
+
+  // ---- 工具室關門值日生：五人輪流制，跨天用同網域 localStorage 記錄 ----
+  (function(){
+    var ROSTER = ['lengkai','yangshan','zhihao','junyang','haohao'];
+    var DUTY_KEY = 'ping-calc-toolroom-duty-v1';
+    var todayStr = '2026-07-16';
+
+    function loadDuty(){
+      try{ return JSON.parse(localStorage.getItem(DUTY_KEY) || '{}'); }catch(e){ return {}; }
+    }
+    function saveDuty(d){ localStorage.setItem(DUTY_KEY, JSON.stringify(d)); }
+
+    var duty = loadDuty();
+    if(!duty.history) duty.history = {};
+
+    if(!duty.history[todayStr]){
+      var dates = Object.keys(duty.history).sort();
+      var nextIndex = 0;
+      if(dates.length){
+        var lastDate = dates[dates.length - 1];
+        nextIndex = (duty.history[lastDate].index + 1) % ROSTER.length;
+      }
+      duty.history[todayStr] = { index: nextIndex, checked: false };
+      saveDuty(duty);
+    }
+
+    var todayEntry = duty.history[todayStr];
+    var dutyPerson = ROSTER[todayEntry.index];
+    document.getElementById('dutyName').textContent = PERSON_NAMES[dutyPerson] || dutyPerson;
+
+    var dutyCheckbox = document.getElementById('dutyCheckbox');
+    var dutyCheckLabel = document.getElementById('dutyCheckLabel');
+    function renderDutyChecked(checked){
+      dutyCheckbox.checked = checked;
+      dutyCheckLabel.textContent = checked ? '已檢查關門 ✓' : '已檢查關門';
+      dutyCheckLabel.classList.toggle('duty-done', checked);
+    }
+    renderDutyChecked(!!todayEntry.checked);
+
+    dutyCheckbox.addEventListener('change', function(){
+      duty.history[todayStr].checked = dutyCheckbox.checked;
+      saveDuty(duty);
+      renderDutyChecked(dutyCheckbox.checked);
+    });
+  })();
+})();
+</script>
