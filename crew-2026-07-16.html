@@ -9,6 +9,8 @@
     --accent:#E2571C;
     --steel:#4C5B66;
     --khaki:#8A6D3B;
+    --olive:#6B7B4F;
+    --rust:#8B4A3D;
     --warn:#B23A2E;
     --ok:#3F7A4E;
     --shadow: 0 1px 2px rgba(36,33,29,.06), 0 4px 14px rgba(36,33,29,.06);
@@ -23,6 +25,8 @@
       --accent:#FF7A3D;
       --steel:#8FA6B8;
       --khaki:#C9A15C;
+      --olive:#9AAD76;
+      --rust:#C97B6A;
       --warn:#E2685A;
       --ok:#7FC28E;
       --shadow: 0 1px 2px rgba(0,0,0,.35), 0 4px 18px rgba(0,0,0,.35);
@@ -30,13 +34,13 @@
   }
   :root[data-theme="dark"]{
     --paper:#1B1917; --ink:#EDE8E0; --ink-soft:#B4ACA0; --line:#3A362F; --card:#242019;
-    --accent:#FF7A3D; --steel:#8FA6B8; --khaki:#C9A15C;
+    --accent:#FF7A3D; --steel:#8FA6B8; --khaki:#C9A15C; --olive:#9AAD76; --rust:#C97B6A;
     --warn:#E2685A; --ok:#7FC28E;
     --shadow: 0 1px 2px rgba(0,0,0,.35), 0 4px 18px rgba(0,0,0,.35);
   }
   :root[data-theme="light"]{
     --paper:#F5F2EC; --ink:#24211D; --ink-soft:#5A554C; --line:#DAD3C6; --card:#FFFFFF;
-    --accent:#E2571C; --steel:#4C5B66; --khaki:#8A6D3B;
+    --accent:#E2571C; --steel:#4C5B66; --khaki:#8A6D3B; --olive:#6B7B4F; --rust:#8B4A3D;
     --warn:#B23A2E; --ok:#3F7A4E;
     --shadow: 0 1px 2px rgba(36,33,29,.06), 0 4px 14px rgba(36,33,29,.06);
   }
@@ -346,6 +350,8 @@
   section.person:nth-of-type(1){--accent-p:var(--accent);}
   section.person:nth-of-type(2){--accent-p:var(--steel);}
   section.person:nth-of-type(3){--accent-p:var(--khaki);}
+  section.person:nth-of-type(4){--accent-p:var(--olive);}
+  section.person:nth-of-type(5){--accent-p:var(--rust);}
 
   a{color:var(--accent);}
 </style>
@@ -357,14 +363,14 @@
     <h1>斜屋頂工程 材料出工分工表</h1>
     <div class="job-meta">
       <span>地點 <b>先到漢將載料</b></span>
-      <span>人力 <b>3 人</b></span>
+      <span>人力 <b>5 人</b></span>
       <span>日期 <b id="jobDateLabel">7/16（四）</b></span>
     </div>
   </header>
 
   <div class="draft-note">
     <span>📋</span>
-    <span><b>皓皓、鈞洋另外去路竹</b>（卡扣地板／矽利康／庫板縫收邊），今天這張只列漢將載料這三人的分工，要調整隨時跟我說。</span>
+    <span>稜凱／楊善／志豪早上先到<b>漢將</b>載斜屋頂材料，<b>鈞洋、皓皓</b>負責收邊黏貼＋油漆料件，要調整隨時跟我說。</span>
   </div>
 
   <div class="duty-card">
@@ -385,6 +391,8 @@
       <button type="button" class="chip" data-who="lengkai">稜凱</button>
       <button type="button" class="chip" data-who="yangshan">楊善</button>
       <button type="button" class="chip" data-who="zhihao">志豪</button>
+      <button type="button" class="chip" data-who="junyang">鈞洋</button>
+      <button type="button" class="chip" data-who="haohao">皓皓</button>
     </div>
     <div class="whoami-current" id="whoamiCurrent" hidden>
       <span>目前身份：<b id="whoamiCurrentName"></b>（其他組唯讀）</span>
@@ -393,7 +401,7 @@
   </div>
 
   <div class="progress">
-    <span class="count" id="progressCount">0 / 39</span>
+    <span class="count" id="progressCount">0 / 44</span>
     <div class="bar"><i id="progressBar"></i></div>
   </div>
 
@@ -487,7 +495,7 @@
     <ul class="items">
       <li><input type="checkbox"><label>屋頂</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>天花板</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>封口板</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>封口板</label><span class="qty">4</span></li>
       <li><input type="checkbox"><label>鐵灰矽利康</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>固定座C鋼</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>內扣阿</label><span class="qty">一式</span></li>
@@ -497,6 +505,61 @@
       <li><input type="checkbox"><label>屋頂用短方管</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>門（鎖頭）</label><span class="qty">2個</span></li>
       <li><input type="checkbox"><label>窗戶</label><span class="qty">2個</span></li>
+    </ul>
+    <div class="submit-area">
+      <button type="button" class="submit-btn">檢查完送出</button>
+      <div class="submit-result" hidden>
+        <p class="submit-status"></p>
+        <div class="missing-list"></div>
+        <div class="submit-actions">
+          <button type="button" class="copy-btn">複製清單傳LINE</button>
+          <button type="button" class="reedit-btn">重新編輯</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="person" data-person="junyang">
+    <div class="person-head">
+      <div class="avatar">鈞</div>
+      <div>
+        <div class="person-name">鈞洋</div>
+        <div class="person-role">收邊/黏貼組</div>
+      </div>
+      <div class="person-count" data-count></div>
+      <span class="status-badge" hidden></span>
+    </div>
+    <ul class="items">
+      <li><input type="checkbox"><label>2cm塑膠壓條</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>紙膠帶</label><span class="qty">一式</span></li>
+    </ul>
+    <div class="submit-area">
+      <button type="button" class="submit-btn">檢查完送出</button>
+      <div class="submit-result" hidden>
+        <p class="submit-status"></p>
+        <div class="missing-list"></div>
+        <div class="submit-actions">
+          <button type="button" class="copy-btn">複製清單傳LINE</button>
+          <button type="button" class="reedit-btn">重新編輯</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="person" data-person="haohao">
+    <div class="person-head">
+      <div class="avatar">皓</div>
+      <div>
+        <div class="person-name">皓皓</div>
+        <div class="person-role">油漆組</div>
+      </div>
+      <div class="person-count" data-count></div>
+      <span class="status-badge" hidden></span>
+    </div>
+    <ul class="items">
+      <li><input type="checkbox"><label>白色油漆</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>香蕉油</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>油漆刷</label><span class="qty">一式</span></li>
     </ul>
     <div class="submit-area">
       <button type="button" class="submit-btn">檢查完送出</button>
