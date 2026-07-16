@@ -576,13 +576,15 @@
   </section>
 
   <footer>
-    勾選只存在「這支手機的瀏覽器」裡，重新整理不會消失，但不會即時同步給其他人的手機看到；換裝置或清瀏覽器資料會歸零。身份鎖定是防手滑用，不是帳號密碼那種保護，選錯了按「切換身份」就能改。<br>
-    每組檢查完按「檢查完送出」：沒勾的項目會列成缺料清單、按「複製清單傳LINE」貼到工班群組；送出後那組會鎖定不能再改，要改要按「重新編輯」。缺料清單只反映這支手機自己勾過的紀錄。<br>
+    勾選會即時同步給其他人的手機看到（需要網路連線）；換裝置或清瀏覽器資料不會影響同步進度，但身份選擇要重選。身份鎖定是防手滑用，不是帳號密碼那種保護，選錯了按「切換身份」就能改。<br>
+    每組檢查完按「檢查完送出」：沒勾的項目會列成缺料清單、按「複製清單傳LINE」貼到工班群組；送出後那組會鎖定不能再改，要改要按「重新編輯」，其他人手機上會同步看到送出狀態。<br>
     工具室關門值日生是五人輪流制（稜凱→楊善→志豪→鈞洋→皓皓→稜凱...），每天換下一位，跟這天出工名單無關；勾「已檢查關門」只會記在這支手機上。
   </footer>
 
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script>
 (function(){
   var STORAGE_KEY = 'crew-2026-07-16-items-v1';
@@ -635,6 +637,7 @@
       save(state);
       cb.closest('li').classList.toggle('checked', cb.checked);
       updateProgress();
+      pushItemState(k, cb.checked);
     });
   });
 
@@ -744,6 +747,7 @@
       saveSubmits(submits);
       renderSubmitResult(section, missing, time);
       updateBadge(section);
+      pushSubmit(section.dataset.person, { time: time, missing: missing });
     });
 
     copyBtn.addEventListener('click', function(){ copyText(section); });
@@ -756,6 +760,7 @@
       section.querySelector('.submit-btn').hidden = false;
       updateBadge(section);
       applyLock(localStorage.getItem(WHOAMI_KEY));
+      pushSubmit(section.dataset.person, null);
     });
 
     var existing = submits[section.dataset.person];
@@ -859,6 +864,94 @@
       duty.history[todayStr].checked = dutyCheckbox.checked;
       saveDuty(duty);
       renderDutyChecked(dutyCheckbox.checked);
+    });
+  })();
+
+  // ---- Firebase即時同步：讓「檢查完送出」跟勾選進度能跨手機互相看到 ----
+  // 只同步「別人那組」給自己看；自己正在填的那組維持本機即時反應，避免遠端回音干擾手感。
+  (function(){
+    var FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDq2fzFAumuwo0N_4Gxgh_P3H3lpC8qdJc",
+      authDomain: "tinan-work.firebaseapp.com",
+      databaseURL: "https://tinan-work-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "tinan-work",
+      storageBucket: "tinan-work.firebasestorage.app",
+      messagingSenderId: "71948183035",
+      appId: "1:71948183035:web:1648a6c75d4e112fa8175e"
+    };
+    var CHART_DATE = '2026-07-16';
+    var chartRef = null;
+
+    try{
+      firebase.initializeApp(FIREBASE_CONFIG);
+      chartRef = firebase.database().ref('crew/' + CHART_DATE);
+    }catch(e){
+      console.warn('Firebase 初始化失敗，改用本機模式（不影響單機使用）', e);
+      return;
+    }
+
+    function sanitizeKey(k){
+      return k.replace(/[.#$\[\]]/g, '_');
+    }
+
+    window.pushItemState = function(key, checked){
+      if(!chartRef) return;
+      chartRef.child('items/' + sanitizeKey(key)).set(checked).catch(function(e){
+        console.warn('同步勾選失敗', e);
+      });
+    };
+
+    window.pushSubmit = function(person, data){
+      if(!chartRef) return;
+      var ref = chartRef.child('submits/' + person);
+      var p = data ? ref.set(data) : ref.remove();
+      p.catch(function(e){ console.warn('同步送出狀態失敗', e); });
+    };
+
+    chartRef.on('value', function(snapshot){
+      var data = snapshot.val() || {};
+      var remoteItems = data.items || {};
+      var remoteSubmits = data.submits || {};
+      var myWho = localStorage.getItem(WHOAMI_KEY);
+
+      sections.forEach(function(section){
+        var person = section.dataset.person;
+        var mine = myWho && person === myWho;
+
+        if(remoteSubmits[person]){
+          submits[person] = remoteSubmits[person];
+        } else {
+          delete submits[person];
+        }
+
+        if(!mine){
+          section.querySelectorAll('input[type="checkbox"]').forEach(function(cb){
+            var k = itemKey(cb);
+            var rv = remoteItems[sanitizeKey(k)];
+            if(rv !== undefined && cb.checked !== rv){
+              cb.checked = rv;
+              cb.closest('li').classList.toggle('checked', rv);
+            }
+          });
+        }
+
+        var existing = submits[person];
+        if(existing){
+          if(!section.classList.contains('submitted')){
+            section.classList.add('submitted');
+            section.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ cb.disabled = true; });
+            renderSubmitResult(section, existing.missing, existing.time);
+          }
+        } else if(section.classList.contains('submitted') && !mine){
+          section.classList.remove('submitted');
+          section.querySelector('.submit-result').hidden = true;
+        }
+        updateBadge(section);
+      });
+      saveSubmits(submits);
+      updateProgress();
+    }, function(err){
+      console.warn('Firebase 讀取失敗，改用本機模式', err);
     });
   })();
 })();
