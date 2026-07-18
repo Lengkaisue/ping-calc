@@ -1082,11 +1082,11 @@ function calcMats(){
 
       // 橫梁(桁條)：沿斜面配置，首隻貼高側邊緣(不縮15)、尾隻在斜樑末端(railCm處，
       // 即滴水側板材懸出15cm的起點)。可用配置長=railCm，只扣滴水單邊15，不是兩端各扣。
-      // 再加1支滴水側收邊料，承接包角包住外露板材——只加低(滴水)側，高側不用加，
-      // 這就是用戶說「單斜橫梁只有單邊」的來源，不是雙斜那種兩端對稱各補1支。
+      // 不另外加滴水側收邊料——用戶現場確認樑上就只塞得下這個等間距算出來的支數(purlinN)，
+      // 尾隻本身已經在滴水側板材懸出的起點(railCm處)，不需要再多一支承接。
       purlinN=Math.max(2, Math.ceil(railCm/80)+1);
       purlinSpace=+(railCm/(purlinN-1)).toFixed(1);
-      purlinTotal=purlinN+1;
+      purlinTotal=purlinN;
     } else {
       // 雙斜：前後各半（或左右各半）
       let flatA, flatB, labelA, labelB;
@@ -1208,7 +1208,7 @@ function calcMats(){
 
     if(rType===1){
       h+=`<div style="color:#888;font-size:13px;margin-top:4px;">
-        橫梁(桁條)：首隻 + ${r.purlinN-1} = ${r.purlinN} 隻（間距 ${r.purlinSpace} cm）＋ 滴水側收邊 1 隻<br>
+        橫梁(桁條)：首隻 + ${r.purlinN-1} = ${r.purlinN} 隻（間距 ${r.purlinSpace} cm）<br>
         總結算：斜樑 ${r.faces[0].n} 隻 ＋ 中柱 ${r.highSideColN} 隻 ＋ 橫梁 ${r.totalC} 隻 = C型鋼共 ${r.faces[0].n+r.highSideColN+r.totalC} 隻
       </div>`;
     } else {
@@ -1230,7 +1230,7 @@ function calcMats(){
       copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.totalC}隻`);
     } else {
       copyLines.push(`  中柱高 ${r.highSideH}cm × ${r.highSideColN}隻（雙C合併左右各一組）`);
-      copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.purlinN}隻（間距${r.purlinSpace}cm）＋滴水側收邊1隻＝共${r.totalC}隻`);
+      copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.totalC}隻（間距${r.purlinSpace}cm）`);
     }
     copyLines.push('');
   });
@@ -1280,10 +1280,10 @@ function calcMats(){
     }
     if(rType===1){
       h+=`<div class="mat-row">
-        <span class="mat-lbl">橫梁(桁條) ${r.perpCm}cm　＋滴水側收邊1隻</span>
-        <span class="mat-val">${r.purlinN}+1＝${r.totalC} 隻　間距${r.purlinSpace}cm</span>
+        <span class="mat-lbl">橫梁(桁條) ${r.perpCm}cm</span>
+        <span class="mat-val">${r.totalC} 隻　間距${r.purlinSpace}cm</span>
       </div>`;
-      copyLines.push(`橫梁 ${r.perpCm}cm：${r.purlinN}隻(間距${r.purlinSpace}cm)＋滴水側收邊1隻＝${r.totalC}隻`);
+      copyLines.push(`橫梁 ${r.perpCm}cm：${r.totalC}隻(間距${r.purlinSpace}cm)`);
     } else {
       h+=`<div class="mat-row">
         <span class="mat-lbl">橫梁 ${r.perpCm}cm</span>
