@@ -1,3 +1,5 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>4×6組合屋(加高20cm) 出工分工表 7/20(一)</title>
 <style>
   :root{
@@ -129,19 +131,27 @@
   .duty-card{
     padding:14px 16px;
     border-radius:12px;
-    background:var(--card);
-    border:1px solid var(--line);
-    box-shadow:var(--shadow);
+    background:color-mix(in srgb, var(--accent) 12%, var(--card));
+    border:2px solid color-mix(in srgb, var(--accent) 50%, var(--line));
+    box-shadow:0 2px 12px color-mix(in srgb, var(--accent) 20%, transparent), var(--shadow);
     margin-bottom:18px;
     display:flex;
     align-items:center;
-    gap:12px;
+    gap:10px;
     flex-wrap:wrap;
   }
-  .duty-icon{font-size:20px;}
-  .duty-text{flex:1;min-width:180px;font-size:14px;}
-  .duty-text b{font-size:15px;}
-  .duty-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .duty-icon{
+    font-size:24px;
+    flex-shrink:0;
+    animation: duty-icon-pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes duty-icon-pulse{
+    0%,100%{ transform:scale(1); opacity:1; }
+    50%{ transform:scale(1.18); opacity:.7; }
+  }
+  .duty-text{flex:1;min-width:150px;font-size:14.5px;font-weight:700;}
+  .duty-text b{font-size:17px;color:var(--accent);}
+  .duty-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;font-weight:400;}
   .duty-marquee{
     overflow:hidden;
     white-space:nowrap;
@@ -164,6 +174,7 @@
   @media (prefers-reduced-motion: reduce){
     .duty-marquee-track{ animation:none; }
     .duty-marquee-item:nth-child(2){ display:none; }
+    .duty-icon{ animation:none; }
   }
   .duty-check{
     display:flex;
