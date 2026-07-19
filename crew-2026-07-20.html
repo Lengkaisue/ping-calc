@@ -148,16 +148,22 @@
     width:100%;
   }
   .duty-marquee-track{
-    display:inline-block;
-    padding-left:100%;
+    display:inline-flex;
+    white-space:nowrap;
+    width:max-content;
     animation: duty-marquee-scroll 14s linear infinite;
+  }
+  .duty-marquee-item{
+    display:inline-block;
+    padding-right:48px;
   }
   @keyframes duty-marquee-scroll{
     0%{ transform:translateX(0); }
-    100%{ transform:translateX(-100%); }
+    100%{ transform:translateX(-50%); }
   }
   @media (prefers-reduced-motion: reduce){
-    .duty-marquee-track{ animation:none; padding-left:0; }
+    .duty-marquee-track{ animation:none; }
+    .duty-marquee-item:nth-child(2){ display:none; }
   }
   .duty-check{
     display:flex;
@@ -440,7 +446,10 @@
   <div class="duty-card">
     <span class="duty-icon">🔑</span>
     <div class="duty-text">
-      <div class="duty-marquee"><div class="duty-marquee-track">今日工具室關門值日生：<b id="dutyName">—</b></div></div>
+      <div class="duty-marquee"><div class="duty-marquee-track">
+        <span class="duty-marquee-item">今日工具室關門值日生：<b id="dutyName">—</b></span>
+        <span class="duty-marquee-item" aria-hidden="true">今日工具室關門值日生：<b id="dutyName2">—</b></span>
+      </div></div>
       <div class="duty-sub">輪流制，每天自動換下一位</div>
     </div>
     <label class="duty-check">
@@ -917,7 +926,9 @@
 
     var todayEntry = duty.history[todayStr];
     var dutyPerson = ROSTER[todayEntry.index];
-    document.getElementById('dutyName').textContent = PERSON_NAMES[dutyPerson] || dutyPerson;
+    var dutyDisplayName = PERSON_NAMES[dutyPerson] || dutyPerson;
+    document.getElementById('dutyName').textContent = dutyDisplayName;
+    document.getElementById('dutyName2').textContent = dutyDisplayName;
 
     var dutyCheckbox = document.getElementById('dutyCheckbox');
     var dutyCheckLabel = document.getElementById('dutyCheckLabel');
