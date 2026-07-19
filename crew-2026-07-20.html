@@ -142,6 +142,23 @@
   .duty-text{flex:1;min-width:180px;font-size:14px;}
   .duty-text b{font-size:15px;}
   .duty-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .duty-marquee{
+    overflow:hidden;
+    white-space:nowrap;
+    width:100%;
+  }
+  .duty-marquee-track{
+    display:inline-block;
+    padding-left:100%;
+    animation: duty-marquee-scroll 14s linear infinite;
+  }
+  @keyframes duty-marquee-scroll{
+    0%{ transform:translateX(0); }
+    100%{ transform:translateX(-100%); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .duty-marquee-track{ animation:none; padding-left:0; }
+  }
   .duty-check{
     display:flex;
     align-items:center;
@@ -423,7 +440,7 @@
   <div class="duty-card">
     <span class="duty-icon">🔑</span>
     <div class="duty-text">
-      <div>今日工具室關門值日生：<b id="dutyName">—</b></div>
+      <div class="duty-marquee"><div class="duty-marquee-track">今日工具室關門值日生：<b id="dutyName">—</b></div></div>
       <div class="duty-sub">輪流制，每天自動換下一位</div>
     </div>
     <label class="duty-check">
