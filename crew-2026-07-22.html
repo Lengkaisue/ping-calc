@@ -822,88 +822,103 @@
   renderWhoami(savedWho);
   applyLock(savedWho);
 
-  // ---- 工具室關門值日生：五人輪流制，跨天用同網域 localStorage 記錄 ----
+  // ---- Firebase 初始化（值日生輪值＋分工表勾選同步共用同一條連線）----
+  var FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDq2fzFAumuwo0N_4Gxgh_P3H3lpC8qdJc",
+    authDomain: "tinan-work.firebaseapp.com",
+    databaseURL: "https://tinan-work-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tinan-work",
+    storageBucket: "tinan-work.firebasestorage.app",
+    messagingSenderId: "71948183035",
+    appId: "1:71948183035:web:1648a6c75d4e112fa8175e"
+  };
+  var CHART_DATE = '2026-07-22';
+  var db = null;
+  var chartRef = null;
+  window.pushItemState = function(){};
+  window.pushSubmit = function(){};
+
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    chartRef = db.ref('crew/' + CHART_DATE);
+  }catch(e){
+    console.warn('Firebase 初始化失敗，改用本機模式（不影響單機使用，但值日生跟跨手機同步會失效）', e);
+  }
+
+  function sanitizeKey(k){
+    return k.replace(/[.#$\[\]]/g, '_');
+  }
+
+  // ---- 工具室關門值日生：五人輪流制，紀錄存Firebase，所有人手機看到同一個人；換成新一天的網址就自動接續輪到下一位、重新從未確認開始 ----
   (function(){
     var ROSTER = ['lengkai','yangshan','zhihao','junyang','haohao'];
     var ALL_NAMES = { lengkai:'稜凱', yangshan:'楊善', zhihao:'志豪', junyang:'鈞洋', haohao:'皓皓' };
-    var DUTY_KEY = 'ping-calc-toolroom-duty-v1';
-    var todayStr = '2026-07-22';
-
-    function loadDuty(){
-      try{ return JSON.parse(localStorage.getItem(DUTY_KEY) || '{}'); }catch(e){ return {}; }
-    }
-    function saveDuty(d){ localStorage.setItem(DUTY_KEY, JSON.stringify(d)); }
-
-    var duty = loadDuty();
-    if(!duty.history) duty.history = {};
-
-    if(!duty.history[todayStr]){
-      var dates = Object.keys(duty.history).sort();
-      var nextIndex = 0;
-      if(dates.length){
-        var lastDate = dates[dates.length - 1];
-        nextIndex = (duty.history[lastDate].index + 1) % ROSTER.length;
-      }
-      duty.history[todayStr] = { index: nextIndex, checked: false };
-      saveDuty(duty);
-    }
-
-    var todayEntry = duty.history[todayStr];
-    var dutyPerson = ROSTER[todayEntry.index];
-    document.getElementById('dutyName').textContent = ALL_NAMES[dutyPerson] || dutyPerson;
-
+    var todayStr = CHART_DATE;
     var dutyCheckbox = document.getElementById('dutyCheckbox');
     var dutyCheckLabel = document.getElementById('dutyCheckLabel');
-    function renderDutyChecked(checked){
-      dutyCheckbox.checked = checked;
+    var dutyNameEl = document.getElementById('dutyName');
+
+    function render(index, checked){
+      var person = ROSTER[index % ROSTER.length];
+      dutyNameEl.textContent = ALL_NAMES[person] || person;
+      dutyCheckbox.checked = !!checked;
       dutyCheckLabel.textContent = checked ? '已檢查關門 ✓' : '已檢查關門';
-      dutyCheckLabel.classList.toggle('duty-done', checked);
+      dutyCheckLabel.classList.toggle('duty-done', !!checked);
     }
-    renderDutyChecked(!!todayEntry.checked);
+
+    if(!db){
+      dutyNameEl.textContent = '（離線，無法同步）';
+      dutyCheckbox.disabled = true;
+      return;
+    }
+
+    var historyRef = db.ref('duty/history');
+    var todayRef = historyRef.child(todayStr);
+
+    historyRef.once('value').then(function(snapshot){
+      var history = snapshot.val() || {};
+      var nextIndex = 0;
+      var pastDates = Object.keys(history).filter(function(d){ return d < todayStr; }).sort();
+      if(pastDates.length){
+        var lastDate = pastDates[pastDates.length - 1];
+        nextIndex = (history[lastDate].index + 1) % ROSTER.length;
+      }
+      return todayRef.transaction(function(current){
+        if(current !== null) return; // 別人已經先建立過今天的紀錄，不要覆蓋
+        return { index: nextIndex, checked: false };
+      });
+    }).catch(function(e){
+      console.warn('讀取值日生紀錄失敗', e);
+    });
+
+    todayRef.on('value', function(snapshot){
+      var entry = snapshot.val();
+      if(!entry) return; // 還在等 transaction 建立今天的紀錄，先不顯示避免閃一下錯的人
+      render(entry.index, entry.checked);
+    }, function(e){
+      console.warn('值日生同步失敗', e);
+    });
 
     dutyCheckbox.addEventListener('change', function(){
-      duty.history[todayStr].checked = dutyCheckbox.checked;
-      saveDuty(duty);
-      renderDutyChecked(dutyCheckbox.checked);
+      todayRef.child('checked').set(dutyCheckbox.checked).catch(function(e){
+        console.warn('同步關門確認失敗', e);
+      });
     });
   })();
 
   // ---- Firebase即時同步：讓「檢查完送出」跟勾選進度能跨手機互相看到 ----
   // 只同步「別人那組」給自己看；自己正在填的那組維持本機即時反應，避免遠端回音干擾手感。
   (function(){
-    var FIREBASE_CONFIG = {
-      apiKey: "AIzaSyDq2fzFAumuwo0N_4Gxgh_P3H3lpC8qdJc",
-      authDomain: "tinan-work.firebaseapp.com",
-      databaseURL: "https://tinan-work-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "tinan-work",
-      storageBucket: "tinan-work.firebasestorage.app",
-      messagingSenderId: "71948183035",
-      appId: "1:71948183035:web:1648a6c75d4e112fa8175e"
-    };
-    var CHART_DATE = '2026-07-22';
-    var chartRef = null;
-
-    try{
-      firebase.initializeApp(FIREBASE_CONFIG);
-      chartRef = firebase.database().ref('crew/' + CHART_DATE);
-    }catch(e){
-      console.warn('Firebase 初始化失敗，改用本機模式（不影響單機使用）', e);
-      return;
-    }
-
-    function sanitizeKey(k){
-      return k.replace(/[.#$\[\]]/g, '_');
-    }
+    if(!chartRef) return;
 
     window.pushItemState = function(key, checked){
-      if(!chartRef) return;
       chartRef.child('items/' + sanitizeKey(key)).set(checked).catch(function(e){
         console.warn('同步勾選失敗', e);
       });
     };
 
     window.pushSubmit = function(person, data){
-      if(!chartRef) return;
       var ref = chartRef.child('submits/' + person);
       var p = data ? ref.set(data) : ref.remove();
       p.catch(function(e){ console.warn('同步送出狀態失敗', e); });
