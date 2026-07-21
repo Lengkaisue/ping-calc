@@ -311,16 +311,6 @@
     white-space:nowrap;
   }
 
-  .new-item-flag{
-    font-size:11px;
-    font-weight:700;
-    padding:2px 8px;
-    border-radius:99px;
-    border:1px solid color-mix(in srgb, var(--ok) 55%, var(--line));
-    color:var(--ok);
-    white-space:nowrap;
-  }
-
   section.person.locked{opacity:.5;}
   section.person.locked .items{pointer-events:none;}
   section.person.locked .submit-area{opacity:.5;pointer-events:none;}
@@ -402,15 +392,10 @@
     <h1>4×6 組合屋 分工表</h1>
     <div class="job-meta">
       <span>棟型 <b>4m×6m 組合屋一組</b></span>
-      <span>人力 <b>4 人（鈞洋今日未出工）</b></span>
+      <span>人力 <b>4 人</b></span>
       <span>日期 <b id="jobDateLabel">7/22（三）</b></span>
     </div>
   </header>
-
-  <div class="draft-note">
-    <span>📋</span>
-    <span><b>鈞洋今天沒上班</b>，他原本的五金雜項＋收尾組料件已併給楊善；新增「固定座鐵片」「抗風柱」「浴室門窗」三項（標<span class="new-item-flag">新增</span>），數量暫填「一式」，實際數量請現場確認調整。</span>
-  </div>
 
   <div class="duty-card">
     <span class="duty-icon">🔑</span>
@@ -542,9 +527,9 @@
       <li><input type="checkbox"><label>大小砂輪片</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>掃把、畚斗、垃圾袋</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>冰桶</label><span class="qty">1個</span></li>
-      <li><input type="checkbox"><label>固定座鐵片</label><span class="qty">4</span><span class="new-item-flag">新增</span></li>
-      <li><input type="checkbox"><label>抗風柱</label><span class="qty">2</span><span class="new-item-flag">新增</span></li>
-      <li><input type="checkbox"><label>浴室門窗</label><span class="qty">一式</span><span class="new-item-flag">新增</span></li>
+      <li><input type="checkbox"><label>固定座鐵片</label><span class="qty">4</span></li>
+      <li><input type="checkbox"><label>抗風柱</label><span class="qty">2</span></li>
+      <li><input type="checkbox"><label>浴室門窗</label><span class="qty">一式</span></li>
     </ul>
     <div class="submit-area">
       <button type="button" class="submit-btn">檢查完送出</button>
@@ -575,8 +560,8 @@
       <li><input type="checkbox"><label>矽利康（白色/淺灰）</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>延長線</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>電動工具</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>電鑽</label><span class="qty">一式</span><span class="new-item-flag">新增</span></li>
-      <li><input type="checkbox"><label>壁虎</label><span class="qty">一式</span><span class="new-item-flag">新增</span></li>
+      <li><input type="checkbox"><label>電鑽</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>壁虎</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>庫板鋸台</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>切台</label><span class="qty">一式</span></li>
     </ul>
@@ -596,8 +581,7 @@
   <footer>
     勾選會即時同步給其他人的手機看到（需要網路連線）；換裝置或清瀏覽器資料不會影響同步進度，但身份選擇要重選。身份鎖定是防手滑用，不是帳號密碼那種保護，選錯了按「切換身份」就能改。<br>
     每組檢查完按「檢查完送出」：沒勾的項目會列成缺料清單、按「複製清單傳LINE」貼到工班群組；送出後那組會鎖定不能再改，要改要按「重新編輯」，其他人手機上會同步看到送出狀態。<br>
-    標「新增」的三項是這次新加的料件，數量暫填一式，實際需要多少請現場確認。<br>
-    工具室關門值日生是五人輪流制（稜凱→楊善→志豪→鈞洋→皓皓→稜凱...），每天換下一位，跟這天出工名單無關（鈞洋今日沒上班不影響值日生輪值）；勾「已檢查關門」只會記在這支手機上。
+    工具室關門值日生是五人輪流制（稜凱→楊善→志豪→鈞洋→皓皓→稜凱...），每天換下一位；勾「已檢查關門」只會記在這支手機上。
   </footer>
 
 </div>
