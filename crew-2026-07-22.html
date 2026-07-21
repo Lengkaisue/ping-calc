@@ -131,6 +131,18 @@
   }
   .duty-check input{width:20px;height:20px;accent-color:var(--ok);}
   .duty-done{color:var(--ok);}
+  .duty-reset-btn{
+    font:inherit;
+    font-size:12px;
+    font-weight:700;
+    padding:5px 12px;
+    border-radius:99px;
+    border:1.5px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .duty-reset-btn:hover{border-color:var(--accent);color:var(--ink);}
 
   .progress{
     display:flex;
@@ -407,6 +419,7 @@
       <input type="checkbox" id="dutyCheckbox">
       <span id="dutyCheckLabel">已檢查關門</span>
     </label>
+    <button type="button" id="dutyResetBtn" class="duty-reset-btn" hidden>解鎖</button>
   </div>
 
   <div class="whoami" id="whoamiBar">
@@ -801,6 +814,7 @@
     localStorage.setItem(WHOAMI_KEY, who);
     renderWhoami(who);
     applyLock(who);
+    if(window.refreshDutyLock) window.refreshDutyLock();
   }
 
   chipsEl.addEventListener('click', function(e){
@@ -813,6 +827,7 @@
     localStorage.removeItem(WHOAMI_KEY);
     renderWhoami(null);
     applyLock(null);
+    if(window.refreshDutyLock) window.refreshDutyLock();
   });
 
   var savedWho = localStorage.getItem(WHOAMI_KEY);
@@ -858,13 +873,18 @@
     var dutyCheckbox = document.getElementById('dutyCheckbox');
     var dutyCheckLabel = document.getElementById('dutyCheckLabel');
     var dutyNameEl = document.getElementById('dutyName');
+    var dutyResetBtn = document.getElementById('dutyResetBtn');
+    var UNLOCK_PASSWORD = '1224';
 
     function render(index, checked){
       var person = ROSTER[index % ROSTER.length];
       dutyNameEl.textContent = ALL_NAMES[person] || person;
       dutyCheckbox.checked = !!checked;
+      dutyCheckbox.disabled = !!checked;
       dutyCheckLabel.textContent = checked ? '已檢查關門 ✓' : '已檢查關門';
       dutyCheckLabel.classList.toggle('duty-done', !!checked);
+      // 解鎖鈕只有選了「稜凱」身份、而且已經打勾鎖定時才會出現
+      dutyResetBtn.hidden = !(checked && localStorage.getItem(WHOAMI_KEY) === 'lengkai');
     }
 
     if(!db){
@@ -892,17 +912,42 @@
       console.warn('讀取值日生紀錄失敗', e);
     });
 
+    var lastEntry = null;
     todayRef.on('value', function(snapshot){
       var entry = snapshot.val();
       if(!entry) return; // 還在等 transaction 建立今天的紀錄，先不顯示避免閃一下錯的人
+      lastEntry = entry;
       render(entry.index, entry.checked);
     }, function(e){
       console.warn('值日生同步失敗', e);
     });
 
+    // 身份切換時（例如切成/切離稜凱）要重新判斷解鎖鈕該不該顯示
+    window.refreshDutyLock = function(){
+      if(lastEntry) render(lastEntry.index, lastEntry.checked);
+    };
+
     dutyCheckbox.addEventListener('change', function(){
-      todayRef.child('checked').set(dutyCheckbox.checked).catch(function(e){
+      if(!dutyCheckbox.checked){
+        // 一般人不能直接點掉勾勾取消確認，強制改回勾選狀態
+        dutyCheckbox.checked = true;
+        return;
+      }
+      todayRef.child('checked').set(true).catch(function(e){
         console.warn('同步關門確認失敗', e);
+      });
+    });
+
+    dutyResetBtn.addEventListener('click', function(){
+      if(localStorage.getItem(WHOAMI_KEY) !== 'lengkai') return;
+      var input = prompt('輸入密碼解鎖：');
+      if(input === null) return;
+      if(input !== UNLOCK_PASSWORD){
+        alert('密碼錯誤');
+        return;
+      }
+      todayRef.child('checked').set(false).catch(function(e){
+        console.warn('解鎖失敗', e);
       });
     });
   })();
