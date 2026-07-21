@@ -439,7 +439,7 @@
   </div>
 
   <div class="progress">
-    <span class="count" id="progressCount">0 / 33</span>
+    <span class="count" id="progressCount">0 / 35</span>
     <div class="bar"><i id="progressBar"></i></div>
   </div>
 
@@ -575,6 +575,8 @@
       <li><input type="checkbox"><label>矽利康（白色/淺灰）</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>延長線</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>電動工具</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>電鑽</label><span class="qty">一式</span><span class="new-item-flag">新增</span></li>
+      <li><input type="checkbox"><label>壁虎</label><span class="qty">一式</span><span class="new-item-flag">新增</span></li>
       <li><input type="checkbox"><label>庫板鋸台</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>切台</label><span class="qty">一式</span></li>
     </ul>
@@ -681,11 +683,12 @@
     var badge = section.querySelector('.status-badge');
     var sub = submits[person];
     if(sub){
+      var missingLen = (sub.missing || []).length;
       badge.hidden = false;
-      badge.textContent = sub.missing.length
-        ? ('已送出・缺' + sub.missing.length + '項')
+      badge.textContent = missingLen
+        ? ('已送出・缺' + missingLen + '項')
         : ('已送出・齊全');
-      badge.className = 'status-badge ' + (sub.missing.length ? 'badge-missing' : 'badge-submitted');
+      badge.className = 'status-badge ' + (missingLen ? 'badge-missing' : 'badge-submitted');
     } else if(section.classList.contains('locked')){
       badge.hidden = false;
       badge.textContent = '唯讀';
@@ -696,6 +699,7 @@
   }
 
   function renderSubmitResult(section, missing, time){
+    missing = missing || [];
     var resultEl = section.querySelector('.submit-result');
     var statusEl = section.querySelector('.submit-status');
     var listEl = section.querySelector('.missing-list');

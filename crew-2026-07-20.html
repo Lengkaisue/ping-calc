@@ -750,11 +750,12 @@
     var badge = section.querySelector('.status-badge');
     var sub = submits[person];
     if(sub){
+      var missingLen = (sub.missing || []).length;
       badge.hidden = false;
-      badge.textContent = sub.missing.length
-        ? ('已送出・缺' + sub.missing.length + '項')
+      badge.textContent = missingLen
+        ? ('已送出・缺' + missingLen + '項')
         : ('已送出・齊全');
-      badge.className = 'status-badge ' + (sub.missing.length ? 'badge-missing' : 'badge-submitted');
+      badge.className = 'status-badge ' + (missingLen ? 'badge-missing' : 'badge-submitted');
     } else if(section.classList.contains('locked')){
       badge.hidden = false;
       badge.textContent = '唯讀';
@@ -765,6 +766,7 @@
   }
 
   function renderSubmitResult(section, missing, time){
+    missing = missing || [];
     var resultEl = section.querySelector('.submit-result');
     var statusEl = section.querySelector('.submit-status');
     var listEl = section.querySelector('.missing-list');
