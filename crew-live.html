@@ -7,6 +7,14 @@
 <link rel="manifest" href="crew-manifest.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23E2571C'/%3E%3Ctext x='50' y='70' font-size='55' text-anchor='middle' fill='white' font-family='sans-serif'%3E%E5%B7%A5%3C/text%3E%3C/svg%3E">
 <title>3×6組合屋 出工分工表</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+  // 在LINE裡點連結打開時，讓畫面用LIFF方式呈現（沒有網址列，右上角✕直接關閉回聊天室）。
+  // 用一般瀏覽器直接開這個網址依然正常可用，liff.init失敗時只是安靜記log，不影響原本功能。
+  liff.init({ liffId: "2010818356-FVp7XCV5" }).catch(function (err) {
+    console.warn("LIFF init failed（可能是在一般瀏覽器打開，非LINE內）", err);
+  });
+</script>
 <style>
   :root{
     --paper:#F5F2EC;
