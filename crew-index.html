@@ -24,12 +24,60 @@
   a.link{color:var(--accent);font-weight:700;font-size:13.5px;text-decoration:none;margin-top:4px;}
   a.link:hover{text-decoration:underline;}
   footer{margin-top:28px;font-size:12.5px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:14px;}
+
+  .live-block{
+    background:color-mix(in srgb, var(--accent) 10%, var(--card));
+    border:1.5px solid var(--accent);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    padding:16px 18px;
+    margin-bottom:22px;
+  }
+  .live-eyebrow{
+    font-size:11.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-weight:800;
+    color:var(--accent);
+    margin:0 0 6px;
+  }
+  .live-desc{font-size:13.5px;color:var(--ink-soft);margin:0 0 10px;}
+  a.live-link{
+    display:inline-block;
+    color:#fff;
+    background:var(--accent);
+    font-weight:800;
+    font-size:14.5px;
+    text-decoration:none;
+    padding:9px 18px;
+    border-radius:99px;
+  }
+  a.live-link:hover{filter:brightness(1.06);}
+  .history-heading{
+    font-size:13px;
+    font-weight:800;
+    color:var(--ink-soft);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin:0 0 10px;
+  }
+  hr.sep{border:none;border-top:1px solid var(--line);margin:22px 0 18px;}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>出工分工表 歷史紀錄</h1>
   <p class="sub">每天出工的材料分工表，手機直接開，不用登入。</p>
+
+  <div class="live-block">
+    <p class="live-eyebrow">固定網址（以後每天都是這個連結）</p>
+    <p class="live-desc">每天出工前直接開這個網址就好，內容會隨當天更新，網址不會再變。可以加到手機主畫面。</p>
+    <a class="live-link" href="crew-live.html">開啟今日分工表 →</a>
+  </div>
+
+  <hr class="sep">
+  <p class="history-heading">歷史每日紀錄</p>
+
   <ul>
     <li>
       <span class="date">7/22（三）</span>
