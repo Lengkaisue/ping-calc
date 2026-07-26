@@ -407,6 +407,7 @@
   section.person:nth-of-type(2){--accent-p:var(--steel);}
   section.person:nth-of-type(3){--accent-p:var(--khaki);}
   section.person:nth-of-type(4){--accent-p:var(--olive);}
+  section.person:nth-of-type(5){--accent-p:var(--rust);}
 
   a{color:var(--accent);}
 </style>
@@ -418,7 +419,7 @@
     <h1>3×6 組合屋 分工表</h1>
     <div class="job-meta">
       <span>棟型 <b>3m×6m 組合屋一組，白骨木紋</b></span>
-      <span>人力 <b>4 人</b></span>
+      <span>人力 <b>5 人</b></span>
       <span>日期 <b id="jobDateLabel">7/25（五）</b></span>
     </div>
   </header>
@@ -439,10 +440,11 @@
   <div class="whoami" id="whoamiBar">
     <span class="whoami-label" id="whoamiLabel">你是哪一位？選了才能勾自己那組，避免亂按到別人的。</span>
     <div class="whoami-chips" id="whoamiChips">
-      <button type="button" class="chip" data-who="junyang">鈞洋</button>
-      <button type="button" class="chip" data-who="haohao">皓皓</button>
-      <button type="button" class="chip" data-who="yangshan">楊善</button>
+      <button type="button" class="chip" data-who="zhihao">志豪</button>
       <button type="button" class="chip" data-who="lengkai">稜凱</button>
+      <button type="button" class="chip" data-who="yangshan">楊善</button>
+      <button type="button" class="chip" data-who="haohao">皓皓</button>
+      <button type="button" class="chip" data-who="junyang">鈞洋</button>
     </div>
     <div class="whoami-current" id="whoamiCurrent" hidden>
       <span>目前身份：<b id="whoamiCurrentName"></b>（其他組唯讀）</span>
@@ -455,12 +457,12 @@
     <div class="bar"><i id="progressBar"></i></div>
   </div>
 
-  <section class="person" data-person="lengkai">
+  <section class="person" data-person="zhihao">
     <div class="person-head">
-      <div class="avatar">稜</div>
+      <div class="avatar">志</div>
       <div>
-        <div class="person-name">稜凱</div>
-        <div class="person-role">骨架＋支架組</div>
+        <div class="person-name">志豪</div>
+        <div class="person-role">骨架立柱＋天花支架組</div>
       </div>
       <div class="person-count" data-count></div>
       <span class="status-badge" hidden></span>
@@ -487,12 +489,12 @@
     </div>
   </section>
 
-  <section class="person" data-person="junyang">
+  <section class="person" data-person="lengkai">
     <div class="person-head">
-      <div class="avatar">鈞</div>
+      <div class="avatar">稜</div>
       <div>
-        <div class="person-name">鈞洋</div>
-        <div class="person-role">包布／方管／抗風柱組</div>
+        <div class="person-name">稜凱</div>
+        <div class="person-role">收邊布料／方管／抗風柱組</div>
       </div>
       <div class="person-count" data-count></div>
       <span class="status-badge" hidden></span>
@@ -505,60 +507,7 @@
       <li><input type="checkbox"><label>5×5方管</label><span class="qty">1隻</span></li>
       <li><input type="checkbox"><label>1.5×3方管</label><span class="qty">18隻</span></li>
       <li><input type="checkbox"><label>3米面2×4方管</label><span class="qty">2支</span></li>
-      <li><input type="checkbox"><label>螺絲</label><span class="qty">一組</span></li>
-      <li class="sublist">
-        <span class="sublist-label">明細（僅供參考）</span>
-        <div class="sublist-tags">
-          <span>馬車螺絲公</span>
-          <span>馬車螺母</span>
-          <span>支架螺絲</span>
-          <span>墊片</span>
-          <span>支架螺母</span>
-          <span>小蜜蜂</span>
-          <span>門釘</span>
-          <span>地板釘</span>
-          <span>六角釘(短)</span>
-          <span>六角釘(長)</span>
-        </div>
-      </li>
       <li><input type="checkbox"><label>抗風柱</label><span class="qty">4隻（全部用「加高」款現場裁切，現場已有兩隻）</span></li>
-    </ul>
-    <div class="submit-area">
-      <button type="button" class="submit-btn">檢查完送出</button>
-      <div class="submit-result" hidden>
-        <p class="submit-status"></p>
-        <div class="missing-list"></div>
-        <div class="submit-actions">
-          <button type="button" class="copy-btn">複製清單傳LINE</button>
-          <button type="button" class="reedit-btn">重新編輯</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="person" data-person="haohao">
-    <div class="person-head">
-      <div class="avatar">皓</div>
-      <div>
-        <div class="person-name">皓皓</div>
-        <div class="person-role">地板／庫板／屋頂天花／工具耗材組</div>
-      </div>
-      <div class="person-count" data-count></div>
-      <span class="status-badge" hidden></span>
-    </div>
-    <ul class="items">
-      <li><input type="checkbox"><label>地板</label><span class="qty">10大</span></li>
-      <li><input type="checkbox"><label>4米天花板</label><span class="qty">一組</span></li>
-      <li><input type="checkbox"><label>木紋庫板</label><span class="qty">18片</span></li>
-      <li><input type="checkbox"><label>4米屋頂（屋頂用短方管）</label><span class="qty">一組</span></li>
-      <li><input type="checkbox"><label>布</label><span class="qty">一組</span></li>
-      <li><input type="checkbox"><label>長梯</label><span class="qty">2</span></li>
-      <li><input type="checkbox"><label>短梯</label><span class="qty">2</span></li>
-      <li><input type="checkbox"><label>肉路ㄚ</label><span class="qty">一組</span></li>
-      <li><input type="checkbox"><label>大小砂輪片</label><span class="qty">一組</span></li>
-      <li><input type="checkbox"><label>掃把、畚斗、垃圾袋</label><span class="qty">一組</span></li>
-      <li><input type="checkbox"><label>冰桶</label><span class="qty">1個</span></li>
-      <li><input type="checkbox"><label>室內壓條</label><span class="qty"></span></li>
     </ul>
     <div class="submit-area">
       <button type="button" class="submit-btn">檢查完送出</button>
@@ -578,6 +527,35 @@
       <div class="avatar">楊</div>
       <div>
         <div class="person-name">楊善</div>
+        <div class="person-role">地板／屋頂／天花板板材組</div>
+      </div>
+      <div class="person-count" data-count></div>
+      <span class="status-badge" hidden></span>
+    </div>
+    <ul class="items">
+      <li><input type="checkbox"><label>地板</label><span class="qty">10大</span></li>
+      <li><input type="checkbox"><label>4米天花板</label><span class="qty">一組</span></li>
+      <li><input type="checkbox"><label>木紋庫板</label><span class="qty">18片</span></li>
+      <li><input type="checkbox"><label>4米屋頂（屋頂用短方管）</label><span class="qty">一組</span></li>
+    </ul>
+    <div class="submit-area">
+      <button type="button" class="submit-btn">檢查完送出</button>
+      <div class="submit-result" hidden>
+        <p class="submit-status"></p>
+        <div class="missing-list"></div>
+        <div class="submit-actions">
+          <button type="button" class="copy-btn">複製清單傳LINE</button>
+          <button type="button" class="reedit-btn">重新編輯</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="person" data-person="haohao">
+    <div class="person-head">
+      <div class="avatar">皓</div>
+      <div>
+        <div class="person-name">皓皓</div>
         <div class="person-role">電焊／動力工具組</div>
       </div>
       <div class="person-count" data-count></div>
@@ -606,6 +584,55 @@
     </div>
   </section>
 
+  <section class="person" data-person="junyang">
+    <div class="person-head">
+      <div class="avatar">鈞</div>
+      <div>
+        <div class="person-name">鈞洋</div>
+        <div class="person-role">五金雜項／收尾組</div>
+      </div>
+      <div class="person-count" data-count></div>
+      <span class="status-badge" hidden></span>
+    </div>
+    <ul class="items">
+      <li><input type="checkbox"><label>螺絲</label><span class="qty">一組</span></li>
+      <li class="sublist">
+        <span class="sublist-label">明細（僅供參考）</span>
+        <div class="sublist-tags">
+          <span>馬車螺絲公</span>
+          <span>馬車螺母</span>
+          <span>支架螺絲</span>
+          <span>墊片</span>
+          <span>支架螺母</span>
+          <span>小蜜蜂</span>
+          <span>門釘</span>
+          <span>地板釘</span>
+          <span>六角釘(短)</span>
+          <span>六角釘(長)</span>
+        </div>
+      </li>
+      <li><input type="checkbox"><label>布</label><span class="qty">一組</span></li>
+      <li><input type="checkbox"><label>室內壓條</label><span class="qty"></span></li>
+      <li><input type="checkbox"><label>長梯</label><span class="qty">2</span></li>
+      <li><input type="checkbox"><label>短梯</label><span class="qty">2</span></li>
+      <li><input type="checkbox"><label>肉路ㄚ</label><span class="qty">一組</span></li>
+      <li><input type="checkbox"><label>大小砂輪片</label><span class="qty">一組</span></li>
+      <li><input type="checkbox"><label>掃把、畚斗、垃圾袋</label><span class="qty">一組</span></li>
+      <li><input type="checkbox"><label>冰桶</label><span class="qty">1個</span></li>
+    </ul>
+    <div class="submit-area">
+      <button type="button" class="submit-btn">檢查完送出</button>
+      <div class="submit-result" hidden>
+        <p class="submit-status"></p>
+        <div class="missing-list"></div>
+        <div class="submit-actions">
+          <button type="button" class="copy-btn">複製清單傳LINE</button>
+          <button type="button" class="reedit-btn">重新編輯</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
 
 </div>
 
@@ -618,7 +645,7 @@
   var WHOAMI_KEY = 'ping-calc-crew-whoami-v1';
   var SUBMIT_KEY = 'crew-' + CHART_DATE + '-submit-v1';
   var PERSON_NAMES = {
-    lengkai:'稜凱', yangshan:'楊善', junyang:'鈞洋', haohao:'皓皓'
+    lengkai:'稜凱', yangshan:'楊善', junyang:'鈞洋', haohao:'皓皓', zhihao:'志豪'
   };
   var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.items input[type="checkbox"]'));
 
