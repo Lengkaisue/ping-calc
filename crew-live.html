@@ -777,15 +777,36 @@
     var sub = submits[person];
     if(!sub) return;
     var personName = PERSON_NAMES[person] || person;
+    var miss = sub.missing || [];
     var text = jobDateLabel + ' ' + personName + '\n' +
-      (sub.missing.length ? '還沒帶：\n- ' + sub.missing.join('\n- ') : '全部帶齊，沒有缺料');
+      (miss.length ? '還沒帶：\n- ' + miss.join('\n- ') : '全部帶齊，沒有缺料');
     var btn = section.querySelector('.copy-btn');
     var reset = function(){ btn.textContent = '複製清單傳LINE'; };
+    var fallbackCopy = function(){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch(e){}
+      document.body.removeChild(ta);
+      if(ok){
+        btn.textContent = '已複製 ✓';
+        setTimeout(reset, 1600);
+      } else {
+        window.prompt('自動複製失敗，請手動長按選取複製：', text);
+      }
+    };
     if(navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(text).then(function(){
         btn.textContent = '已複製 ✓';
         setTimeout(reset, 1600);
-      });
+      }).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
     }
   }
 
@@ -904,7 +925,7 @@
   }
 
   function sanitizeKey(k){
-    return k.replace(/[.#$\[\]]/g, '_');
+    return k.replace(/[.#$\[\]\/]/g, '_');
   }
 
   // ---- 工具室關門值日生：五人輪流制，紀錄存Firebase，所有人手機看到同一個人；換成新一天的網址就自動接續輪到下一位、重新從未確認開始 ----
@@ -941,10 +962,13 @@
     historyRef.once('value').then(function(snapshot){
       var history = snapshot.val() || {};
       var nextIndex = 0;
-      var pastDates = Object.keys(history).filter(function(d){ return d < todayStr; }).sort();
+      var pastDates = Object.keys(history).filter(function(d){
+        return /^\d{4}-\d{2}-\d{2}$/.test(d) && d < todayStr;
+      }).sort();
       if(pastDates.length){
         var lastDate = pastDates[pastDates.length - 1];
-        nextIndex = (history[lastDate].index + 1) % ROSTER.length;
+        var lastIndex = history[lastDate] && history[lastDate].index;
+        nextIndex = Number.isInteger(lastIndex) ? (lastIndex + 1) % ROSTER.length : 0;
       }
       return todayRef.transaction(function(current){
         if(current !== null) return; // 別人已經先建立過今天的紀錄，不要覆蓋
@@ -1048,6 +1072,8 @@
         } else if(section.classList.contains('submitted') && !mine){
           section.classList.remove('submitted');
           section.querySelector('.submit-result').hidden = true;
+          section.querySelector('.submit-btn').hidden = false;
+          applyLock(localStorage.getItem(WHOAMI_KEY));
         }
         updateBadge(section);
       });
