@@ -419,7 +419,7 @@
     <h1>3×6 組合屋 分工表</h1>
     <div class="job-meta">
       <span>棟型 <b>3m×6m 組合屋一組，白骨木紋</b></span>
-      <span>人力 <b>4 人</b></span>
+      <span>人力 <b>5 人</b></span>
       <span>日期 <b id="jobDateLabel">8/4（二）</b></span>
     </div>
   </header>
@@ -444,6 +444,7 @@
       <button type="button" class="chip" data-who="lengkai">稜凱</button>
       <button type="button" class="chip" data-who="yangshan">楊善</button>
       <button type="button" class="chip" data-who="junyang">鈞洋</button>
+      <button type="button" class="chip" data-who="haohao">皓皓</button>
     </div>
     <div class="whoami-current" id="whoamiCurrent" hidden>
       <span>目前身份：<b id="whoamiCurrentName"></b>（其他組唯讀）</span>
@@ -452,7 +453,7 @@
   </div>
 
   <div class="progress">
-    <span class="count" id="progressCount">0 / 44</span>
+    <span class="count" id="progressCount">0 / 45</span>
     <div class="bar"><i id="progressBar"></i></div>
   </div>
 
@@ -503,7 +504,6 @@
       <li><input type="checkbox"><label>6米扣布</label><span class="qty">2隻</span></li>
       <li><input type="checkbox"><label>5×5方管</label><span class="qty">5隻</span></li>
       <li><input type="checkbox"><label>4×6方管</label><span class="qty">2隻</span></li>
-      <li><input type="checkbox"><label>1.5×3方管</label><span class="qty">14隻</span></li>
       <li><input type="checkbox"><label>3米面2×4方管</label><span class="qty">2支</span></li>
     </ul>
     <div class="submit-area">
@@ -532,6 +532,8 @@
     <ul class="items">
       <li><input type="checkbox"><label>地板</label><span class="qty">10小</span></li>
       <li><input type="checkbox"><label>木紋庫板</label><span class="qty">23片</span></li>
+      <li><input type="checkbox"><label>3米屋頂（屋頂用短方管）</label><span class="qty">一組</span></li>
+      <li><input type="checkbox"><label>5米屋頂</label><span class="qty">一組</span></li>
     </ul>
     <div class="submit-area">
       <button type="button" class="submit-btn">檢查完送出</button>
@@ -583,10 +585,38 @@
       <li><input type="checkbox"><label>布</label><span class="qty">一組</span></li>
       <li><input type="checkbox"><label>止水膠條</label><span class="qty"></span></li>
       <li><input type="checkbox"><label>C夾</label><span class="qty">一組</span></li>
+      <li><input type="checkbox"><label>室內壓條</label><span class="qty"></span></li>
       <li><input type="checkbox"><label>長梯</label><span class="qty">2</span></li>
       <li><input type="checkbox"><label>短梯</label><span class="qty">2</span></li>
       <li><input type="checkbox"><label>肉路ㄚ</label><span class="qty">一組</span></li>
       <li><input type="checkbox"><label>大小砂輪片</label><span class="qty">一組</span></li>
+      <li><input type="checkbox"><label>掃把、畚斗、垃圾袋</label><span class="qty">一組</span></li>
+      <li><input type="checkbox"><label>冰桶</label><span class="qty">1個</span></li>
+    </ul>
+    <div class="submit-area">
+      <button type="button" class="submit-btn">檢查完送出</button>
+      <div class="submit-result" hidden>
+        <p class="submit-status"></p>
+        <div class="missing-list"></div>
+        <div class="submit-actions">
+          <button type="button" class="copy-btn">複製清單傳LINE</button>
+          <button type="button" class="reedit-btn">重新編輯</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="person" data-person="haohao">
+    <div class="person-head">
+      <div class="avatar">皓</div>
+      <div>
+        <div class="person-name">皓皓</div>
+        <div class="person-role">收尾料件組（明天另一個工地用）</div>
+      </div>
+      <div class="person-count" data-count></div>
+      <span class="status-badge" hidden></span>
+    </div>
+    <ul class="items">
       <li><input type="checkbox"><label>蝴蝶牌批土</label><span class="qty">一組</span></li>
       <li><input type="checkbox"><label>雙面膠</label><span class="qty">已在車上</span></li>
       <li><input type="checkbox"><label>壁貼（白色/淺灰）</label><span class="qty">已在車上</span></li>
@@ -598,9 +628,6 @@
       <li><input type="checkbox"><label>個人工具</label><span class="qty"></span></li>
       <li><input type="checkbox"><label>配電螺絲盒</label><span class="qty"></span></li>
       <li><input type="checkbox"><label>電線</label><span class="qty"></span></li>
-      <li><input type="checkbox"><label>室內壓條</label><span class="qty"></span></li>
-      <li><input type="checkbox"><label>掃把、畚斗、垃圾袋</label><span class="qty">一組</span></li>
-      <li><input type="checkbox"><label>冰桶</label><span class="qty">1個</span></li>
     </ul>
     <div class="submit-area">
       <button type="button" class="submit-btn">檢查完送出</button>
