@@ -166,7 +166,8 @@
         <tr><td>庫板</td><td>2 ×（短邊＋長邊）</td></tr>
         <tr><td>1.5×3 方管</td><td>＝庫板片數，再 +2</td></tr>
         <tr><td>4×6 方管</td><td>一組 1 隻</td></tr>
-        <tr><td>5×5 方管</td><td>短邊−2；長邊8米 +1；二樓再 +1</td></tr>
+        <tr><td>5×5 方管（一樓）</td><td>短邊−2；長邊8米 +1</td></tr>
+        <tr><td>5×5 方管（二樓）</td><td>查表：長邊6米→隻數＝短邊米數（3米3隻、4米4隻、5米5隻）；長邊8米→3×8＝2、4×8＝6、5×8＝7</td></tr>
         <tr><td>抗風柱</td><td>一組 2 隻</td></tr>
         <tr><td>地板支架</td><td>長邊6米→14；8米→19</td></tr>
         <tr><td>天花板支架（主）</td><td>長邊6米→2；8米→3</td></tr>
@@ -210,6 +211,9 @@
   // 地板支架、主支架：只有6米跟8米有實際數字
   var FLOOR_BRACKET = { 6:14, 8:19 };
   var MAIN_CEIL = { 6:2, 8:3 };
+  // 二樓的5×5方管不套一樓公式，直接查這張表（用戶2026-08-04定案）
+  // 長邊6米：隻數＝短邊米數；長邊8米：3→2、4→6、5→7（3×8那格跟其餘兩格不成規律，用戶確認過就是2）
+  var FANG55_2F = { 6:{3:3, 4:4, 5:5}, 8:{3:2, 4:6, 5:7} };
 
   var shortEl = document.getElementById('shortSide');
   var longEl = document.getElementById('longSide');
@@ -262,11 +266,18 @@
     // 布
     add(s + '米叩布', '2隻');
     add(l + '米扣布', '2隻');
-    add('止水膠條', '有扣布就要帶');
+    add('止水膠條', '一組');
 
     // 方管
-    var fang55 = (s - 2) + (l === 8 ? 1 : 0) + (second ? 1 : 0);
-    add('5×5方管', fang55 + '隻');
+    var fang55, fang55Est = false;
+    if(second){
+      var t = FANG55_2F[l];
+      if(t && t[s] != null){ fang55 = t[s]; }
+      else { fang55 = (s - 2) + (l === 8 ? 1 : 0) + 1; fang55Est = true; }
+    } else {
+      fang55 = (s - 2) + (l === 8 ? 1 : 0);
+    }
+    add('5×5方管', fang55 + '隻', fang55Est);
     add('4×6方管', '1隻');
     var kuban = 2 * (s + l);
     add('1.5×3方管', (kuban + 2) + '隻（庫板' + kuban + '＋2）');
