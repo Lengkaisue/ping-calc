@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="金紙滑門櫃三視圖施工圖，含裁切清單與施工註記。外框 140x40x111 cm。">
+<meta property="og:title" content="金紙滑門櫃 施工圖">
+<meta property="og:description" content="三視圖 + 裁切清單 + 施工註記。外框 140x40x111 cm，5分夾板。">
+<meta property="og:type" content="website">
+<title>金紙滑門櫃 施工圖</title>
+<style>
+  :root{
+    --paper:#FBFAF7; --sheet:#FFFFFF;
+    --ink:#1B1E24; --ink2:#5C6169; --ink3:#8A8F97;
+    --rule:#CFCBC2; --rule2:#E4E1DA;
+    --accent:#A96C2E;
+    --steel:#4A6A82;
+    --wood:rgba(169,108,46,.10);
+    --doorfill:rgba(169,108,46,.20);
+    --hw:#3A3E45;
+    --sans:"Helvetica Neue",Arial,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,"Roboto Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#101216; --sheet:#171A1F;
+      --ink:#E9E7E2; --ink2:#A2A8B0; --ink3:#767C85;
+      --rule:#343941; --rule2:#24282E;
+      --accent:#D89B5B;
+      --steel:#7FA6C2;
+      --wood:rgba(216,155,91,.10);
+      --doorfill:rgba(216,155,91,.18);
+      --hw:#C6CAD1;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#101216; --sheet:#171A1F;
+    --ink:#E9E7E2; --ink2:#A2A8B0; --ink3:#767C85;
+    --rule:#343941; --rule2:#24282E;
+    --accent:#D89B5B; --steel:#7FA6C2;
+    --wood:rgba(216,155,91,.10); --doorfill:rgba(216,155,91,.18);
+    --hw:#C6CAD1;
+  }
+  :root[data-theme="light"]{
+    --paper:#FBFAF7; --sheet:#FFFFFF;
+    --ink:#1B1E24; --ink2:#5C6169; --ink3:#8A8F97;
+    --rule:#CFCBC2; --rule2:#E4E1DA;
+    --accent:#A96C2E; --steel:#4A6A82;
+    --wood:rgba(169,108,46,.10); --doorfill:rgba(169,108,46,.20);
+    --hw:#3A3E45;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.6;
+    -webkit-font-smoothing:antialiased}
+
+  .sheet{max-width:1180px;margin:0 auto;padding:clamp(14px,3vw,34px)}
+  .frame{background:var(--sheet);border:1.5px solid var(--ink);
+    outline:1px solid var(--ink);outline-offset:4px;
+    padding:clamp(16px,3vw,32px);
+    display:flex;flex-direction:column;gap:34px}
+
+  /* ---- title block ---- */
+  .titleblock{display:grid;grid-template-columns:1fr auto;gap:20px;
+    align-items:end;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+  .tb-name{font-size:clamp(22px,3.4vw,31px);font-weight:700;
+    letter-spacing:.06em;margin:0;text-wrap:balance}
+  .tb-sub{margin:5px 0 0;color:var(--ink2);font-size:13.5px;letter-spacing:.04em}
+  .tb-meta{display:grid;grid-template-columns:auto auto;
+    border:1px solid var(--rule);font-size:12.5px}
+  .tb-meta div{padding:5px 11px;border-bottom:1px solid var(--rule2)}
+  .tb-meta div:nth-child(odd){color:var(--ink3);letter-spacing:.09em;
+    border-right:1px solid var(--rule2);white-space:nowrap}
+  .tb-meta div:nth-child(even){font-family:var(--mono);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tb-meta div:nth-last-child(-n+2){border-bottom:0}
+
+  /* ---- view blocks ---- */
+  .views{display:grid;gap:30px}
+  .row{display:grid;gap:30px;grid-template-columns:1fr}
+  @media(min-width:820px){ .row.two{grid-template-columns:2.1fr 1fr} }
+
+  .view{min-width:0}
+  .vhead{display:flex;align-items:baseline;gap:12px;
+    border-bottom:1px solid var(--ink);padding-bottom:5px;margin-bottom:14px}
+  .vname{font-size:14px;font-weight:700;letter-spacing:.18em}
+  .vnote{font-size:11.5px;color:var(--ink3);letter-spacing:.06em;margin-left:auto;
+    font-family:var(--mono)}
+  .vwrap{overflow-x:auto}
+  svg.dwg{display:block;width:100%;height:auto;min-width:280px}
+
+  .p{fill:var(--wood);stroke:var(--ink);stroke-width:.32}
+  .o{fill:none;stroke:var(--ink);stroke-width:.62}
+  .door{fill:var(--doorfill);stroke:var(--ink);stroke-width:.32}
+  .rail{fill:var(--steel);opacity:.5;stroke:none}
+  .hw{fill:var(--hw);stroke:none}
+  .wheel{fill:none;stroke:var(--hw);stroke-width:.42}
+  .ext{stroke:var(--accent);stroke-width:.14;opacity:.55}
+  .dim{stroke:var(--accent);stroke-width:.22;fill:none}
+  .tick{stroke:var(--accent);stroke-width:.32}
+  .dt{fill:var(--accent);font-family:var(--mono);font-size:3.9px;
+    text-anchor:middle;font-variant-numeric:tabular-nums}
+  .lb{fill:var(--ink3);font-family:var(--sans);font-size:3.5px;text-anchor:middle}
+  .lbl{fill:var(--ink3);font-family:var(--sans);font-size:3.5px}
+  .lead{stroke:var(--ink3);stroke-width:.16}
+
+  /* ---- schedule table ---- */
+  .sched{border-top:1.5px solid var(--ink);padding-top:16px}
+  .stitle{font-size:14px;font-weight:700;letter-spacing:.18em;margin:0 0 12px}
+  .twrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+  caption{caption-side:top;text-align:left;color:var(--ink3);font-size:12px;
+    letter-spacing:.1em;padding-bottom:7px}
+  th{text-align:left;font-weight:700;font-size:11.5px;letter-spacing:.11em;
+    color:var(--ink2);border-bottom:1px solid var(--ink);padding:7px 10px}
+  td{border-bottom:1px solid var(--rule2);padding:7px 10px;vertical-align:top}
+  td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  td.q{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:center}
+  tbody tr:last-child td{border-bottom:1px solid var(--ink)}
+  .grp td{background:var(--rule2);font-weight:700;font-size:11.5px;
+    letter-spacing:.12em;color:var(--ink2);padding:5px 10px}
+
+  /* ---- notes ---- */
+  .notes{border-top:1.5px solid var(--ink);padding-top:16px}
+  .notes ol{margin:0;padding-left:1.4em;columns:2;column-gap:34px;font-size:13.5px}
+  @media(max-width:700px){.notes ol{columns:1}}
+  .notes li{margin-bottom:7px;break-inside:avoid;color:var(--ink2)}
+  .notes b{color:var(--ink);font-weight:700}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .warn{color:var(--accent);font-weight:700}
+
+  @media(max-width:640px){
+    .titleblock{grid-template-columns:1fr;gap:14px;align-items:start}
+    .tb-meta{font-size:11.5px;justify-self:start}
+    .tb-meta div{padding:4px 9px}
+    .vhead{flex-wrap:wrap;gap:4px 12px}
+    .vnote{margin-left:0;flex-basis:100%}
+  }
+
+  @media print{
+    body{background:#fff}
+    .sheet{padding:0;max-width:none}
+    .frame{border-color:#000;outline-color:#000}
+    .view,.sched,.notes{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+
+<div class="sheet">
+<div class="frame">
+
+  <header class="titleblock">
+    <div>
+      <h1 class="tb-name">金紙滑門櫃　施工圖</h1>
+      <p class="tb-sub">下段滑門收納（香桶・備品）／上段開放三格（金紙）</p>
+    </div>
+    <div class="tb-meta">
+      <div>單位</div><div>cm</div>
+      <div>板材</div><div>5分夾板 t=1.5</div>
+      <div>外框</div><div>140 × 40 × 111</div>
+      <div>下段開口</div><div>137 × 71</div>
+      <div>日期</div><div>2026-08-05</div>
+    </div>
+  </header>
+
+  <div class="views">
+
+    <div class="row two">
+      <!-- ================= FRONT ELEVATION ================= -->
+      <section class="view">
+        <div class="vhead">
+          <span class="vname">正視圖</span>
+          <span class="vnote">門片關閉狀態</span>
+        </div>
+        <div class="vwrap">
+        <svg class="dwg" viewBox="-34 -18 198 146" role="img"
+             aria-label="金紙滑門櫃正視圖，外框寬140高111公分">
+
+          <!-- 上段殼體 -->
+          <rect class="p" x="0" y="0" width="140" height="1.5"/>
+          <rect class="p" x="0" y="1.5" width="1.5" height="28.5"/>
+          <rect class="p" x="138.5" y="1.5" width="1.5" height="28.5"/>
+          <rect class="p" x="46.1667" y="1.5" width="1.5" height="28.5"/>
+          <rect class="p" x="92.3333" y="1.5" width="1.5" height="28.5"/>
+          <!-- 層板(下段頂板) -->
+          <rect class="p" x="0" y="30" width="140" height="1.5"/>
+          <!-- 下段殼體 -->
+          <rect class="p" x="0" y="31.5" width="1.5" height="71"/>
+          <rect class="p" x="138.5" y="31.5" width="1.5" height="71"/>
+          <rect class="p" x="0" y="102.5" width="140" height="1.5"/>
+          <!-- 上下滑軌：裝在兩側板之間，非跨滿外框 -->
+          <rect class="rail" x="1.5" y="31.5" width="137" height="1.5"/>
+          <rect class="rail" x="1.5" y="101.3" width="137" height="1.2"/>
+          <!-- 門片：後片先畫，前片壓在上面 -->
+          <rect class="door" x="68" y="33" width="70.5" height="68.3"/>
+          <rect class="door" x="1.5" y="33" width="70.5" height="68.3"/>
+          <rect class="hw" x="66" y="61" width="2" height="12"/>
+          <rect class="hw" x="73" y="61" width="2" height="12"/>
+          <!-- 腳輪 -->
+          <rect class="hw" x="3" y="104" width="6" height="1"/>
+          <circle class="wheel" cx="6" cy="107.5" r="3.5"/>
+          <rect class="hw" x="131" y="104" width="6" height="1"/>
+          <circle class="wheel" cx="134" cy="107.5" r="3.5"/>
+          <!-- 外框 -->
+          <rect class="o" x="0" y="0" width="140" height="104"/>
+
+          <!-- 上段三格尺寸 -->
+          <line class="ext" x1="1.5" y1="1.5" x2="1.5" y2="-9.5"/>
+          <line class="ext" x1="46.1667" y1="1.5" x2="46.1667" y2="-9.5"/>
+          <line class="ext" x1="47.6667" y1="1.5" x2="47.6667" y2="-9.5"/>
+          <line class="ext" x1="92.3333" y1="1.5" x2="92.3333" y2="-9.5"/>
+          <line class="ext" x1="93.8333" y1="1.5" x2="93.8333" y2="-9.5"/>
+          <line class="ext" x1="138.5" y1="1.5" x2="138.5" y2="-9.5"/>
+          <line class="dim" x1="1.5" y1="-8" x2="46.1667" y2="-8"/>
+          <line class="dim" x1="47.6667" y1="-8" x2="92.3333" y2="-8"/>
+          <line class="dim" x1="93.8333" y1="-8" x2="138.5" y2="-8"/>
+          <line class="tick" x1="0.5" y1="-7" x2="2.5" y2="-9"/>
+          <line class="tick" x1="45.1667" y1="-7" x2="47.1667" y2="-9"/>
+          <line class="tick" x1="46.6667" y1="-7" x2="48.6667" y2="-9"/>
+          <line class="tick" x1="91.3333" y1="-7" x2="93.3333" y2="-9"/>
+          <line class="tick" x1="92.8333" y1="-7" x2="94.8333" y2="-9"/>
+          <line class="tick" x1="137.5" y1="-7" x2="139.5" y2="-9"/>
+          <text class="dt" x="23.83" y="-10">44.67</text>
+          <text class="dt" x="70" y="-10">44.67</text>
+          <text class="dt" x="116.17" y="-10">44.67</text>
+          <text class="lb" x="70" y="-14.6">上段　開放三格</text>
+
+          <!-- 門片寬(內部標註) -->
+          <line class="dim" x1="1.5" y1="97" x2="72" y2="97"/>
+          <line class="tick" x1="0.5" y1="98" x2="2.5" y2="96"/>
+          <line class="tick" x1="71" y1="98" x2="73" y2="96"/>
+          <text class="dt" x="36.75" y="95.4">70.5（門片，共2片）</text>
+          <!-- 重疊註記 -->
+          <line class="lead" x1="70" y1="43" x2="70" y2="36"/>
+          <line class="lead" x1="70" y1="36" x2="86" y2="36"/>
+          <text class="lbl" x="87" y="37.3">關閉時重疊 4</text>
+
+          <!-- 門片高 -->
+          <line class="ext" x1="140" y1="33" x2="148.5" y2="33"/>
+          <line class="ext" x1="140" y1="101.3" x2="148.5" y2="101.3"/>
+          <line class="dim" x1="147" y1="33" x2="147" y2="101.3"/>
+          <line class="tick" x1="146" y1="34" x2="148" y2="32"/>
+          <line class="tick" x1="146" y1="102.3" x2="148" y2="100.3"/>
+          <text class="dt" x="145.4" y="67.15" transform="rotate(-90 145.4 67.15)">68.3</text>
+          <text class="lb" x="146.5" y="29.5">門片</text>
+          <!-- 開口淨高 -->
+          <line class="ext" x1="138.5" y1="31.5" x2="160.5" y2="31.5"/>
+          <line class="ext" x1="138.5" y1="102.5" x2="160.5" y2="102.5"/>
+          <line class="dim" x1="159" y1="31.5" x2="159" y2="102.5"/>
+          <line class="tick" x1="158" y1="32.5" x2="160" y2="30.5"/>
+          <line class="tick" x1="158" y1="103.5" x2="160" y2="101.5"/>
+          <text class="dt" x="157.4" y="67" transform="rotate(-90 157.4 67)">71</text>
+          <text class="lb" x="158.5" y="29.5">開口</text>
+
+          <!-- 總寬 -->
+          <line class="ext" x1="0" y1="111" x2="0" y2="119.5"/>
+          <line class="ext" x1="140" y1="111" x2="140" y2="119.5"/>
+          <line class="dim" x1="0" y1="118" x2="140" y2="118"/>
+          <line class="tick" x1="-1" y1="119" x2="1" y2="117"/>
+          <line class="tick" x1="139" y1="119" x2="141" y2="117"/>
+          <text class="dt" x="70" y="116.4">140</text>
+
+          <!-- 高度分段 -->
+          <line class="ext" x1="0" y1="0" x2="-26" y2="0"/>
+          <line class="ext" x1="0" y1="30" x2="-11.5" y2="30"/>
+          <line class="ext" x1="0" y1="104" x2="-11.5" y2="104"/>
+          <line class="ext" x1="0" y1="111" x2="-26" y2="111"/>
+          <line class="dim" x1="-10" y1="0" x2="-10" y2="30"/>
+          <line class="dim" x1="-10" y1="30" x2="-10" y2="104"/>
+          <line class="dim" x1="-10" y1="104" x2="-10" y2="111"/>
+          <line class="tick" x1="-11" y1="1" x2="-9" y2="-1"/>
+          <line class="tick" x1="-11" y1="31" x2="-9" y2="29"/>
+          <line class="tick" x1="-11" y1="105" x2="-9" y2="103"/>
+          <line class="tick" x1="-11" y1="112" x2="-9" y2="110"/>
+          <text class="dt" x="-11.6" y="15" transform="rotate(-90 -11.6 15)">30</text>
+          <text class="dt" x="-11.6" y="67" transform="rotate(-90 -11.6 67)">74</text>
+          <text class="dt" x="-11.6" y="107.5" transform="rotate(-90 -11.6 107.5)">7</text>
+          <!-- 總高 -->
+          <line class="dim" x1="-24" y1="0" x2="-24" y2="111"/>
+          <line class="tick" x1="-25" y1="1" x2="-23" y2="-1"/>
+          <line class="tick" x1="-25" y1="112" x2="-23" y2="110"/>
+          <text class="dt" x="-25.6" y="55.5" transform="rotate(-90 -25.6 55.5)">111</text>
+        </svg>
+        </div>
+      </section>
+
+      <!-- ================= SIDE SECTION ================= -->
+      <section class="view">
+        <div class="vhead">
+          <span class="vname">側視圖</span>
+          <span class="vnote">左為正面</span>
+        </div>
+        <div class="vwrap">
+        <svg class="dwg" viewBox="-8 -12 84 136" role="img"
+             aria-label="金紙滑門櫃側視剖面，深40公分">
+          <rect class="p" x="0" y="0" width="40" height="1.5"/>
+          <rect class="p" x="38.5" y="1.5" width="1.5" height="28.5"/>
+          <rect class="p" x="0" y="30" width="40" height="1.5"/>
+          <rect class="p" x="38.5" y="31.5" width="1.5" height="71"/>
+          <rect class="p" x="0" y="102.5" width="40" height="1.5"/>
+          <!-- 前後軌：軌道座寬 6 -->
+          <rect class="rail" x="0" y="31.5" width="6" height="1.5"/>
+          <rect class="rail" x="0" y="101.3" width="6" height="1.2"/>
+          <!-- 前後門片 t=1.5 -->
+          <rect class="door" x="0.75" y="33" width="1.5" height="68.3"/>
+          <rect class="door" x="3.75" y="33" width="1.5" height="68.3"/>
+          <!-- 腳輪 -->
+          <rect class="hw" x="3" y="104" width="6" height="1"/>
+          <circle class="wheel" cx="6" cy="107.5" r="3.5"/>
+          <rect class="hw" x="31" y="104" width="6" height="1"/>
+          <circle class="wheel" cx="34" cy="107.5" r="3.5"/>
+          <rect class="o" x="0" y="0" width="40" height="104"/>
+
+          <!-- 前後軌註記 -->
+          <line class="lead" x1="2.5" y1="36" x2="13" y2="42"/>
+          <text class="lbl" x="14" y="43.3">前後雙軌</text>
+
+          <!-- 軌道座寬 -->
+          <line class="ext" x1="0" y1="31.5" x2="0" y2="26.5"/>
+          <line class="ext" x1="6" y1="31.5" x2="6" y2="26.5"/>
+          <line class="dim" x1="0" y1="28" x2="6" y2="28"/>
+          <line class="tick" x1="-1" y1="29" x2="1" y2="27"/>
+          <line class="tick" x1="5" y1="29" x2="7" y2="27"/>
+          <text class="dt" x="3" y="26.4">6</text>
+          <text class="lbl" x="8.5" y="27.6">軌道座 ≥6</text>
+
+          <!-- 深度 -->
+          <line class="ext" x1="0" y1="111" x2="0" y2="119.5"/>
+          <line class="ext" x1="40" y1="111" x2="40" y2="119.5"/>
+          <line class="dim" x1="0" y1="118" x2="40" y2="118"/>
+          <line class="tick" x1="-1" y1="119" x2="1" y2="117"/>
+          <line class="tick" x1="39" y1="119" x2="41" y2="117"/>
+          <text class="dt" x="20" y="116.4">40</text>
+
+          <!-- 高度分段 -->
+          <line class="ext" x1="40" y1="0" x2="63" y2="0"/>
+          <line class="ext" x1="40" y1="30" x2="49.5" y2="30"/>
+          <line class="ext" x1="40" y1="104" x2="49.5" y2="104"/>
+          <line class="ext" x1="40" y1="111" x2="63" y2="111"/>
+          <line class="dim" x1="48" y1="0" x2="48" y2="30"/>
+          <line class="dim" x1="48" y1="30" x2="48" y2="104"/>
+          <line class="dim" x1="48" y1="104" x2="48" y2="111"/>
+          <line class="tick" x1="47" y1="1" x2="49" y2="-1"/>
+          <line class="tick" x1="47" y1="31" x2="49" y2="29"/>
+          <line class="tick" x1="47" y1="105" x2="49" y2="103"/>
+          <line class="tick" x1="47" y1="112" x2="49" y2="110"/>
+          <text class="dt" x="46.4" y="15" transform="rotate(-90 46.4 15)">30</text>
+          <text class="dt" x="46.4" y="67" transform="rotate(-90 46.4 67)">74</text>
+          <text class="dt" x="46.4" y="107.5" transform="rotate(-90 46.4 107.5)">7</text>
+          <line class="dim" x1="61" y1="0" x2="61" y2="111"/>
+          <line class="tick" x1="60" y1="1" x2="62" y2="-1"/>
+          <line class="tick" x1="60" y1="112" x2="62" y2="110"/>
+          <text class="dt" x="59.4" y="55.5" transform="rotate(-90 59.4 55.5)">111</text>
+        </svg>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= PLAN ================= -->
+    <div class="row">
+      <section class="view">
+        <div class="vhead">
+          <span class="vname">俯視圖</span>
+          <span class="vnote">上段水平剖面・下為正面</span>
+        </div>
+        <div class="vwrap">
+        <svg class="dwg" viewBox="-14 -14 178 80" role="img"
+             aria-label="上段金紙櫃俯視圖，三格各淨寬44.67公分">
+          <rect class="p" x="0" y="0" width="1.5" height="40"/>
+          <rect class="p" x="138.5" y="0" width="1.5" height="40"/>
+          <rect class="p" x="1.5" y="38.5" width="137" height="1.5"/>
+          <rect class="p" x="46.1667" y="0" width="1.5" height="38.5"/>
+          <rect class="p" x="92.3333" y="0" width="1.5" height="38.5"/>
+          <rect class="o" x="0" y="0" width="140" height="40"/>
+
+          <text class="lb" x="23.83" y="22">格 1</text>
+          <text class="lb" x="70" y="22">格 2</text>
+          <text class="lb" x="116.17" y="22">格 3</text>
+
+          <!-- 三格淨寬 -->
+          <line class="ext" x1="1.5" y1="40" x2="1.5" y2="49.5"/>
+          <line class="ext" x1="46.1667" y1="40" x2="46.1667" y2="49.5"/>
+          <line class="ext" x1="47.6667" y1="40" x2="47.6667" y2="49.5"/>
+          <line class="ext" x1="92.3333" y1="40" x2="92.3333" y2="49.5"/>
+          <line class="ext" x1="93.8333" y1="40" x2="93.8333" y2="49.5"/>
+          <line class="ext" x1="138.5" y1="40" x2="138.5" y2="49.5"/>
+          <line class="dim" x1="1.5" y1="48" x2="46.1667" y2="48"/>
+          <line class="dim" x1="47.6667" y1="48" x2="92.3333" y2="48"/>
+          <line class="dim" x1="93.8333" y1="48" x2="138.5" y2="48"/>
+          <line class="tick" x1="0.5" y1="49" x2="2.5" y2="47"/>
+          <line class="tick" x1="45.1667" y1="49" x2="47.1667" y2="47"/>
+          <line class="tick" x1="46.6667" y1="49" x2="48.6667" y2="47"/>
+          <line class="tick" x1="91.3333" y1="49" x2="93.3333" y2="47"/>
+          <line class="tick" x1="92.8333" y1="49" x2="94.8333" y2="47"/>
+          <line class="tick" x1="137.5" y1="49" x2="139.5" y2="47"/>
+          <text class="dt" x="23.83" y="46.4">44.67</text>
+          <text class="dt" x="70" y="46.4">44.67</text>
+          <text class="dt" x="116.17" y="46.4">44.67</text>
+
+          <!-- 總寬 -->
+          <line class="ext" x1="0" y1="49" x2="0" y2="58.5"/>
+          <line class="ext" x1="140" y1="49" x2="140" y2="58.5"/>
+          <line class="dim" x1="0" y1="57" x2="140" y2="57"/>
+          <line class="tick" x1="-1" y1="58" x2="1" y2="56"/>
+          <line class="tick" x1="139" y1="58" x2="141" y2="56"/>
+          <text class="dt" x="70" y="55.4">140</text>
+
+          <!-- 深度 -->
+          <line class="ext" x1="140" y1="0" x2="152.5" y2="0"/>
+          <line class="ext" x1="140" y1="40" x2="152.5" y2="40"/>
+          <line class="dim" x1="151" y1="0" x2="151" y2="40"/>
+          <line class="tick" x1="150" y1="1" x2="152" y2="-1"/>
+          <line class="tick" x1="150" y1="41" x2="152" y2="39"/>
+          <text class="dt" x="149.4" y="20" transform="rotate(-90 149.4 20)">40</text>
+
+          <!-- 隔板深度 -->
+          <line class="ext" x1="46.1667" y1="0" x2="40.5" y2="0"/>
+          <line class="ext" x1="46.1667" y1="38.5" x2="40.5" y2="38.5"/>
+          <line class="dim" x1="42" y1="0" x2="42" y2="38.5"/>
+          <line class="tick" x1="41" y1="1" x2="43" y2="-1"/>
+          <line class="tick" x1="41" y1="39.5" x2="43" y2="37.5"/>
+          <text class="dt" x="40.4" y="19.25" transform="rotate(-90 40.4 19.25)">38.5</text>
+
+          <!-- 板厚註記 -->
+          <line class="lead" x1="46.9" y1="4" x2="40" y2="-6"/>
+          <text class="lbl" x="14" y="-7">中隔板 t=1.5</text>
+        </svg>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ================= CUT LIST ================= -->
+  <section class="sched">
+    <h2 class="stitle">裁切清單</h2>
+    <div class="twrap">
+      <table>
+        <caption>尺寸單位 cm，格式為　寬 × 高／深 × 厚</caption>
+        <thead>
+          <tr><th>件名</th><th>尺寸</th><th style="text-align:center">數量</th><th>備註</th></tr>
+        </thead>
+        <tbody>
+          <tr class="grp"><td colspan="4">下段　滑門櫃</td></tr>
+          <tr><td>底板</td><td class="n">140 × 40 × 1.5</td><td class="q">1</td><td>—</td></tr>
+          <tr><td>頂板</td><td class="n">140 × 40 × 1.5</td><td class="q">1</td><td>兼上段地板</td></tr>
+          <tr><td>側板</td><td class="n">40 × 71 × 1.5</td><td class="q">2</td><td>深40、高71</td></tr>
+          <tr><td>背板</td><td class="n">137 × 71 × 1.5</td><td class="q">1</td><td>嵌在兩側板之間</td></tr>
+          <tr><td>滑門片</td><td class="n">70.5 × 68.3 × 1.5</td><td class="q">2</td><td>關閉時中間重疊 4</td></tr>
+
+          <tr class="grp"><td colspan="4">上段　金紙櫃（開放）</td></tr>
+          <tr><td>頂板</td><td class="n">140 × 40 × 1.5</td><td class="q">1</td><td>—</td></tr>
+          <tr><td>側板</td><td class="n">40 × 28.5 × 1.5</td><td class="q">2</td><td>深40、高28.5</td></tr>
+          <tr><td>背板</td><td class="n">137 × 28.5 × 1.5</td><td class="q">1</td><td>—</td></tr>
+          <tr><td>中隔板</td><td class="n">38.5 × 28.5 × 1.5</td><td class="q">2</td><td>深38.5（不含背板）</td></tr>
+
+          <tr class="grp"><td colspan="4">五金</td></tr>
+          <tr><td>上下滑軌</td><td class="n">137 長</td><td class="q">1套</td><td>前後雙軌，裝於兩側板之間</td></tr>
+          <tr><td>腳輪</td><td class="n">Ø7</td><td class="q">4</td><td>離邊各 6，含座總高 7</td></tr>
+          <tr><td>門把</td><td class="n">2 × 12</td><td class="q">2</td><td>距地 38～50</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= NOTES ================= -->
+  <section class="notes">
+    <h2 class="stitle">施工註記</h2>
+    <ol>
+      <li><b>全部板材統一 5 分夾板 <span class="num">t=1.5</span>（含門片）。</b>若改用其他厚度，上段三格淨寬與門片尺寸都要重算。</li>
+      <li><span class="warn">三格淨寬 <span class="num">44.67</span> 是 <span class="num">134 ÷ 3</span> 的理論均分值</span>，不是整數。實際下料抓 <span class="num">44.6～44.7</span>，並以現場實測外框為準。</li>
+      <li>總高 <span class="num">111 = 7</span>（腳輪）<span class="num">+ 74</span>（下段）<span class="num">+ 30</span>（上段）。</li>
+      <li><b>門片尺寸是依滑軌規格反推的：</b>下段開口 <span class="num">137 × 71</span>；門高 <span class="num">= 71 − 2.7 = 68.3</span>；門寬 <span class="num">= (137 + 4) ÷ 2 = 70.5</span>（重疊 4）。</li>
+      <li><span class="warn">滑軌廠商規格三條：</span>①門板高度比門框矮 <span class="num">2.7</span>　②門板厚度 <span class="num">1.5～2.4</span>（故門片用 <span class="num">t=1.5</span>，<b>不可用 4 分 1.2</b>）　③軌道座寬 <span class="num">≥6</span>。<b>訂購前請再核對實物規格。</b></li>
+      <li>滑軌<b>裝在兩側板之間</b>（開口 <span class="num">137</span>），不是外掛在櫃體正面，所以門片寬度不能用外框 <span class="num">140</span> 去算。</li>
+      <li>滑門為<b>上下軌前後雙軌</b>，前片走前軌、後片走後軌，故兩片可交錯滑行。</li>
+      <li>下段內部<b>不做分隔</b>，維持大空間放香桶與備品。</li>
+      <li>上段<b>不裝門</b>，開放式方便金紙疊放抽取。</li>
+      <li>夾板估算：<span class="num">t=1.5</span> 合計約 <span class="num">5.02 m²</span>，理論約 <span class="num">1.7</span> 張 <span class="num">4×8</span> 尺板。但有多片 <span class="num">137～140</span> 長的板，<b>一張長邊 <span class="num">244</span> 只能排一片</b>，排版損耗大，<b>建議叫 3 張</b>。<b>未計鋸路與紋路方向。</b></li>
+      <li><span class="num">140</span> 為現場硬限制（左火爐、右功德箱之間），<b>不可放大</b>。</li>
+      <li>左側火爐已有防火板隔開，不另抓防火間距。</li>
+      <li><b>火爐與功德箱為現場既有物件，非本次施作範圍</b>，3D 圖中僅作卡位示意。</li>
+    </ol>
+  </section>
+
+</div>
+</div>
+
+</body>
+</html>
