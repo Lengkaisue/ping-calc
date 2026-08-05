@@ -1,0 +1,304 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#E2571C">
+<title>組合屋材料對照表</title>
+<meta property="og:title" content="組合屋材料對照表">
+<meta property="og:description" content="骨架尺寸、屋頂天花板、材料公式一次查，選規格自動算料">
+<style>
+  :root{
+    --accent:#E2571C; --steel:#5B7C99; --khaki:#B39B77; --olive:#7A8B5A; --rust:#A85A3C;
+    --bg:#F5F1E8; --card:#FFFDF8; --ink:#2B2621; --ink-soft:#7A7268; --line:#E5DDD0;
+    --warn-bg:#FFF4E5; --warn-line:#E8B96B; --ok:#4A7C4E;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC",sans-serif;
+    line-height:1.6;-webkit-text-size-adjust:100%;}
+  .wrap{max-width:860px;margin:0 auto;padding:18px 14px 60px;}
+  header.top{background:var(--card);border-radius:16px;padding:20px 18px;margin-bottom:16px;
+    border:1px solid var(--line);}
+  .eyebrow{margin:0 0 6px;font-size:12px;letter-spacing:.12em;color:var(--accent);font-weight:700;}
+  h1{margin:0 0 8px;font-size:23px;font-weight:800;letter-spacing:-.01em;}
+  .sub{margin:0;font-size:13.5px;color:var(--ink-soft);}
+  section.block{background:var(--card);border-radius:16px;padding:18px 16px;margin-bottom:16px;
+    border:1px solid var(--line);}
+  h2{margin:0 0 4px;font-size:17px;font-weight:800;display:flex;align-items:center;gap:8px;}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;
+    border-radius:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:800;flex:none;}
+  .note{margin:6px 0 12px;font-size:13px;color:var(--ink-soft);}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px;}
+  table{border-collapse:collapse;width:100%;min-width:440px;font-size:14px;}
+  th,td{padding:8px 9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;}
+  th{background:#F0EADD;font-weight:700;font-size:12.5px;color:var(--ink-soft);
+    position:sticky;top:0;}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  tr:last-child td{border-bottom:none;}
+  .flag{color:#B4671F;font-weight:800;}
+  .warn{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:12px;
+    padding:11px 13px;font-size:13.5px;margin-top:12px;}
+  .warn b{color:#8A5311;}
+  /* 計算器 */
+  .calc-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .field{flex:1 1 130px;}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);font-weight:700;margin-bottom:4px;}
+  select,.chk{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;
+    background:#fff;font-size:15px;font-family:inherit;color:var(--ink);}
+  .chk{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
+  .chk input{width:18px;height:18px;accent-color:var(--accent);margin:0;}
+  ul.result{list-style:none;margin:0;padding:0;}
+  ul.result li{display:flex;align-items:baseline;gap:10px;padding:8px 2px;
+    border-bottom:1px solid var(--line);font-size:14.5px;}
+  ul.result li:last-child{border-bottom:none;}
+  ul.result .name{flex:1;}
+  ul.result .qty{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  ul.result li.est .qty{color:#B4671F;}
+  .legend{margin-top:10px;font-size:12.5px;color:var(--ink-soft);}
+  .pill{display:inline-block;padding:1px 7px;border-radius:99px;font-size:11px;font-weight:800;
+    background:#EFE7D8;color:var(--ink-soft);margin-left:6px;vertical-align:1px;}
+  .pill.est{background:var(--warn-bg);color:#8A5311;border:1px solid var(--warn-line);}
+  footer{text-align:center;font-size:12px;color:var(--ink-soft);margin-top:24px;}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">工班用 · 內部參考</p>
+  <h1>組合屋材料對照表</h1>
+  <p class="sub">尺寸查表 ＋ 選規格自動算料。標<span class="pill est">推估</span>的是還沒有實際案例驗證過的數字，要現場確認過再用。</p>
+</header>
+
+<section class="block">
+  <h2><span class="num">1</span>骨架尺寸</h2>
+  <p class="note">角座每顆 16.5cm。「骨架」是桿件本身，「總長」是含兩端角座，兩個不一樣不要混用。</p>
+  <div class="scroll">
+    <table>
+      <thead><tr>
+        <th>規格</th><th class="num">骨架長度</th><th class="num">含角座總長</th>
+        <th class="num">差值</th><th class="num">實內空間</th><th class="num">扣除常數</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>1米</td><td class="num">67</td><td class="num">100</td><td class="num">33</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>1.5米</td><td class="num">118</td><td class="num">150</td><td class="num flag">32</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>2米</td><td class="num">168</td><td class="num">200</td><td class="num flag">32</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>3米</td><td class="num">269</td><td class="num">301</td><td class="num flag">32</td><td class="num">280</td><td class="num">−21</td></tr>
+        <tr><td>4米</td><td class="num">364</td><td class="num">396</td><td class="num flag">32</td><td class="num">374</td><td class="num">−22</td></tr>
+        <tr><td>5米</td><td class="num">458</td><td class="num">491</td><td class="num">33</td><td class="num">470</td><td class="num">−21</td></tr>
+        <tr><td>6米</td><td class="num">562.5</td><td class="num">596</td><td class="num flag">33.5</td><td class="num">572.5</td><td class="num">−23.5</td></tr>
+        <tr><td>7米</td><td class="num">657</td><td class="num">690</td><td class="num">33</td><td class="num">—</td><td class="num">—</td></tr>
+        <tr><td>8米</td><td class="num">752</td><td class="num">785</td><td class="num">33</td><td class="num">764</td><td class="num">−21</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="warn">
+    <b>⚠️ 待確認：</b>兩顆角座應該是 33，但 1.5／2／3／4米 這四個差值是 <b>32</b>，6米是 <b>33.5</b>。是這些規格接法不同，還是抄寫誤差？<br>
+    <b>8米</b>是兩支 4米骨架相接（單支 <b>376</b>），要另配<b>連接鐵片 4片</b>。
+  </div>
+</section>
+
+<section class="block">
+  <h2><span class="num">2</span>屋頂／天花板尺寸</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr>
+        <th>規格</th><th class="num">屋頂</th><th class="num">天花板</th>
+        <th class="num">屋頂−天花板</th><th class="num">總長−屋頂</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>3米</td><td class="num">296</td><td class="num">277</td><td class="num">19</td><td class="num">5</td></tr>
+        <tr><td>4米</td><td class="num">391</td><td class="num">372</td><td class="num">19</td><td class="num">5</td></tr>
+        <tr><td>5米</td><td class="num">487</td><td class="num">466</td><td class="num flag">21</td><td class="num flag">4</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="warn"><b>⚠️ 待確認：</b>3米、4米兩組差值都是 19／5 很整齊，只有 5米 是 21／4，這組要再量一次。</div>
+</section>
+
+<section class="block">
+  <h2><span class="num">3</span>板材片數（6米）</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>板材</th><th class="num">寬</th><th class="num">6米片數</th><th class="num">片數×寬</th></tr></thead>
+      <tbody>
+        <tr><td>五溝清版（白）</td><td class="num">75</td><td class="num">8</td><td class="num">600</td></tr>
+        <tr><td>單層裝潢版白（中一溝、鋁箔底）</td><td class="num">35</td><td class="num">19</td><td class="num flag">665</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="warn"><b>⚠️ 待確認：</b>五溝版 8×75＝600，跟 6米總長 596 很接近，合理。但單層版 19×35＝<b>665</b>，比 596／572.5 都大不少——是本來就要多備，還是片數要改？</div>
+</section>
+
+<section class="block">
+  <h2><span class="num">4</span>選規格自動算料</h2>
+  <p class="note">選好短邊、長邊，下面直接出數量。<b>算出來的是「這個規格總共要多少」</b>，現場已經有的料要自己扣掉。</p>
+  <div class="calc-row">
+    <div class="field">
+      <label>短邊（面寬）</label>
+      <select id="shortSide">
+        <option value="3">3米</option>
+        <option value="4" selected>4米</option>
+        <option value="5">5米</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>長邊（深度）</label>
+      <select id="longSide">
+        <option value="6" selected>6米</option>
+        <option value="8">8米</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>樓層</label>
+      <label class="chk"><input type="checkbox" id="isSecondFloor"><span>二樓</span></label>
+    </div>
+  </div>
+  <ul class="result" id="result"></ul>
+  <p class="legend"><span class="pill est">推估</span>＝照公式外推、還沒有實際案例驗證過，用之前要確認。</p>
+</section>
+
+<section class="block">
+  <h2><span class="num">5</span>公式一覽</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>項目</th><th>公式</th></tr></thead>
+      <tbody>
+        <tr><td>立柱／角座</td><td>固定 4 隻／8 顆（跟規格無關）</td></tr>
+        <tr><td>上下樑</td><td>短邊 4 支 ＋ 長邊 4 支</td></tr>
+        <tr><td>庫板</td><td>2 ×（短邊＋長邊）</td></tr>
+        <tr><td>1.5×3 方管</td><td>＝庫板片數，再 +2</td></tr>
+        <tr><td>4×6 方管</td><td>一組 1 隻</td></tr>
+        <tr><td>5×5 方管</td><td>短邊−2；長邊8米 +1；二樓再 +1</td></tr>
+        <tr><td>抗風柱</td><td>一組 2 隻</td></tr>
+        <tr><td>地板支架</td><td>長邊6米→14；8米→19</td></tr>
+        <tr><td>天花板支架（主）</td><td>長邊6米→2；8米→3</td></tr>
+        <tr><td>天花板支架 粗／細</td><td>6米基準：3×6＝3粗6細、4×6＝6粗6細、5×6＝6粗6細；長邊8米時 ×4/3</td></tr>
+        <tr><td>地板片數</td><td>面寬大小片組合 × 深度列數</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note" style="margin-top:12px;">
+    <b>地板片數細節：</b>面寬用 140 大片＋95 小片補零頭（3米＝2大、4米＝2大1小、5米＝2大2小）；
+    深度＝實內空間 ÷ 114.5 無條件進位（6米→5列、8米→7列），最後一片裁短一樣算一片。
+  </p>
+</section>
+
+<section class="block">
+  <h2><span class="num">6</span>算料原則</h2>
+  <ul style="margin:6px 0 0;padding-left:20px;font-size:14.5px;">
+    <li>公式算的是<b>總共要多少</b>，不是這次要載多少。現場已有料就扣掉，要備用就加上去。</li>
+    <li>庫板的公式數量本來就含現場備用緩衝，比實際裝的多是正常的。</li>
+    <li>立柱固定 4 隻，規格再大也不會變；需要額外支撐用的是抗風柱，不是加立柱。</li>
+    <li>有扣布就要帶止水膠條。</li>
+    <li>二樓要加抗風柱（用加高款現場裁切）＋角座連接器。</li>
+    <li>磚塊已經拿掉，不再自動列。</li>
+    <li>電焊機不一定 1 組（4×8 那次是 2 組），工具類每次要確認。</li>
+    <li>沒有公式、每次都要問：門窗規格、方管細部規格、天花板支架粗細規格。</li>
+  </ul>
+</section>
+
+<footer>資料來源：現場實測與歷次叫料紀錄　·　有錯直接跟稜凱說</footer>
+
+</div>
+
+<script>
+(function(){
+  // 實內空間（cm），用來算地板片數
+  var INTERIOR = { 3:280, 4:374, 5:470, 6:572.5, 8:764 };
+  // 面寬方向的大小片組合，已用實際案例驗證過的三個規格
+  var WIDTH_PANELS = { 3:{big:2,small:0}, 4:{big:2,small:1}, 5:{big:2,small:2} };
+  // 天花板支架粗細的6米基準值
+  var CEIL_BASE = { 3:{thick:3,thin:6}, 4:{thick:6,thin:6}, 5:{thick:6,thin:6} };
+  // 地板支架、主支架：只有6米跟8米有實際數字
+  var FLOOR_BRACKET = { 6:14, 8:19 };
+  var MAIN_CEIL = { 6:2, 8:3 };
+
+  var shortEl = document.getElementById('shortSide');
+  var longEl = document.getElementById('longSide');
+  var floorEl = document.getElementById('isSecondFloor');
+  var out = document.getElementById('result');
+
+  function depthRows(len){
+    var it = INTERIOR[len];
+    if(!it) return null;
+    return Math.ceil(it / 114.5);
+  }
+
+  function render(){
+    var s = Number(shortEl.value);
+    var l = Number(longEl.value);
+    var second = floorEl.checked;
+    var rows = [];
+
+    function add(name, qty, isEstimate){
+      rows.push({ name:name, qty:qty, est:!!isEstimate });
+    }
+
+    // 骨架
+    add(s + '米上下樑', '4支');
+    add(l + '米上下樑', '4支');
+    if(l === 8) add('連接鐵片（8米是兩支4米相接）', '4片');
+    add('立柱', '4隻');
+    add('角座', '8顆');
+
+    // 地板支架 / 天花板支架
+    var fb = FLOOR_BRACKET[l];
+    add(s + '米地板支架', fb ? fb + '隻' : '要問', !fb);
+    var mc = MAIN_CEIL[l];
+    add(s + '米天花板(主)支架', mc ? mc + '支' : '要問', !mc);
+
+    var base = CEIL_BASE[s];
+    if(base){
+      var mult = (l === 8) ? 4/3 : 1;
+      var thick = base.thick * mult;
+      var thin = base.thin * mult;
+      var neat = (thick % 1 === 0) && (thin % 1 === 0);
+      add('天花板支架',
+        (neat ? thick : Math.round(thick * 10) / 10) + '粗' +
+        (neat ? thin : Math.round(thin * 10) / 10) + '細',
+        l === 8 && !(s === 3 || s === 4 || s === 5) ? true : (l === 8 ? false : false));
+    } else {
+      add('天花板支架', '要問', true);
+    }
+
+    // 布
+    add(s + '米叩布', '2隻');
+    add(l + '米扣布', '2隻');
+    add('止水膠條', '有扣布就要帶');
+
+    // 方管
+    var fang55 = (s - 2) + (l === 8 ? 1 : 0) + (second ? 1 : 0);
+    add('5×5方管', fang55 + '隻');
+    add('4×6方管', '1隻');
+    var kuban = 2 * (s + l);
+    add('1.5×3方管', (kuban + 2) + '隻（庫板' + kuban + '＋2）');
+    add('抗風柱', '2隻');
+    if(second) add('角座連接器（二樓）', '4隻');
+
+    // 板材
+    add('庫板', kuban + '片');
+    var wp = WIDTH_PANELS[s];
+    var dr = depthRows(l);
+    if(wp && dr){
+      var big = wp.big * dr;
+      var small = wp.small * dr;
+      var verified = (s === 3 && l === 6) || (l === 8 && (s === 3 || s === 4 || s === 5));
+      add('地板', big + '大' + (small ? small + '小' : '') + '（' +
+        (wp.big + '大' + (wp.small ? wp.small + '小' : '')) + ' × ' + dr + '列）', !verified);
+    } else {
+      add('地板', '要問', true);
+    }
+    add(s + '米屋頂', '一組');
+    add(s + '米天花板', '一組');
+
+    out.innerHTML = rows.map(function(r){
+      return '<li class="' + (r.est ? 'est' : '') + '">' +
+        '<span class="name">' + r.name + (r.est ? '<span class="pill est">推估</span>' : '') + '</span>' +
+        '<span class="qty">' + r.qty + '</span></li>';
+    }).join('');
+  }
+
+  shortEl.addEventListener('change', render);
+  longEl.addEventListener('change', render);
+  floorEl.addEventListener('change', render);
+  render();
+})();
+</script>
