@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>庫板裁切計算機</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+    background: #f4f1ea;
+    color: #2b2620;
+    margin: 0;
+    padding: 16px;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  h1 { font-size: 22px; margin: 4px 0 4px; }
+  .sub { color: #6b5f4f; font-size: 14px; margin-bottom: 16px; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .card h2 { font-size: 16px; margin: 0 0 12px; color: #8a5a2b; }
+  label {
+    display: block;
+    font-size: 15px;
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  input[type=number] {
+    width: 100%;
+    padding: 10px;
+    font-size: 18px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  .row { display: flex; gap: 10px; }
+  .row > div { flex: 1; }
+  .result-line {
+    font-size: 17px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #ddd;
+  }
+  .result-line:last-child { border-bottom: none; }
+  .result-line b { color: #8a5a2b; }
+  .formula {
+    font-size: 14px;
+    color: #555;
+    background: #f8f5ee;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+  }
+  .warn {
+    background: #fff3e0;
+    color: #9a5a00;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  .ok { color: #1a7a3c; font-weight: bold; }
+  .bad { color: #c0392b; font-weight: bold; }
+  .note {
+    font-size: 13px;
+    color: #8a5a2b;
+    background: #fdf6ec;
+    border: 1px solid #f0dfc0;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+
+<h1>庫板裁切計算機</h1>
+<div class="sub">輸入牆段需要的實際尺寸，算出全片數＋裁切片尺寸＋剩下的邊料</div>
+
+<div class="note">
+這台只算「裁切怎麼切」。目標尺寸怎麼定案（例如浴室內部要留多少、裝潢板要多留幾公分）現場狀況每次不同，要師傅自己判斷輸入，不自動幫你推算。
+</div>
+
+<div class="card">
+  <h2>基本參數（庫板規格）</h2>
+  <div class="row">
+    <div>
+      <label>庫板裁切寬度 (cm)</label>
+      <input type="number" id="boardWidth" value="97" step="0.1">
+    </div>
+    <div>
+      <label>公榫凸出量 (cm)</label>
+      <input type="number" id="tenon" value="1.5" step="0.1">
+    </div>
+  </div>
+  <div class="result-line" id="pitchLine"></div>
+</div>
+
+<div class="card">
+  <h2>目標尺寸計算</h2>
+  <label>這段牆需要的實際尺寸 (cm)</label>
+  <input type="number" id="target" value="360" step="0.1">
+
+  <label>這段牆的片數預算（可留空不核對）</label>
+  <input type="number" id="budget" placeholder="例如：6片牆扣過道2片＝4片">
+
+  <div id="resultBox"></div>
+  <div class="formula" id="formulaBox"></div>
+  <div class="warn" id="budgetWarn" style="display:none;"></div>
+</div>
+
+<div class="card">
+  <h2>邊料去哪用（選填）</h2>
+  <label>另一個地方需要的小塊尺寸 (cm)</label>
+  <input type="number" id="needElsewhere" placeholder="例如：過道邊上缺的那一小塊">
+  <div id="matchBox" class="result-line" style="border:none;"></div>
+</div>
+
+<script>
+function round1(n) { return Math.round(n * 100) / 100; }
+
+function calc() {
+  const boardWidth = parseFloat(document.getElementById('boardWidth').value);
+  const tenon = parseFloat(document.getElementById('tenon').value);
+  const target = parseFloat(document.getElementById('target').value);
+  const budgetRaw = document.getElementById('budget').value;
+  const budget = budgetRaw === '' ? null : parseFloat(budgetRaw);
+
+  const pitchLine = document.getElementById('pitchLine');
+  const resultBox = document.getElementById('resultBox');
+  const formulaBox = document.getElementById('formulaBox');
+  const budgetWarn = document.getElementById('budgetWarn');
+
+  if (isNaN(boardWidth) || isNaN(tenon) || boardWidth <= 0 || tenon < 0 || tenon >= boardWidth) {
+    pitchLine.innerHTML = '<span class="bad">庫板寬度／公榫凸出量輸入不合理</span>';
+    resultBox.innerHTML = '';
+    formulaBox.textContent = '';
+    budgetWarn.style.display = 'none';
+    return null;
+  }
+
+  const pitch = round1(boardWidth - tenon);
+  pitchLine.innerHTML = `有效模距（pitch）＝ ${boardWidth} − ${tenon} = <b>${pitch} cm</b>`;
+
+  if (isNaN(target) || target <= 0) {
+    resultBox.innerHTML = '<span class="bad">請輸入目標尺寸</span>';
+    formulaBox.textContent = '';
+    budgetWarn.style.display = 'none';
+    return null;
+  }
+
+  const fullPanels = Math.floor(target / pitch + 1e-9);
+  const remainder = round1(target - fullPanels * pitch);
+
+  let cutPanel, offcut, totalPanels, formulaText;
+
+  if (remainder < 0.1) {
+    cutPanel = 0;
+    offcut = 0;
+    totalPanels = fullPanels;
+    formulaText = `${pitch} × ${fullPanels} = ${round1(fullPanels * pitch)} cm，剛好整除，不用裁切片`;
+    resultBox.innerHTML = `
+      <div class="result-line">全片數：<b>${fullPanels} 片</b>（每片 ${pitch}cm 計算）</div>
+      <div class="result-line">裁切片：<b>不需要</b></div>
+      <div class="result-line">共用庫板：<b>${totalPanels} 片</b></div>
+    `;
+  } else {
+    cutPanel = remainder;
+    offcut = round1(boardWidth - cutPanel);
+    totalPanels = fullPanels + 1;
+    formulaText =
+`${pitch} × ${fullPanels} = ${round1(fullPanels * pitch)} cm（${fullPanels}片全片）
+${target} − ${round1(fullPanels * pitch)} = ${cutPanel} cm（裁切片尺寸）
+${boardWidth} − ${cutPanel} = ${offcut} cm（這片裁下來的邊料）`;
+    resultBox.innerHTML = `
+      <div class="result-line">全片數：<b>${fullPanels} 片</b>（每片 ${pitch}cm）</div>
+      <div class="result-line">裁切片尺寸：<b>${cutPanel} cm</b>（從一片 ${boardWidth}cm 的庫板裁出來）</div>
+      <div class="result-line">裁下的邊料：<b>${offcut} cm</b>（可以拿去別的地方用，不算浪費）</div>
+      <div class="result-line">共用庫板：<b>${totalPanels} 片</b>（含裁切那片）</div>
+      ${cutPanel < 5 ? `<div class="warn">⚠️ 裁切片只有 ${cutPanel}cm，太薄現場可能不好裁、不好裝，建議跟師傅確認排版方式（例如少排一片全片，讓裁切片變大片一些）再施作</div>` : ''}
+    `;
+  }
+  formulaBox.textContent = formulaText;
+
+  if (budget !== null && !isNaN(budget)) {
+    if (Math.abs(totalPanels - budget) < 1e-6) {
+      budgetWarn.style.display = 'block';
+      budgetWarn.innerHTML = `<span class="ok">✓ 剛好吻合片數預算（${budget}片）</span>`;
+    } else if (totalPanels < budget) {
+      budgetWarn.style.display = 'block';
+      budgetWarn.innerHTML = `用了 ${totalPanels} 片，比預算 ${budget} 片少，還剩 <b>${round1(budget - totalPanels)} 片</b>可以用`;
+    } else {
+      budgetWarn.style.display = 'block';
+      budgetWarn.innerHTML = `<span class="bad">超出預算！</span>需要 ${totalPanels} 片，但預算只有 ${budget} 片，差 <b>${round1(totalPanels - budget)} 片</b>`;
+    }
+  } else {
+    budgetWarn.style.display = 'none';
+  }
+
+  return { pitch, fullPanels, cutPanel, offcut, totalPanels };
+}
+
+function calcMatch() {
+  const matchBox = document.getElementById('matchBox');
+  const needRaw = document.getElementById('needElsewhere').value;
+  if (needRaw === '') { matchBox.innerHTML = ''; return; }
+  const need = parseFloat(needRaw);
+  const r = calc();
+  if (!r || isNaN(need)) { matchBox.innerHTML = ''; return; }
+  if (!r.offcut || r.offcut <= 0) {
+    matchBox.innerHTML = `<span class="bad">目前沒有邊料可以用（上面是整除或還沒算出裁切片）</span>`;
+    return;
+  }
+  const diff = round1(r.offcut - need);
+  if (Math.abs(diff) < 0.05) {
+    matchBox.innerHTML = `<span class="ok">✓ 邊料 ${r.offcut}cm 剛好夠用！</span>`;
+  } else if (diff > 0) {
+    matchBox.innerHTML = `邊料 ${r.offcut}cm 夠用，切完還多 <b>${diff}cm</b>`;
+  } else {
+    matchBox.innerHTML = `<span class="bad">邊料 ${r.offcut}cm 不夠，還差 ${Math.abs(diff)}cm，需要另外裁一片</span>`;
+  }
+}
+
+['boardWidth','tenon','target','budget'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { calc(); calcMatch(); });
+});
+document.getElementById('needElsewhere').addEventListener('input', calcMatch);
+
+calc();
+calcMatch();
+</script>
+
+</body>
+</html>
