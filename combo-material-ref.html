@@ -86,6 +86,10 @@
       <span class="lbl">樓層</span>
       <button type="button" class="toggle" id="floorBtn" aria-pressed="false">二樓</button>
     </div>
+    <div class="row">
+      <span class="lbl">基座</span>
+      <button type="button" class="toggle" id="baseBtn" aria-pressed="true">客人有基座鐵板</button>
+    </div>
   </div>
 
   <p class="spec" id="specLine"></p>
@@ -138,7 +142,7 @@
   // 二樓的5×5方管直接查表（用戶定案），不是套一樓那條公式
   var F55_2F     = {6:{3:3, 4:4, 5:5}, 8:{3:2, 4:6, 5:7}};
 
-  var S = 3, L = 6, F2 = false;
+  var S = 3, L = 6, F2 = false, HASBASE = true;
 
   function mkOpts(el, vals, get, set){
     el.innerHTML = '';
@@ -213,12 +217,15 @@
     add('大槌', '');
     add('千斤頂', '');
 
-    cur = '墊高類';
-    add('磚', '');
-    add('石板片', '');
-    add('地板片', '');
-    add('卡扣地板', '');
-    add('地板貼', '');
+    // 客人沒有基座鐵板才要墊高，有基座就整組不用帶
+    if(!HASBASE){
+      cur = '墊高類（客人沒有基座鐵板）';
+      add('磚', '');
+      add('石板片', '');
+      add('地板片', '');
+      add('卡扣地板', '');
+      add('地板貼', '');
+    }
 
     cur = '電料／配電';
     add('電料', '');
@@ -264,9 +271,13 @@
     mkOpts(document.getElementById('shortOpts'), [3,4,5], function(){return S;}, function(v){S=v;});
     mkOpts(document.getElementById('longOpts'), [6,8], function(){return L;}, function(v){L=v;});
     document.getElementById('floorBtn').setAttribute('aria-pressed', F2 ? 'true' : 'false');
+    var bb = document.getElementById('baseBtn');
+    bb.setAttribute('aria-pressed', HASBASE ? 'true' : 'false');
+    bb.textContent = HASBASE ? '客人有基座鐵板' : '沒基座，要墊高';
 
     document.getElementById('specLine').innerHTML =
-      '<b>' + S + '×' + L + '</b> 組合屋一組' + (F2 ? '（二樓）' : '');
+      '<b>' + S + '×' + L + '</b> 組合屋一組' + (F2 ? '（二樓）' : '') +
+      (HASBASE ? '' : '・要墊高');
 
     var data = rows(), groups = [], seen = {};
     data.forEach(function(r){ if(!seen[r.group]){ seen[r.group] = []; groups.push(r.group); } seen[r.group].push(r); });
@@ -295,7 +306,8 @@
   }
 
   function asText(){
-    var data = rows(), out = [S + '×' + L + ' 組合屋一組' + (F2 ? '（二樓）' : ''), ''];
+    var data = rows(), out = [S + '×' + L + ' 組合屋一組' + (F2 ? '（二樓）' : '') +
+      (HASBASE ? '' : '・要墊高'), ''];
     var last = '';
     data.forEach(function(r){
       if(r.group !== last){ out.push('【' + r.group + '】'); last = r.group; }
@@ -306,6 +318,7 @@
   }
 
   document.getElementById('floorBtn').onclick = function(){ F2 = !F2; render(); };
+  document.getElementById('baseBtn').onclick = function(){ HASBASE = !HASBASE; render(); };
 
   document.getElementById('copyBtn').onclick = function(){
     var txt = asText(), btn = this;
