@@ -1,0 +1,182 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#E2571C">
+<title>MV分鏡提示詞</title>
+<meta property="og:title" content="MV分鏡提示詞">
+<meta property="og:description" content="心跳漏拍 MV 分鏡，點一下複製貼進 Gemini">
+<style>
+  :root{
+    --accent:#E2571C; --bg:#F5F1E8; --card:#FFFDF8; --ink:#2B2621;
+    --ink-soft:#7A7268; --line:#E5DDD0; --done:#4A7C4E; --done-bg:#EAF3EA;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC",sans-serif;
+    line-height:1.65;-webkit-text-size-adjust:100%;}
+  .wrap{max-width:620px;margin:0 auto;padding:16px 14px 60px;}
+  h1{margin:0 0 4px;font-size:21px;font-weight:800;}
+  .sub{margin:0 0 14px;font-size:13.5px;color:var(--ink-soft);}
+
+  .howto{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:13px 15px;margin-bottom:16px;font-size:14px;}
+  .howto b{color:var(--accent);}
+  .howto ol{margin:8px 0 0;padding-left:20px;}
+  .howto li{margin-bottom:4px;}
+
+  .prog{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px;
+    color:var(--ink-soft);font-weight:700;}
+  .prog .bar{flex:1;height:7px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .prog .bar i{display:block;height:100%;width:0;background:var(--accent);
+    border-radius:99px;transition:width .25s;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:14px;margin-bottom:12px;}
+  .card.done{background:var(--done-bg);border-color:#BFD8BF;}
+  .head{display:flex;align-items:center;gap:9px;margin-bottom:8px;}
+  .num{width:26px;height:26px;border-radius:9px;background:var(--accent);color:#fff;
+    font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none;}
+  .card.done .num{background:var(--done);}
+  .title{font-size:16px;font-weight:800;flex:1;}
+  .fname{font-size:11.5px;color:var(--ink-soft);font-family:ui-monospace,monospace;}
+  .txt{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 12px;
+    font-size:14px;white-space:pre-wrap;word-break:break-word;margin-bottom:10px;}
+  .row{display:flex;gap:8px;}
+  button{flex:1;padding:12px;border:none;border-radius:11px;font-size:15px;font-weight:800;
+    font-family:inherit;cursor:pointer;}
+  .copy{background:var(--accent);color:#fff;}
+  .copy:active{opacity:.75;}
+  .mark{background:#EFE7D8;color:var(--ink-soft);flex:0 0 96px;}
+  .card.done .mark{background:var(--done);color:#fff;}
+  .tip{font-size:12.5px;color:var(--ink-soft);margin-top:14px;}
+</style>
+
+<div class="wrap">
+  <h1>《心跳漏拍》MV 分鏡</h1>
+  <p class="sub">女主角 mini ＋ 法鬥蹦蹦 · 共 11 張</p>
+
+  <div class="howto">
+    <b>怎麼用</b>
+    <ol>
+      <li>手機打開 <b>Gemini App</b>，進到「<b>Watercolor Taro Gift Scene</b>」那個對話</li>
+      <li>回來這裡點「<b>複製</b>」，切回 Gemini 貼上送出</li>
+      <li>生好的圖<b>長按存到相簿</b></li>
+      <li>回來點「<b>完成</b>」做記號，接著下一張</li>
+    </ol>
+    <div style="margin-top:8px;font-size:13px;">
+      一定要在<b>同一個對話</b>裡生，Gemini 才記得住 mini 跟蹦蹦的長相。
+    </div>
+  </div>
+
+  <div class="prog">
+    <span id="pcount">0 / 11</span>
+    <div class="bar"><i id="pbar"></i></div>
+  </div>
+
+  <div id="list"></div>
+
+  <p class="tip">
+    做記號會存在這支手機裡，關掉再開還在。<br>
+    圖全部生完，把它們傳給我，我負責合成 MV（配歌、字幕、轉場）。<br>
+    生出來如果長相跑掉，就補一句「臉要跟前一張完全一樣」再生一次。
+  </p>
+</div>
+
+<script>
+(function(){
+  // 提示詞刻意用中文寫，因為是在 Gemini App 的同一個對話裡接續生成，
+  // 它已經有前面那張定裝圖當畫風/角色依據，不需要再用英文描述細節。
+  var COMMON = "請用完全相同的畫風和角色畫一張新插畫。女生的臉、髮型、五官要跟前面那張完全一致；白色法鬥的外型和彩色串珠項圈也要一致。橫式16:9寬螢幕構圖，畫面下方三分之一留空間放字幕，絕對不要出現任何文字、標題或浮水印。\n\n畫面：";
+
+  var SCENES = [
+    ["公園散步（開場）", "01_intro_park", "女生牽著白色法鬥，在早晨陽光的公園步道散步，兩旁有樹，全身遠景，從背後稍微側身。"],
+    ["花束", "02_flowers", "女生蹲下來抱著一小束黃色雛菊和白玫瑰，法鬥好奇地湊過來聞花，溫暖的近景。"],
+    ["咖啡店窗邊", "03_cafe_window", "女生坐在明亮的咖啡店窗邊喝拿鐵，法鬥把下巴靠在她膝蓋上，慵懶的午後。"],
+    ["沙發滑手機", "04_phone_smile", "女生躺在沙發上看手機微笑，法鬥蜷在她旁邊睡著，柔和的室內燈光，夜晚。"],
+    ["草地奔跑", "05_run_grass", "女生和法鬥一起在寬廣的綠色草地上奔跑，充滿動感和喜悅，藍天白雲。"],
+    ["握手遞腳腳", "06_paw", "女生蹲下來伸出手，法鬥抬起前腳放在她手心上，兩個開心地對看，陽光灑落的花園。"],
+    ["夕陽長椅", "07_sunset_bench", "女生坐在公園長椅上，法鬥坐在她旁邊，兩個一起望向金黃色的夕陽，逆光剪影感。"],
+    ["雨天雨傘", "08_rain_umbrella", "小雨中女生撐著透明雨傘，法鬥穿著小雨衣抬頭看她，濕潤的地面反射柔和光線。"],
+    ["夜晚窗邊", "09_home_window", "女生和法鬥一起望著窗外的夜景城市燈火，從背後拍，安靜親密的氛圍。"],
+    ["擁抱", "10_hug", "女生溫柔地抱著法鬥，兩個都滿足地閉著眼睛，背景柔焦，溫馨的近景。"],
+    ["星空（結尾）", "12_outro_stars", "女生和法鬥一起躺在草地上仰望滿天星空，寧靜的收尾畫面，深藍色調帶溫暖光點。"]
+  ];
+
+  var KEY = "mv-prompts-done-v1";
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ done = {}; }
+
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(done)); }catch(e){} }
+
+  function refresh(){
+    var n = SCENES.filter(function(s){ return done[s[1]]; }).length;
+    document.getElementById("pcount").textContent = n + " / " + SCENES.length;
+    document.getElementById("pbar").style.width = (n / SCENES.length * 100) + "%";
+  }
+
+  function copyText(txt, btn){
+    function ok(){
+      var o = btn.textContent;
+      btn.textContent = "已複製 ✓";
+      setTimeout(function(){ btn.textContent = o; }, 1400);
+    }
+    function fallback(){
+      try{
+        var ta = document.createElement("textarea");
+        ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        var good = document.execCommand("copy");
+        document.body.removeChild(ta);
+        if(good){ ok(); return; }
+      }catch(e){}
+      window.prompt("手動複製：", txt);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(ok, fallback);
+    } else { fallback(); }
+  }
+
+  var list = document.getElementById("list");
+  SCENES.forEach(function(s, i){
+    var title = s[0], fname = s[1], scene = s[2];
+    var full = COMMON + scene;
+
+    var card = document.createElement("div");
+    card.className = "card" + (done[fname] ? " done" : "");
+
+    var head = document.createElement("div");
+    head.className = "head";
+    head.innerHTML = '<div class="num">' + (i+1) + '</div>' +
+                     '<div class="title">' + title + '</div>';
+    var fn = document.createElement("div");
+    fn.className = "fname"; fn.textContent = fname + ".png";
+    head.appendChild(fn);
+
+    var txt = document.createElement("div");
+    txt.className = "txt"; txt.textContent = full;
+
+    var row = document.createElement("div");
+    row.className = "row";
+
+    var cbtn = document.createElement("button");
+    cbtn.className = "copy"; cbtn.textContent = "複製";
+    cbtn.onclick = function(){ copyText(full, cbtn); };
+
+    var mbtn = document.createElement("button");
+    mbtn.className = "mark";
+    mbtn.textContent = done[fname] ? "已完成" : "完成";
+    mbtn.onclick = function(){
+      done[fname] = !done[fname];
+      save();
+      card.className = "card" + (done[fname] ? " done" : "");
+      mbtn.textContent = done[fname] ? "已完成" : "完成";
+      refresh();
+    };
+
+    row.appendChild(cbtn); row.appendChild(mbtn);
+    card.appendChild(head); card.appendChild(txt); card.appendChild(row);
+    list.appendChild(card);
+  });
+
+  refresh();
+})();
+</script>
