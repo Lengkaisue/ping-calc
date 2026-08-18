@@ -17,11 +17,12 @@
   h1{margin:0 0 4px;font-size:21px;font-weight:800;}
   .sub{margin:0 0 14px;font-size:13.5px;color:var(--ink-soft);}
 
-  .howto{background:var(--card);border:1px solid var(--line);border-radius:14px;
-    padding:13px 15px;margin-bottom:16px;font-size:14px;}
-  .howto b{color:var(--accent);}
-  .howto ol{margin:8px 0 0;padding-left:20px;}
-  .howto li{margin-bottom:4px;}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:13px 15px;margin-bottom:14px;font-size:14px;}
+  .box b{color:var(--accent);}
+  .box ol{margin:8px 0 0;padding-left:20px;}
+  .box li{margin-bottom:5px;}
+  .box.warn{background:#FFF4E5;border-color:#E8B96B;}
 
   .prog{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px;
     color:var(--ink-soft);font-weight:700;}
@@ -32,14 +33,15 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
     padding:14px;margin-bottom:12px;}
   .card.done{background:var(--done-bg);border-color:#BFD8BF;}
-  .head{display:flex;align-items:center;gap:9px;margin-bottom:8px;}
+  .head{display:flex;align-items:center;gap:9px;margin-bottom:3px;}
   .num{width:26px;height:26px;border-radius:9px;background:var(--accent);color:#fff;
     font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none;}
   .card.done .num{background:var(--done);}
   .title{font-size:16px;font-weight:800;flex:1;}
-  .fname{font-size:11.5px;color:var(--ink-soft);font-family:ui-monospace,monospace;}
+  .time{font-size:11.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+  .lyric{font-size:12.5px;color:var(--ink-soft);margin:0 0 9px 35px;font-style:italic;}
   .txt{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 12px;
-    font-size:14px;white-space:pre-wrap;word-break:break-word;margin-bottom:10px;}
+    font-size:13.5px;white-space:pre-wrap;word-break:break-word;margin-bottom:10px;}
   .row{display:flex;gap:8px;}
   button{flex:1;padding:12px;border:none;border-radius:11px;font-size:15px;font-weight:800;
     font-family:inherit;cursor:pointer;}
@@ -52,18 +54,26 @@
 
 <div class="wrap">
   <h1>《心跳漏拍》MV 分鏡</h1>
-  <p class="sub">女主角 mini ＋ 法鬥蹦蹦 · 共 11 張</p>
+  <p class="sub">女主角 mini ＋ 法鬥蹦蹦 · 11 張 · 每張都對應歌詞</p>
 
-  <div class="howto">
-    <b>怎麼用</b>
+  <div class="box warn">
+    <b>先做這一步：換項圈</b><br>
+    定裝圖上的項圈還是舊的彩色串珠。先傳定裝圖進 Gemini，貼下面這句生一張新的當基準：
+    <div class="txt" style="margin:9px 0 8px;" id="step0txt"></div>
+    <button class="copy" id="step0btn" style="width:100%;">複製這句</button>
+  </div>
+
+  <div class="box">
+    <b>然後每張這樣做</b>
     <ol>
-      <li>手機打開 <b>Gemini App</b>，進到「<b>Watercolor Taro Gift Scene</b>」那個對話</li>
-      <li>回來這裡點「<b>複製</b>」，切回 Gemini 貼上送出</li>
-      <li>生好的圖<b>長按存到相簿</b></li>
-      <li>回來點「<b>完成</b>」做記號，接著下一張</li>
+      <li>Gemini App <b>開新對話</b>，第一則先傳<b>新的定裝圖</b></li>
+      <li>回來點「<b>複製</b>」，切回 Gemini 貼上送出</li>
+      <li>圖出來<b>長按存到相簿</b></li>
+      <li>回來點「<b>完成</b>」，換下一張</li>
     </ol>
     <div style="margin-top:8px;font-size:13px;">
-      一定要在<b>同一個對話</b>裡生，Gemini 才記得住 mini 跟蹦蹦的長相。
+      11 張都要在<b>同一個對話</b>裡生，Gemini 才記得住長相。<br>
+      長相跑掉就重生，或補一句「臉要跟第一張完全一樣」。
     </div>
   </div>
 
@@ -75,47 +85,70 @@
   <div id="list"></div>
 
   <p class="tip">
-    做記號會存在這支手機裡，關掉再開還在。<br>
-    圖全部生完，把它們傳給我，我負責合成 MV（配歌、字幕、轉場）。<br>
-    生出來如果長相跑掉，就補一句「臉要跟前一張完全一樣」再生一次。
+    完成記號存在這支手機裡，關掉再開還在。<br>
+    圖全部生完傳給我，我負責合成 MV（配歌、卡拉OK字幕、推近、轉場、1920×1080）。
   </p>
 </div>
 
 <script>
 (function(){
-  // 提示詞刻意用中文寫，因為是在 Gemini App 的同一個對話裡接續生成，
-  // 它已經有前面那張定裝圖當畫風/角色依據，不需要再用英文描述細節。
-  // ⚠️ 開頭這幾句「只畫一個畫面、不要拼貼」是必要的：
-  // 2026-08-18 第一次生成時沒寫死，Gemini 自作主張把12個場景擠成一張 4x3 拼貼大圖，
-  // 整張才 1376x768、每格只有 344x256，放大到 1080p 會糊掉，整批不能用。
-  var COMMON = "只畫「一個」畫面，整張圖就是這一個場景的完整構圖。"
-             + "絕對不要拼貼、不要分格、不要做成多格漫畫或縮圖牆、不要一張圖裡放好幾個小場景。\n\n"
-             + "請用完全相同的畫風和角色：女生的臉、髮型、五官要跟前面那張完全一致，"
-             // 項圈 2026-08-18 從彩色串珠改成海軍藍馬丁格訓練款（用戶傳了實物照）
-             + "白色法鬥的外型要一致，牠戴的是深海軍藍色的織帶項圈（馬丁格訓練款，"
-             + "素面深藍、沒有花紋、配銀色金屬環），維持一樣的水彩插畫質感。\n"
-             + "橫式16:9寬螢幕、高解析度大圖，畫面下方三分之一留空間放字幕，"
-             + "絕對不要出現任何文字、標題或浮水印。\n\n"
-             + "這一張的畫面內容：";
+  // 角色描述刻意寫成「自給自足」的完整敘述，不只依賴「跟前面那張一樣」——
+  // 因為生到第8、9張時角色容易漂移，有完整描述才拉得回來。
+  var CHAR = "女生：長黑褐色直髮、大而有神的深色眼睛、柔和的笑容，穿米白色針織外套。"
+           + "法鬥：白色短毛、大立耳、壯壯的體型，戴深海軍藍色素面織帶項圈（銀色金屬環，沒有花紋）。";
 
+  // ⚠️「只畫一個畫面、不要拼貼」這幾句不能拿掉：
+  // 2026-08-18 第一次沒寫死，Gemini 把12個場景擠成一張 4x3 拼貼大圖，
+  // 整張才 1376x768、每格 344x256，放到 1080p 會糊，整批報廢。
+  var COMMON = "只畫「一個」畫面，整張圖就是這一個場景的完整構圖。"
+             + "絕對不要拼貼、不要分格、不要多格漫畫、不要一張圖裡放好幾個小場景。\n\n"
+             + "畫風跟前面那張完全一致（水彩插畫質感），角色也要一致：\n" + CHAR + "\n\n"
+             + "橫式16:9寬螢幕、高解析度大圖，畫面下方留空間放字幕，"
+             + "不要出現任何文字、標題或浮水印。\n\n畫面：";
+
+  var STEP0 = "把這張圖裡狗狗的項圈改成深海軍藍色的素面織帶項圈（馬丁格訓練款，配銀色金屬環，沒有花紋、沒有串珠），"
+            + "其他部分包括女生的臉、髮型、衣服、狗狗的外型和整體畫風都完全不要變。";
+
+  // 場景照歌曲實際段落與歌詞排序，不是隨便想的：
+  // 全曲 132 秒，11 張平均每張約 12 秒。
   var SCENES = [
-    ["公園散步（開場）", "01_intro_park", "女生牽著白色法鬥，在早晨陽光的公園步道散步，兩旁有樹，全身遠景，從背後稍微側身。"],
-    ["花束", "02_flowers", "女生蹲下來抱著一小束黃色雛菊和白玫瑰，法鬥好奇地湊過來聞花，溫暖的近景。"],
-    ["咖啡店窗邊", "03_cafe_window", "女生坐在明亮的咖啡店窗邊喝拿鐵，法鬥把下巴靠在她膝蓋上，慵懶的午後。"],
-    ["沙發滑手機", "04_phone_smile", "女生躺在沙發上看手機微笑，法鬥蜷在她旁邊睡著，柔和的室內燈光，夜晚。"],
-    ["草地奔跑", "05_run_grass", "女生和法鬥一起在寬廣的綠色草地上奔跑，充滿動感和喜悅，藍天白雲。"],
-    ["握手遞腳腳", "06_paw", "女生蹲下來伸出手，法鬥抬起前腳放在她手心上，兩個開心地對看，陽光灑落的花園。"],
-    ["夕陽長椅", "07_sunset_bench", "女生坐在公園長椅上，法鬥坐在她旁邊，兩個一起望向金黃色的夕陽，逆光剪影感。"],
-    ["雨天雨傘", "08_rain_umbrella", "小雨中女生撐著透明雨傘，法鬥穿著小雨衣抬頭看她，濕潤的地面反射柔和光線。"],
-    ["夜晚窗邊", "09_home_window", "女生和法鬥一起望著窗外的夜景城市燈火，從背後拍，安靜親密的氛圍。"],
-    ["擁抱", "10_hug", "女生溫柔地抱著法鬥，兩個都滿足地閉著眼睛，背景柔焦，溫馨的近景。"],
-    ["星空（結尾）", "12_outro_stars", "女生和法鬥一起躺在草地上仰望滿天星空，寧靜的收尾畫面，深藍色調帶溫暖光點。"]
+    ["公園散步（開場）", "01_park", "0:00–0:30", "前奏",
+     "女生牽著白色法鬥，走在早晨陽光的公園步道上，兩旁是高大的樹，光影灑在地面。從後方稍微側面的全身遠景，畫面開闊。"],
+
+    ["巷口的拿鐵", "02_cafe", "0:30–0:41", "「巷口那杯拿鐵　還沒喝就微笑」",
+     "女生坐在明亮的咖啡店窗邊，手裡捧著一杯拿鐵，嘴角帶著笑意；白色法鬥趴在桌子底下，下巴靠在她的膝蓋上。溫暖的午後陽光。中景。"],
+
+    ["深夜的訊息", "03_phone", "0:41–0:52", "「你傳來的訊息　害我整夜睡不著」",
+     "夜晚，女生側躺在沙發上看著手機微笑，手機螢幕的光映在她臉上；白色法鬥蜷在她身旁睡著了。柔和溫暖的室內燈光。近景。"],
+
+    ["草地上奔跑", "04_run", "0:52–1:05", "副歌「我的心跳漏拍　因為你走過來」",
+     "女生和白色法鬥一起在寬闊的綠色草地上奔跑，兩個都很開心，頭髮和耳朵被風吹起。藍天白雲，充滿動感。全身中遠景。"],
+
+    ["牽起你的手", "05_paw", "1:05–1:15", "「牽你的手那瞬間　所有煩惱都不見」",
+     "女生蹲下來伸出手掌，白色法鬥抬起前腳輕輕放在她手心上，兩個開心地互看。陽光灑落的花園。溫暖的近景。"],
+
+    ["陽光曬進窗台", "06_window_day", "1:15–1:25", "「陽光曬進窗台　風吹起了窗簾」",
+     "明亮的房間裡，陽光從窗戶灑進來，白色窗簾被風輕輕吹起；女生坐在窗邊的地板上，白色法鬥趴在她腿邊。柔和逆光。中景。"],
+
+    ["你笑起來的樣子", "07_flowers", "1:25–1:36", "「你笑起來的樣子　比什麼都好看」",
+     "女生蹲著捧著一小束黃色雛菊和白玫瑰，笑得很開心；白色法鬥好奇地把鼻子湊近花束聞。溫暖明亮的近景，臉部清楚。"],
+
+    ["如果幸福有形狀", "08_sunset", "1:36–1:48", "橋段「如果幸福有形狀　大概就是你現在的模樣」",
+     "黃昏，女生坐在公園長椅上，白色法鬥坐在她身邊，兩個一起望向金黃色的夕陽。逆光剪影感，天空是溫暖的橘粉色。中遠景。"],
+
+    ["雨天也不怕", "09_rain", "1:48–1:59", "副歌重複段",
+     "小雨中，女生撐著透明雨傘，白色法鬥穿著小雨衣抬頭看她；濕潤的地面反射著柔和的光。清新不悲傷的氛圍。中景。"],
+
+    ["我學會了快樂", "10_hug", "1:59–2:10", "「遇見你之後　我學會了快樂」",
+     "女生溫柔地抱著白色法鬥，兩個都滿足地閉著眼睛，臉貼著臉。背景柔焦，光線溫暖。溫馨的特寫。"],
+
+    ["星空（結尾）", "11_stars", "2:10–2:13", "尾聲「今天以後　我只想跟著你走」",
+     "夜晚，女生和白色法鬥一起躺在草地上仰望滿天星空，安靜而幸福。深藍色調帶著溫暖的星光點點。全身遠景，天空佔畫面大部分。"]
   ];
 
-  var KEY = "mv-prompts-done-v1";
+  var KEY = "mv-prompts-done-v2";
   var done = {};
   try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ done = {}; }
-
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(done)); }catch(e){} }
 
   function refresh(){
@@ -146,9 +179,13 @@
     } else { fallback(); }
   }
 
+  document.getElementById("step0txt").textContent = STEP0;
+  var s0 = document.getElementById("step0btn");
+  s0.onclick = function(){ copyText(STEP0, s0); };
+
   var list = document.getElementById("list");
   SCENES.forEach(function(s, i){
-    var title = s[0], fname = s[1], scene = s[2];
+    var title=s[0], fname=s[1], time=s[2], lyric=s[3], scene=s[4];
     var full = COMMON + scene;
 
     var card = document.createElement("div");
@@ -157,10 +194,12 @@
     var head = document.createElement("div");
     head.className = "head";
     head.innerHTML = '<div class="num">' + (i+1) + '</div>' +
-                     '<div class="title">' + title + '</div>';
-    var fn = document.createElement("div");
-    fn.className = "fname"; fn.textContent = fname + ".png";
-    head.appendChild(fn);
+                     '<div class="title"></div><div class="time"></div>';
+    head.querySelector(".title").textContent = title;
+    head.querySelector(".time").textContent = time;
+
+    var ly = document.createElement("div");
+    ly.className = "lyric"; ly.textContent = lyric;
 
     var txt = document.createElement("div");
     txt.className = "txt"; txt.textContent = full;
@@ -176,15 +215,15 @@
     mbtn.className = "mark";
     mbtn.textContent = done[fname] ? "已完成" : "完成";
     mbtn.onclick = function(){
-      done[fname] = !done[fname];
-      save();
+      done[fname] = !done[fname]; save();
       card.className = "card" + (done[fname] ? " done" : "");
       mbtn.textContent = done[fname] ? "已完成" : "完成";
       refresh();
     };
 
     row.appendChild(cbtn); row.appendChild(mbtn);
-    card.appendChild(head); card.appendChild(txt); card.appendChild(row);
+    card.appendChild(head); card.appendChild(ly);
+    card.appendChild(txt); card.appendChild(row);
     list.appendChild(card);
   });
 
