@@ -899,6 +899,13 @@
         var lastIndex = history[lastDate] && history[lastDate].index;
         nextIndex = Number.isInteger(lastIndex) ? (lastIndex + 1) % ROSTER.length : 0;
       }
+      // 跳過今天沒出工的人。2026-08-30 抓到的問題：8/31 只有稜凱跟皓皓出工，
+      // 但輪序算出來是楊善，畫面會顯示一個不在場的人當值日生、沒人能打勾。
+      // PERSON_NAMES 是當天真正在表上的人，用它當在場名單。
+      for(var guard = 0; guard < ROSTER.length; guard++){
+        if(PERSON_NAMES.hasOwnProperty(ROSTER[nextIndex])) break;
+        nextIndex = (nextIndex + 1) % ROSTER.length;
+      }
       return todayRef.transaction(function(current){
         if(current !== null) return; // 別人已經先建立過今天的紀錄，不要覆蓋
         return { index: nextIndex, checked: false };
