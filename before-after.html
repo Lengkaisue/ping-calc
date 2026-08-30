@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>施工前後對照圖產生器</title>
+<style>
+  :root{
+    --bg:#f4f1ea; --card:#ffffff; --ink:#2b2620; --sub:#7a7268;
+    --old:#b5762a; --new:#3a7d5c; --line:#e4ddd0; --danger:#c0392b;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;padding-bottom:60px;}
+  header{padding:18px 16px 10px;text-align:center;}
+  header h1{font-size:20px;margin:0 0 4px;}
+  header p{font-size:13px;color:var(--sub);margin:0;}
+  .step{background:var(--card);margin:12px;padding:14px;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .step h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:6px;}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;flex-shrink:0;}
+  .name-input{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:15px;margin-bottom:2px;}
+  .upload-row{display:flex;gap:10px;}
+  .upload-btn{flex:1;padding:16px 8px;border-radius:12px;border:2px dashed var(--line);text-align:center;font-size:14px;font-weight:600;cursor:pointer;background:#fafafa;}
+  .upload-btn.old{border-color:var(--old);color:var(--old);}
+  .upload-btn.new{border-color:var(--new);color:var(--new);}
+  .upload-btn .count{display:block;font-size:22px;margin-top:2px;}
+  input[type=file]{display:none;}
+  .lists{display:flex;gap:10px;margin-top:12px;}
+  .list-col{flex:1;min-width:0;}
+  .list-col h3{font-size:12px;color:var(--sub);margin:0 0 6px;}
+  .thumb{position:relative;background:#f0ede6;border-radius:10px;overflow:hidden;margin-bottom:8px;}
+  .thumb img{width:100%;height:90px;object-fit:cover;display:block;}
+  .thumb .idx{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:1px 6px;border-radius:8px;}
+  .thumb .ctrl{position:absolute;bottom:4px;right:4px;display:flex;gap:4px;}
+  .thumb .ctrl button{width:24px;height:24px;border:none;border-radius:6px;background:rgba(0,0,0,.55);color:#fff;font-size:13px;line-height:1;}
+  .empty-hint{font-size:12px;color:var(--sub);text-align:center;padding:16px 4px;}
+  .pair-note{font-size:12px;color:var(--sub);margin-top:8px;line-height:1.5;}
+  .pair-note b{color:var(--ink);}
+  .warn{color:var(--danger);}
+  .generate-btn{width:100%;padding:15px;border:none;border-radius:12px;background:var(--ink);color:#fff;font-size:16px;font-weight:700;margin-top:4px;}
+  .generate-btn:disabled{background:#c9c2b4;}
+  .result img{width:100%;border-radius:10px;margin-top:10px;border:1px solid var(--line);}
+  .dl-btn{display:block;width:100%;text-align:center;padding:14px;border-radius:12px;background:var(--new);color:#fff;font-weight:700;text-decoration:none;margin-top:10px;font-size:15px;}
+  .reset-btn{display:block;width:100%;text-align:center;padding:10px;border-radius:10px;background:none;border:1px solid var(--line);color:var(--sub);margin-top:8px;font-size:13px;}
+  .spinner{text-align:center;padding:20px;color:var(--sub);font-size:13px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>施工前後對照圖產生器</h1>
+  <p>選照片 → 自動配對 → 一鍵合成下載，全程手機操作</p>
+</header>
+
+<div class="step">
+  <h2><span class="badge">1</span>案名／工地（選填）</h2>
+  <input class="name-input" id="projName" placeholder="例：中壢○○工地">
+</div>
+
+<div class="step">
+  <h2><span class="badge">2</span>選照片（可一次多選）</h2>
+  <div class="upload-row">
+    <label class="upload-btn old" for="oldInput">施工前（舊）<span class="count" id="oldCount">0</span></label>
+    <label class="upload-btn new" for="newInput">施工後（新）<span class="count" id="newCount">0</span></label>
+  </div>
+  <input type="file" id="oldInput" accept="image/*" multiple>
+  <input type="file" id="newInput" accept="image/*" multiple>
+
+  <div class="lists" id="listsWrap" style="display:none;">
+    <div class="list-col">
+      <h3>施工前順序</h3>
+      <div id="oldList"></div>
+    </div>
+    <div class="list-col">
+      <h3>施工後順序</h3>
+      <div id="newList"></div>
+    </div>
+  </div>
+  <div class="empty-hint" id="emptyHint">還沒選照片。兩邊各按一次「選照片」，可一次選好幾張。</div>
+  <div class="pair-note" id="pairNote" style="display:none;"></div>
+</div>
+
+<div class="step">
+  <h2><span class="badge">3</span>產生對照圖</h2>
+  <button class="generate-btn" id="genBtn" disabled>先選好照片再產生</button>
+  <div id="spinnerWrap"></div>
+  <div class="result" id="resultWrap"></div>
+</div>
+
+<script>
+const state = { old: [], new: [] }; // each: {file, url}
+
+const oldInput = document.getElementById('oldInput');
+const newInput = document.getElementById('newInput');
+const oldCount = document.getElementById('oldCount');
+const newCount = document.getElementById('newCount');
+const oldList = document.getElementById('oldList');
+const newList = document.getElementById('newList');
+const listsWrap = document.getElementById('listsWrap');
+const emptyHint = document.getElementById('emptyHint');
+const pairNote = document.getElementById('pairNote');
+const genBtn = document.getElementById('genBtn');
+const resultWrap = document.getElementById('resultWrap');
+const spinnerWrap = document.getElementById('spinnerWrap');
+
+function handleFiles(kind, fileList){
+  const arr = state[kind];
+  Array.from(fileList).forEach(f => {
+    if(!f.type.startsWith('image/')) return;
+    arr.push({ file:f, url: URL.createObjectURL(f) });
+  });
+  render();
+}
+oldInput.addEventListener('change', e => { handleFiles('old', e.target.files); e.target.value=''; });
+newInput.addEventListener('change', e => { handleFiles('new', e.target.files); e.target.value=''; });
+
+function renderColumn(kind, container){
+  container.innerHTML = '';
+  state[kind].forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'thumb';
+    div.innerHTML = `
+      <img src="${item.url}">
+      <span class="idx">#${i+1}</span>
+      <span class="ctrl">
+        <button data-act="up">↑</button>
+        <button data-act="down">↓</button>
+        <button data-act="del">×</button>
+      </span>`;
+    div.querySelector('[data-act="up"]').onclick = () => move(kind, i, -1);
+    div.querySelector('[data-act="down"]').onclick = () => move(kind, i, 1);
+    div.querySelector('[data-act="del"]').onclick = () => remove(kind, i);
+    container.appendChild(div);
+  });
+}
+function move(kind, i, dir){
+  const arr = state[kind];
+  const j = i + dir;
+  if(j < 0 || j >= arr.length) return;
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+  render();
+}
+function remove(kind, i){
+  state[kind].splice(i, 1);
+  render();
+}
+
+function render(){
+  oldCount.textContent = state.old.length;
+  newCount.textContent = state.new.length;
+  const has = state.old.length > 0 || state.new.length > 0;
+  listsWrap.style.display = has ? 'flex' : 'none';
+  emptyHint.style.display = has ? 'none' : 'block';
+  renderColumn('old', oldList);
+  renderColumn('new', newList);
+
+  const pairs = Math.min(state.old.length, state.new.length);
+  const extra = Math.abs(state.old.length - state.new.length);
+  if(has){
+    pairNote.style.display = 'block';
+    let msg = `會配成 <b>${pairs}</b> 組對照`;
+    if(extra > 0) msg += `，另外 <b>${extra}</b> 張沒對到的照片會單獨列在最後（<span class="warn">建議兩邊張數一致</span>）`;
+    msg += '。用 ↑↓ 調整順序，第幾張對第幾張。';
+    pairNote.innerHTML = msg;
+  } else {
+    pairNote.style.display = 'none';
+  }
+
+  const canGen = pairs > 0 || has;
+  genBtn.disabled = !has;
+  genBtn.textContent = has ? '產生對照圖' : '先選好照片再產生';
+}
+
+async function loadBitmap(file, targetW){
+  try{
+    return await createImageBitmap(file, { imageOrientation: 'from-image', resizeWidth: targetW, resizeQuality: 'high' });
+  }catch(e){
+    return await createImageBitmap(file);
+  }
+}
+
+genBtn.addEventListener('click', async () => {
+  genBtn.disabled = true;
+  spinnerWrap.innerHTML = '<div class="spinner">合成中…</div>';
+  resultWrap.innerHTML = '';
+
+  const MARGIN = 24, GAP = 16, COL_W = 520, LABEL_H = 32, ROW_GAP = 26;
+  const canvasW = MARGIN*2 + COL_W*2 + GAP;
+
+  const pairs = Math.min(state.old.length, state.new.length);
+  const rows = [];
+  for(let i=0;i<pairs;i++){
+    const [oldBmp, newBmp] = await Promise.all([
+      loadBitmap(state.old[i].file, COL_W),
+      loadBitmap(state.new[i].file, COL_W)
+    ]);
+    rows.push({ type:'pair', oldBmp, newBmp });
+  }
+  const rest = state.old.length > state.new.length ? state.old.slice(pairs) : state.new.slice(pairs);
+  const restKind = state.old.length > state.new.length ? 'old' : 'new';
+  for(const item of rest){
+    const bmp = await loadBitmap(item.file, COL_W);
+    rows.push({ type:'single', kind: restKind, bmp });
+  }
+
+  const projName = document.getElementById('projName').value.trim();
+  const titleH = projName ? 54 : 0;
+
+  let totalH = MARGIN + titleH;
+  rows.forEach(r => {
+    if(r.type === 'pair'){
+      const oh = r.oldBmp.height * (COL_W / r.oldBmp.width);
+      const nh = r.newBmp.height * (COL_W / r.newBmp.width);
+      r.rowH = LABEL_H + Math.max(oh, nh);
+      r.oh = oh; r.nh = nh;
+    } else {
+      const h = r.bmp.height * (COL_W / r.bmp.width);
+      r.rowH = LABEL_H + h;
+      r.h = h;
+    }
+    totalH += r.rowH + ROW_GAP;
+  });
+  totalH += MARGIN - ROW_GAP;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvasW;
+  canvas.height = Math.max(totalH, 200);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f4f1ea';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  let y = MARGIN;
+  if(projName){
+    ctx.fillStyle = '#2b2620';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.textBaseline = 'top';
+    ctx.fillText(projName, MARGIN, y);
+    ctx.fillStyle = '#7a7268';
+    ctx.font = '15px sans-serif';
+    const today = new Date().toISOString().slice(0,10);
+    ctx.fillText(today, MARGIN, y + 32);
+    y += titleH;
+  }
+
+  function drawLabel(x, w, text, color){
+    ctx.fillStyle = color;
+    roundRect(ctx, x, y, w, LABEL_H-8, 6);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + w/2, y + (LABEL_H-8)/2);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  const xOld = MARGIN, xNew = MARGIN + COL_W + GAP;
+  rows.forEach(r => {
+    if(r.type === 'pair'){
+      drawLabel(xOld, COL_W, '施工前', '#b5762a');
+      drawLabel(xNew, COL_W, '施工後', '#3a7d5c');
+      const imgY = y + LABEL_H;
+      ctx.drawImage(r.oldBmp, xOld, imgY, COL_W, r.oh);
+      ctx.drawImage(r.newBmp, xNew, imgY, COL_W, r.nh);
+    } else {
+      const label = r.kind === 'old' ? '施工前（未配對）' : '施工後（未配對）';
+      const color = r.kind === 'old' ? '#b5762a' : '#3a7d5c';
+      drawLabel(xOld, COL_W, label, color);
+      ctx.drawImage(r.bmp, xOld, y + LABEL_H, COL_W, r.h);
+    }
+    y += r.rowH + ROW_GAP;
+  });
+
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    spinnerWrap.innerHTML = '';
+    resultWrap.innerHTML = `<img src="${url}"><a class="dl-btn" download="對照圖.png" href="${url}">下載對照圖</a>
+      <button class="reset-btn" id="resetBtn">清空重來</button>`;
+    document.getElementById('resetBtn').onclick = () => {
+      state.old = []; state.new = [];
+      resultWrap.innerHTML = '';
+      render();
+      window.scrollTo(0,0);
+    };
+    genBtn.disabled = false;
+  }, 'image/png');
+});
+
+render();
+</script>
+</body>
+</html>
