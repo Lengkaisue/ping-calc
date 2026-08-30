@@ -165,7 +165,6 @@ function render(){
     pairNote.style.display = 'none';
   }
 
-  const canGen = pairs > 0 || has;
   genBtn.disabled = !has;
   genBtn.textContent = has ? '產生對照圖' : '先選好照片再產生';
 }
@@ -202,10 +201,6 @@ genBtn.addEventListener('click', async () => {
     rows.push({ type:'single', kind: restKind, bmp });
   }
 
-  const projName = document.getElementById('projName').value.trim();
-  const titleH = projName ? 54 : 0;
-
-  let totalH = MARGIN + titleH;
   rows.forEach(r => {
     if(r.type === 'pair'){
       const oh = r.oldBmp.height * (COL_W / r.oldBmp.width);
@@ -217,31 +212,18 @@ genBtn.addEventListener('click', async () => {
       r.rowH = LABEL_H + h;
       r.h = h;
     }
-    totalH += r.rowH + ROW_GAP;
   });
-  totalH += MARGIN - ROW_GAP;
 
-  const canvas = document.createElement('canvas');
-  canvas.width = canvasW;
-  canvas.height = Math.max(totalH, 200);
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#f4f1ea';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  const projName = document.getElementById('projName').value.trim();
+  const today = new Date().toISOString().slice(0,10);
+  const titleH = projName ? 54 : 30; // always show date even without a project name
 
-  let y = MARGIN;
-  if(projName){
-    ctx.fillStyle = '#2b2620';
-    ctx.font = 'bold 28px sans-serif';
-    ctx.textBaseline = 'top';
-    ctx.fillText(projName, MARGIN, y);
-    ctx.fillStyle = '#7a7268';
-    ctx.font = '15px sans-serif';
-    const today = new Date().toISOString().slice(0,10);
-    ctx.fillText(today, MARGIN, y + 32);
-    y += titleH;
-  }
+  // 手機上單張圖太長會有 canvas 尺寸上限風險，也不好瀏覽/分享，超過 BATCH_SIZE 組就自動分成多張
+  const BATCH_SIZE = 6;
+  const chunks = [];
+  for(let i=0;i<rows.length;i+=BATCH_SIZE) chunks.push(rows.slice(i, i+BATCH_SIZE));
 
-  function drawLabel(x, w, text, color){
+  function drawLabel(ctx, x, y, w, text, color){
     ctx.fillStyle = color;
     roundRect(ctx, x, y, w, LABEL_H-8, 6);
     ctx.fill();
@@ -263,36 +245,70 @@ genBtn.addEventListener('click', async () => {
     ctx.closePath();
   }
 
-  const xOld = MARGIN, xNew = MARGIN + COL_W + GAP;
-  rows.forEach(r => {
-    if(r.type === 'pair'){
-      drawLabel(xOld, COL_W, '施工前', '#b5762a');
-      drawLabel(xNew, COL_W, '施工後', '#3a7d5c');
-      const imgY = y + LABEL_H;
-      ctx.drawImage(r.oldBmp, xOld, imgY, COL_W, r.oh);
-      ctx.drawImage(r.newBmp, xNew, imgY, COL_W, r.nh);
-    } else {
-      const label = r.kind === 'old' ? '施工前（未配對）' : '施工後（未配對）';
-      const color = r.kind === 'old' ? '#b5762a' : '#3a7d5c';
-      drawLabel(xOld, COL_W, label, color);
-      ctx.drawImage(r.bmp, xOld, y + LABEL_H, COL_W, r.h);
-    }
-    y += r.rowH + ROW_GAP;
-  });
+  function renderChunk(chunkRows, chunkIdx){
+    let totalH = MARGIN + titleH;
+    chunkRows.forEach(r => { totalH += r.rowH + ROW_GAP; });
+    totalH += MARGIN - ROW_GAP;
 
-  canvas.toBlob(blob => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvasW;
+    canvas.height = Math.max(totalH, 200);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f4f1ea';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    let y = MARGIN;
+    ctx.fillStyle = '#2b2620';
+    ctx.font = 'bold 26px sans-serif';
+    ctx.textBaseline = 'top';
+    const titleText = projName ? (chunks.length > 1 ? `${projName}（${chunkIdx+1}/${chunks.length}）` : projName) : '';
+    if(titleText) ctx.fillText(titleText, MARGIN, y);
+    ctx.fillStyle = '#7a7268';
+    ctx.font = '14px sans-serif';
+    const dateText = chunks.length > 1 && !projName ? `${today}（第${chunkIdx+1}/${chunks.length}張）` : today;
+    ctx.fillText(dateText, MARGIN, y + (titleText ? 32 : 0));
+    y += titleH;
+
+    const xOld = MARGIN, xNew = MARGIN + COL_W + GAP;
+    chunkRows.forEach(r => {
+      if(r.type === 'pair'){
+        drawLabel(ctx, xOld, y, COL_W, '施工前', '#b5762a');
+        drawLabel(ctx, xNew, y, COL_W, '施工後', '#3a7d5c');
+        const imgY = y + LABEL_H;
+        ctx.drawImage(r.oldBmp, xOld, imgY, COL_W, r.oh);
+        ctx.drawImage(r.newBmp, xNew, imgY, COL_W, r.nh);
+      } else {
+        const label = r.kind === 'old' ? '施工前（未配對）' : '施工後（未配對）';
+        const color = r.kind === 'old' ? '#b5762a' : '#3a7d5c';
+        drawLabel(ctx, xOld, y, COL_W, label, color);
+        ctx.drawImage(r.bmp, xOld, y + LABEL_H, COL_W, r.h);
+      }
+      y += r.rowH + ROW_GAP;
+    });
+
+    return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+  }
+
+  const blobs = [];
+  for(let i=0;i<chunks.length;i++){
+    blobs.push(await renderChunk(chunks[i], i));
+  }
+
+  spinnerWrap.innerHTML = '';
+  const items = blobs.map((blob, i) => {
     const url = URL.createObjectURL(blob);
-    spinnerWrap.innerHTML = '';
-    resultWrap.innerHTML = `<img src="${url}"><a class="dl-btn" download="對照圖.png" href="${url}">下載對照圖</a>
-      <button class="reset-btn" id="resetBtn">清空重來</button>`;
-    document.getElementById('resetBtn').onclick = () => {
-      state.old = []; state.new = [];
-      resultWrap.innerHTML = '';
-      render();
-      window.scrollTo(0,0);
-    };
-    genBtn.disabled = false;
-  }, 'image/png');
+    const fname = chunks.length > 1 ? `對照圖_${i+1}.jpg` : '對照圖.jpg';
+    const label = chunks.length > 1 ? `下載第 ${i+1}/${chunks.length} 張` : '下載對照圖';
+    return `<img src="${url}"><a class="dl-btn" download="${fname}" href="${url}">${label}</a>`;
+  }).join('');
+  resultWrap.innerHTML = items + `<button class="reset-btn" id="resetBtn">清空重來</button>`;
+  document.getElementById('resetBtn').onclick = () => {
+    state.old = []; state.new = [];
+    resultWrap.innerHTML = '';
+    render();
+    window.scrollTo(0,0);
+  };
+  genBtn.disabled = false;
 });
 
 render();
