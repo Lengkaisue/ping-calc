@@ -513,11 +513,11 @@
       <li><input type="checkbox"><label>4×6方管</label><span class="qty">1隻</span></li>
       <li><input type="checkbox"><label>1.5×3方管</label><span class="qty">18隻</span></li>
       <li><input type="checkbox"><label>4米面2×4方管</label><span class="qty">2隻</span></li>
-      <li><input type="checkbox"><label>止水膠條</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>止水膠條</label><span class="qty">1包</span></li>
       <li><input type="checkbox"><label>電焊機（電纜、正負極、焊條）</label><span class="qty">一組</span></li>
       <li><input type="checkbox"><label>噴漆（白/銀/黑）</label><span class="qty">白3箱／銀少量／黑1</span></li>
-      <li><input type="checkbox"><label>矽利康（白色/淺灰）</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>延長線</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>矽利康（白色/淺灰）</label></li>
+      <li><input type="checkbox"><label>延長線</label></li>
     </ul>
     <div class="submit-area">
       <button type="button" class="submit-btn">檢查完送出</button>
@@ -543,20 +543,20 @@
       <span class="status-badge" hidden></span>
     </div>
     <ul class="items">
-      <li><input type="checkbox"><label>螺絲</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>螺絲</label></li>
       <li class="sublist">明細（僅供參考，不用勾）　馬車螺絲公　馬車螺母　支架螺絲　墊片　支架螺母　小蜜蜂　門釘　地板釘　六角釘(短)　六角釘(長)</li>
-      <li><input type="checkbox"><label>布</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>千斤頂</label><span class="qty">備用</span></li>
+      <li><input type="checkbox"><label>布</label></li>
+      <li><input type="checkbox"><label>千斤頂</label></li>
       <li><input type="checkbox"><label>長梯</label><span class="qty">2</span></li>
       <li><input type="checkbox"><label>短梯</label><span class="qty">2</span></li>
-      <li><input type="checkbox"><label>肉路ㄚ</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>大小砂輪片</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>掃把、畚斗、垃圾袋</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>肉路ㄚ</label></li>
+      <li><input type="checkbox"><label>大小砂輪片</label></li>
+      <li><input type="checkbox"><label>掃把、畚斗、垃圾袋</label></li>
       <li><input type="checkbox"><label>冰桶</label><span class="qty">1個</span></li>
-      <li><input type="checkbox"><label>電動工具</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>庫板鋸台</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>切台</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>C夾</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>電動工具</label></li>
+      <li><input type="checkbox"><label>庫板鋸台</label></li>
+      <li><input type="checkbox"><label>切台</label></li>
+      <li><input type="checkbox"><label>C夾</label></li>
     </ul>
     <div class="submit-area">
       <button type="button" class="submit-btn">檢查完送出</button>
@@ -720,8 +720,9 @@
       var cb = li.querySelector('input[type="checkbox"]');
       if(!cb || cb.checked) return;
       var label = li.querySelector('label').textContent.trim();
-      var qty = li.querySelector('.qty').textContent.trim();
-      missing.push(label + '（' + qty + '）');
+      var qtyEl = li.querySelector('.qty');
+      var qty = qtyEl ? qtyEl.textContent.trim() : '';
+      missing.push(qty ? label + '（' + qty + '）' : label);
     });
     return missing;
   }
