@@ -8,10 +8,10 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23E2571C'/%3E%3Ctext x='50' y='70' font-size='55' text-anchor='middle' fill='white' font-family='sans-serif'%3E%E5%B7%A5%3C/text%3E%3C/svg%3E">
 <!-- ⚠️LINE的連結預覽不會執行JavaScript，只讀下面這幾行靜態標籤。
      換新的一天時，除了改CHART_DATE，這三個地方的日期也要一起改，不然LINE預覽會停在舊日期。 -->
-<title>2026 8月31號 出工分工表</title>
-<meta property="og:title" content="2026 8月31號 出工分工表">
+<title>2026 9月5號 出工分工表</title>
+<meta property="og:title" content="2026 9月5號 出工分工表">
 <meta property="og:description" content="點開勾選自己那組的材料，勾完按「檢查完送出」">
-<meta name="description" content="2026 8月31號 出工分工表">
+<meta name="description" content="2026 9月5號 出工分工表">
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
   // 在LINE裡點連結打開時，讓畫面用LIFF方式呈現（沒有網址列，右上角✕直接關閉回聊天室）。
@@ -425,7 +425,7 @@
     <div class="job-meta">
       <span>棟型 <b>4m×6m 組合屋一組（一樓），白骨白板</b></span>
       <span>人力 <b>2 人</b></span>
-      <span>日期 <b id="jobDateLabel">8/31（一）</b></span>
+      <span>日期 <b id="jobDateLabel">9/5（六）</b></span>
     </div>
   </header>
 
@@ -446,7 +446,8 @@
     <span class="whoami-label" id="whoamiLabel">你是哪一位？選了才能勾自己那組，避免亂按到別人的。</span>
     <div class="whoami-chips" id="whoamiChips">
       <button type="button" class="chip" data-who="lengkai">稜凱</button>
-      <button type="button" class="chip" data-who="haohao">皓皓</button>
+      <button type="button" class="chip" data-who="yangshan">楊善</button>
+      <button type="button" class="chip" data-who="zhihao">志豪</button>
     </div>
     <div class="whoami-current" id="whoamiCurrent" hidden>
       <span>目前身份：<b id="whoamiCurrentName"></b>（其他組唯讀）</span>
@@ -459,12 +460,12 @@
     <div class="bar"><i id="progressBar"></i></div>
   </div>
 
-  <section class="person" data-person="haohao">
+  <section class="person" data-person="lengkai">
     <div class="person-head">
-      <div class="avatar">皓</div>
+      <div class="avatar">稜</div>
       <div>
-        <div class="person-name">皓皓</div>
-        <div class="person-role">骨架立柱＋方管收邊＋板材組</div>
+        <div class="person-name">稜凱</div>
+        <div class="person-role">骨架立柱＋天花支架＋板材組</div>
       </div>
       <div class="person-count" data-count></div>
       <span class="status-badge" hidden></span>
@@ -477,12 +478,6 @@
       <li><input type="checkbox"><label>4米地板支架</label><span class="qty">14隻</span></li>
       <li><input type="checkbox"><label>4米天花板(主)支架</label><span class="qty">2支</span></li>
       <li><input type="checkbox"><label>天花板支架</label><span class="qty">6粗6細</span></li>
-      <li><input type="checkbox"><label>4米叩布</label><span class="qty">2隻</span></li>
-      <li><input type="checkbox"><label>6米扣布</label><span class="qty">2隻</span></li>
-      <li><input type="checkbox"><label>5×5方管</label><span class="qty">2隻</span></li>
-      <li><input type="checkbox"><label>4×6方管</label><span class="qty">1隻</span></li>
-      <li><input type="checkbox"><label>1.5×3方管</label><span class="qty">18隻</span></li>
-      <li><input type="checkbox"><label>4米面2×4方管</label><span class="qty">2隻</span></li>
       <li><input type="checkbox"><label>地板</label><span class="qty">10大5小</span></li>
       <li><input type="checkbox"><label>白色庫板</label><span class="qty">20片</span></li>
       <li><input type="checkbox"><label>屋頂（短5×5方管）</label><span class="qty">8片</span></li>
@@ -501,36 +496,28 @@
     </div>
   </section>
 
-  <section class="person" data-person="lengkai">
+  <section class="person" data-person="yangshan">
     <div class="person-head">
-      <div class="avatar">稜</div>
+      <div class="avatar">楊</div>
       <div>
-        <div class="person-name">稜凱</div>
-        <div class="person-role">電焊動力工具＋五金收尾組</div>
+        <div class="person-name">楊善</div>
+        <div class="person-role">方管收邊＋電焊塗裝組</div>
       </div>
       <div class="person-count" data-count></div>
       <span class="status-badge" hidden></span>
     </div>
     <ul class="items">
+      <li><input type="checkbox"><label>4米叩布</label><span class="qty">2隻</span></li>
+      <li><input type="checkbox"><label>6米扣布</label><span class="qty">2隻</span></li>
+      <li><input type="checkbox"><label>5×5方管</label><span class="qty">2隻</span></li>
+      <li><input type="checkbox"><label>4×6方管</label><span class="qty">1隻</span></li>
+      <li><input type="checkbox"><label>1.5×3方管</label><span class="qty">18隻</span></li>
+      <li><input type="checkbox"><label>4米面2×4方管</label><span class="qty">2隻</span></li>
+      <li><input type="checkbox"><label>止水膠條</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>電焊機（電纜、正負極、焊條）</label><span class="qty">一組</span></li>
       <li><input type="checkbox"><label>噴漆（白/銀/黑）</label><span class="qty">白3箱／銀少量／黑1</span></li>
       <li><input type="checkbox"><label>矽利康（白色/淺灰）</label><span class="qty">一式</span></li>
       <li><input type="checkbox"><label>延長線</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>電動工具</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>庫板鋸台</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>切台</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>C夾</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>螺絲</label><span class="qty">一式</span></li>
-      <li class="sublist">明細（僅供參考，不用勾）　馬車螺絲公　馬車螺母　支架螺絲　墊片　支架螺母　小蜜蜂　門釘　地板釘　六角釘(短)　六角釘(長)</li>
-      <li><input type="checkbox"><label>布</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>止水膠條</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>千斤頂</label><span class="qty">備用</span></li>
-      <li><input type="checkbox"><label>長梯</label><span class="qty">2</span></li>
-      <li><input type="checkbox"><label>短梯</label><span class="qty">2</span></li>
-      <li><input type="checkbox"><label>肉路ㄚ</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>大小砂輪片</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>掃把、畚斗、垃圾袋</label><span class="qty">一式</span></li>
-      <li><input type="checkbox"><label>冰桶</label><span class="qty">1個</span></li>
     </ul>
     <div class="submit-area">
       <button type="button" class="submit-btn">檢查完送出</button>
@@ -545,6 +532,44 @@
     </div>
   </section>
 
+  <section class="person" data-person="zhihao">
+    <div class="person-head">
+      <div class="avatar">志</div>
+      <div>
+        <div class="person-name">志豪</div>
+        <div class="person-role">五金收尾＋動力工具組</div>
+      </div>
+      <div class="person-count" data-count></div>
+      <span class="status-badge" hidden></span>
+    </div>
+    <ul class="items">
+      <li><input type="checkbox"><label>螺絲</label><span class="qty">一式</span></li>
+      <li class="sublist">明細（僅供參考，不用勾）　馬車螺絲公　馬車螺母　支架螺絲　墊片　支架螺母　小蜜蜂　門釘　地板釘　六角釘(短)　六角釘(長)</li>
+      <li><input type="checkbox"><label>布</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>千斤頂</label><span class="qty">備用</span></li>
+      <li><input type="checkbox"><label>長梯</label><span class="qty">2</span></li>
+      <li><input type="checkbox"><label>短梯</label><span class="qty">2</span></li>
+      <li><input type="checkbox"><label>肉路ㄚ</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>大小砂輪片</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>掃把、畚斗、垃圾袋</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>冰桶</label><span class="qty">1個</span></li>
+      <li><input type="checkbox"><label>電動工具</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>庫板鋸台</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>切台</label><span class="qty">一式</span></li>
+      <li><input type="checkbox"><label>C夾</label><span class="qty">一式</span></li>
+    </ul>
+    <div class="submit-area">
+      <button type="button" class="submit-btn">檢查完送出</button>
+      <div class="submit-result" hidden>
+        <p class="submit-status"></p>
+        <div class="missing-list"></div>
+        <div class="submit-actions">
+          <button type="button" class="copy-btn">複製清單傳LINE</button>
+          <button type="button" class="reedit-btn">重新編輯</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
 </div>
 
@@ -552,12 +577,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
 <script>
 (function(){
-  var CHART_DATE = '2026-08-31';
+  var CHART_DATE = '2026-09-05';
   var STORAGE_KEY = 'crew-' + CHART_DATE + '-items-v1';
   var WHOAMI_KEY = 'ping-calc-crew-whoami-v1';
   var SUBMIT_KEY = 'crew-' + CHART_DATE + '-submit-v1';
   var PERSON_NAMES = {
-    lengkai:'稜凱', haohao:'皓皓'
+    lengkai:'稜凱', yangshan:'楊善', zhihao:'志豪'
   };
 
   // 日期文字一律從CHART_DATE算出來（頁籤標題＋頁首日期都是），
