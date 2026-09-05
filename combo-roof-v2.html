@@ -174,6 +174,9 @@ a.back:hover { color:#fff; }
     <div id="ridgeMarkBar" style="display:none;margin-top:8px;">
       <button class="btn-sm" onclick="addEndMarks()" style="background:#2a6b2a;color:#fff;">兩端加中柱標記</button>
       <span style="color:#666;font-size:12px;">手機在端點附近點擊容易誤觸拖曳把手，用這個按鈕直接在兩端加標記</span>
+      <div id="ridgeMarkNote" style="display:none;color:#c07020;font-size:12px;margin-top:4px;">
+        單斜屋頂的中柱固定「左右各一組（共4支）」，落柱標記不會影響算料，這裡先停用。紅色中脊線仍可拖曳，用來決定這組的排水方向。
+      </div>
     </div>
 
     <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:#666;flex-wrap:wrap;">
@@ -205,12 +208,12 @@ a.back:hover { color:#fff; }
     </div>
     <div class="row">
       <label>新建物預設方向</label>
-      <select id="roofDir" onchange="draw(); redraw3DIfActive()">
+      <select id="roofDir" onchange="draw(); redraw3DIfActive(); noteRoofDirScope()">
         <option value="col">前後斜（沿D邊）</option>
         <option value="row">左右斜（沿W邊）</option>
       </select>
     </div>
-    <p style="color:#888;font-size:12px;margin:2px 0 8px 0;">
+    <p id="roofDirNote" style="color:#888;font-size:12px;margin:2px 0 8px 0;">
       這裡只設定「新增建物」的預設方向。已在畫布上的每一棟，直接點它右上角的箭頭圖示（↕/↔）就能個別切換，圖示旁會即時顯示算出來的中柱/中脊高度，設定改了就跟著變，不用再對照W/D。
     </p>
     <p style="color:#aaa;font-size:13px;margin:12px 0 4px 0;font-weight:bold;">延伸尺寸</p>
@@ -403,6 +406,79 @@ const PAD=40;
 let _sc=1, _ox=0, _oy=0;
 let _dirBtnRects=[]; // 每次draw()重建：畫布上每棟建物右上角「方向切換鈕」的命中範圍(canvas內部px，含PAD)
 
+// 使用者常以為這個下拉選單會改「已經畫在畫布上」的建物(回報「怎麼切示意圖都一樣」)，
+// 但它只影響之後新增的建物。畫布上已有建物時就把下方說明閃黃提醒一次。
+function noteRoofDirScope(){
+  if(!buildings.length) return;
+  let el=document.getElementById('roofDirNote');
+  if(!el) return;
+  el.style.transition='none';
+  el.style.color='#ffe14d';
+  el.style.fontWeight='bold';
+  setTimeout(()=>{
+    el.style.transition='color .6s, font-weight .6s';
+    el.style.color='#888';
+    el.style.fontWeight='normal';
+  }, 1200);
+}
+
+// 在2D俯視圖的建物方塊裡直接畫出坡向：落水線(平行細線)＋箭頭。
+// 箭頭方向跟3D示意圖一致：指向「高邊」(往上爬的方向)。
+// dir==='col' → 沿畫布縱向(D邊)排水；dir==='row' → 沿橫向(W邊)排水。
+// rType 1=單斜(整片同一方向)、2=雙斜(中間有脊，兩側各自往脊爬)。
+function drawSlopeHint(ctx,px,py,pw,ph,dir,rType){
+  if(pw<24||ph<24) return; // 太小畫了反而糊成一團
+  const vert = (dir==='col');
+  const pad = 4;
+  ctx.save();
+  ctx.strokeStyle='rgba(125,232,125,0.55)'; ctx.lineWidth=1;
+  // 落水線：跟排水方向平行，數量隨方塊大小，最少3條
+  let across = vert ? pw : ph;
+  let nLines = Math.max(3, Math.min(7, Math.round(across/22)));
+  for(let i=1;i<=nLines;i++){
+    let f = i/(nLines+1);
+    ctx.beginPath();
+    if(vert){ let x=px+pw*f; ctx.moveTo(x,py+pad); ctx.lineTo(x,py+ph-pad); }
+    else    { let y=py+ph*f; ctx.moveTo(px+pad,y); ctx.lineTo(px+pw-pad,y); }
+    ctx.stroke();
+  }
+  // 箭頭：單斜一支(指高邊)，雙斜兩支(從兩端指向中脊)＋中脊虛線
+  function arrow(x1,y1,x2,y2){
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    let a=Math.atan2(y2-y1,x2-x1), h=Math.min(9,Math.max(5,across/12));
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-h*Math.cos(a-0.4), y2-h*Math.sin(a-0.4));
+    ctx.lineTo(x2-h*Math.cos(a+0.4), y2-h*Math.sin(a+0.4));
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.strokeStyle='#ffffff'; ctx.fillStyle='#ffffff'; ctx.lineWidth=2;
+  let cx=px+pw/2, cy=py+ph/2;
+  if(rType===2){
+    // 雙斜：中脊在中間，兩側往中間爬
+    ctx.save();
+    ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    if(vert){ ctx.moveTo(px+pad,cy); ctx.lineTo(px+pw-pad,cy); }
+    else    { ctx.moveTo(cx,py+pad); ctx.lineTo(cx,py+ph-pad); }
+    ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle='#ffffff'; ctx.fillStyle='#ffffff'; ctx.lineWidth=2;
+    if(vert){
+      arrow(cx, py+ph-pad-2, cx, cy+5);
+      arrow(cx, py+pad+2,    cx, cy-5);
+    } else {
+      arrow(px+pw-pad-2, cy, cx+5, cy);
+      arrow(px+pad+2,    cy, cx-5, cy);
+    }
+  } else {
+    // 單斜：一支箭頭指向高邊(col→往上/row→往左，跟3D的爬升方向對齊)
+    if(vert) arrow(cx, py+ph-pad-2, cx, py+pad+2);
+    else     arrow(px+pw-pad-2, cy, px+pad+2, cy);
+  }
+  ctx.restore();
+}
+
 function draw(){
   const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
   _dirBtnRects=[];
@@ -471,6 +547,9 @@ function draw(){
     // 避免每次畫布重繪都整包重算材料。
     if(!isDeck && b.groupId==null && !autoMergedMemberSet.has(b)){
       if(!b.dir) b.dir='col';
+      // ▼ 坡向視覺化：只有一顆18px小箭頭鈕+一行10px小字，使用者反應「前後斜/左右斜
+      // 看起來都一樣」。這裡在方塊裡直接畫出落水線+大箭頭，形狀本身就跟著方向變。
+      drawSlopeHint(ctx,px,py,pw,ph,b.dir,_rType);
       let btnSize=18;
       let bx=px+pw-btnSize-2, by=py+2;
       _dirBtnRects.push({objs:[b], x:bx, y:by, w:btnSize, h:btnSize});
@@ -590,7 +669,17 @@ function draw(){
     ctx.restore();
   });
 
+  // 單斜的中柱寫死「左右各一組共4支」，落柱標記不影響算料也不影響3D，
+  // 所以按鈕停用並說明原因，避免使用者點了半天以為壞掉(中脊線本身要留著，
+  // 它同時決定手動群組的排水方向)。
   document.getElementById('ridgeMarkBar').style.display = manualGroups.length ? 'block' : 'none';
+  if(manualGroups.length){
+    let single = (_rType===1);
+    let btn=document.querySelector('#ridgeMarkBar button');
+    let note=document.getElementById('ridgeMarkNote');
+    if(btn){ btn.disabled=single; btn.style.opacity=single?0.4:1; btn.style.cursor=single?'not-allowed':'pointer'; }
+    if(note) note.style.display=single?'block':'none';
+  }
 }
 
 function hitTest(ex,ey){
@@ -771,7 +860,13 @@ function onRidgeMove(e){
   let cx=px/_sc+_ox, cy=py/_sc+_oy;
   let g=manualGroups.find(g=>g.id===_rdrag.groupId);
   if(!g) return;
-  if(_rdrag.which===1){ g.ridge.x1=cx; g.ridge.y1=cy; } else { g.ridge.x2=cx; g.ridge.y2=cy; }
+  // 不允許把中脊線拖到長度接近0：長度<1時整條線點不到，標記也刪不掉，變成死線。
+  // 這裡先算出新位置，長度不足就直接不套用這次移動(線停在最短可用長度)。
+  const MIN_RIDGE=40; // 世界座標cm，約等於半個模組寬，肉眼還抓得到
+  let nx1=g.ridge.x1, ny1=g.ridge.y1, nx2=g.ridge.x2, ny2=g.ridge.y2;
+  if(_rdrag.which===1){ nx1=cx; ny1=cy; } else { nx2=cx; ny2=cy; }
+  if(Math.hypot(nx2-nx1, ny2-ny1) < MIN_RIDGE) return;
+  g.ridge.x1=nx1; g.ridge.y1=ny1; g.ridge.x2=nx2; g.ridge.y2=ny2;
   draw();
 }
 function onRidgeUp(){
@@ -907,7 +1002,23 @@ function onGroupActionClick(){
 // 斜樑/中柱本來就常見「左右各一組」，所以直接給一個按鈕在兩端內縮一點的
 // 位置(t=0.03/0.97，避開端點把手判定範圍)自動加標記，不用精準點擊。
 function addEndMarks(){
-  manualGroups.forEach(g=>{
+  // 只加在「目前選取的建物所屬的群組」；沒選任何建物時，只有單一群組才自動套用。
+  // (舊版對所有手動群組一起加標記，多組時材料數量會整批被改掉，使用者不會察覺)
+  let targets=[];
+  if(selectedIdxs.size){
+    let gids=new Set();
+    selectedIdxs.forEach(i=>{ let b=buildings[i]; if(b&&b.groupId!=null) gids.add(b.groupId); });
+    targets=manualGroups.filter(g=>gids.has(g.id));
+  }
+  if(!targets.length){
+    if(manualGroups.length===1) targets=manualGroups.slice();
+    else if(manualGroups.length>1){
+      alert('目前有多組手動群組。請先點選要加中柱標記的那一組建物，再按這顆按鈕。');
+      return;
+    }
+  }
+  if(!targets.length) return;
+  targets.forEach(g=>{
     if(!g.ridgeColMarks) g.ridgeColMarks=[];
     [0.03,0.97].forEach(t=>{
       let already=g.ridgeColMarks.some(m=>Math.abs(m-t)<0.02);
@@ -1465,7 +1576,10 @@ function calc3DUnitDims(u, unitDefaultDir, rType, sr){
     ridgeColN = (u.manual && u.ridgeColMarks && u.ridgeColMarks.length>0)
       ? u.ridgeColMarks.length : 2;
   }
-  return {dir, highSideH, ridgeH, ridgeColN};
+  // ridgeColMarks 一併帶出去給 draw3D 用：紅柱要畫在使用者「實際點的位置」，
+  // 不是平均分布（舊版只用數量、丟掉位置，導致點在中間也永遠畫在兩端）
+  let ridgeColMarks = (u.manual && u.ridgeColMarks) ? u.ridgeColMarks.slice() : [];
+  return {dir, highSideH, ridgeH, ridgeColN, ridgeColMarks};
 }
 
 function toggle3DView(){
@@ -1634,9 +1748,14 @@ function draw3D(){
       // ▼ 中脊柱落點：沿中脊線(從一端到另一端)平均分布ridgeColN組，從牆高頂到牆高+ridgeH——
       // 組數用跟calcMats()同一套公式(見calc3DUnitDims)，不是另外亂猜，紅柱數量要能跟材料
       // 清單「中柱...共X組」對得起來。單斜之前只做了左右各一組(固定2支)的紅柱，雙斜這裡補上。
-      let ncol=Math.max(2,ridgeColN);
-      for(let i=0;i<ncol;i++){
-        let t=ncol===1?0.5:i/(ncol-1);
+      // 有手動標記就照「使用者實際點的位置」畫（marks 是沿中脊線 0~1 的比例值）；
+      // 沒標記才退回平均分布。舊版只用數量、把位置丟掉，所以點在中間也永遠畫兩端。
+      // 數量也不再硬拉到2(舊版 Math.max(2,...))，否則標1組會變成清單寫1組、畫面畫2根。
+      let tList = (ridgeColMarks && ridgeColMarks.length>0)
+        ? ridgeColMarks.slice()
+        : (function(){ let n=Math.max(2,ridgeColN), a=[]; for(let i=0;i<n;i++) a.push(n===1?0.5:i/(n-1)); return a; })();
+      for(let i=0;i<tList.length;i++){
+        let t=tList[i];
         let px=ridgeStart[0]+(ridgeEnd[0]-ridgeStart[0])*t;
         let py=ridgeStart[1]+(ridgeEnd[1]-ridgeStart[1])*t;
         let pb=w2p(px,py,wallH), pt=w2p(px,py,wallH+ridgeH);
