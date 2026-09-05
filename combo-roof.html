@@ -478,8 +478,9 @@ function updLayout(){
 }
 
 // 最佳 C型鋼間距演算法（從 roof-calc 搬來）
-function bestCSpacing(lenCm, first=15){
-  let usable=lenCm-first;
+function bestCSpacing(lenCm, edge=15){
+  // 兩端各留 edge(cm) 安裝間隙，中間支數平均分配
+  let usable=lenCm-edge*2;
   if(usable<=0) return {n:1,space:0};
   let minSp=lenCm<=200?50:60;
   for(let n=2;n<100;n++){
@@ -514,6 +515,7 @@ function calcMats(){
   let bldRows=[];
 
   modBuildings.forEach(b=>{
+    // 旋轉會直接交換 w/d，中脊／斜樑／延伸方向全部跟著旋轉後的邊走
     let{bw,bd}=bDims(b);
     let extW=bw+ovL+ovR, extD=bd+ovF+ovB;
     // pp = 橫梁長度方向（垂直於排水方向）
@@ -526,17 +528,21 @@ function calcMats(){
       let{n,space}=bestCSpacing(sp);
       faces.push({label:'斜樑', flatCm:sp, n, space});
     } else {
+      let flatA, flatB, labelA, labelB;
       if(dir==='col'){
-        let fFlat=Math.round(bd/2+ovF), bFlat=Math.round(bd/2+ovB);
-        let fC=bestCSpacing(fFlat), bC=bestCSpacing(bFlat);
-        faces.push({label:'前斜樑', flatCm:fFlat, n:fC.n, space:fC.space});
-        faces.push({label:'後斜樑', flatCm:bFlat, n:bC.n, space:bC.space});
+        flatA=Math.round(bd/2+ovF); flatB=Math.round(bd/2+ovB);
+        labelA='前斜樑'; labelB='後斜樑';
       } else {
-        let lFlat=Math.round(bw/2+ovL), rFlat=Math.round(bw/2+ovR);
-        let lC=bestCSpacing(lFlat), rC=bestCSpacing(rFlat);
-        faces.push({label:'左斜樑', flatCm:lFlat, n:lC.n, space:lC.space});
-        faces.push({label:'右斜樑', flatCm:rFlat, n:rC.n, space:rC.space});
+        flatA=Math.round(bw/2+ovL); flatB=Math.round(bw/2+ovR);
+        labelA='左斜樑'; labelB='右斜樑';
       }
+      // 斜樑長(flatA/flatB)用來算橫梁間距：首支扣15，其餘等分
+      // 前後（或左右）支數須一致，橫梁才有對應落腳點，取較大值
+      let n=Math.max(bestCSpacing(flatA).n, bestCSpacing(flatB).n);
+      let spaceA=+((flatA-30)/(n-1)).toFixed(1);
+      let spaceB=+((flatB-30)/(n-1)).toFixed(1);
+      faces.push({label:labelA, flatCm:flatA, n, space:spaceA});
+      faces.push({label:labelB, flatCm:flatB, n, space:spaceB});
     }
 
     let pcsPerFace=Math.ceil(pp/wW);
@@ -544,11 +550,12 @@ function calcMats(){
     if(rType===2) tr+=pp/100;
     let totalC=faces.reduce((s,f)=>s+f.n,0)+2;
 
-    // 中脊柱高度：slopeR × 15cm
-    let ridgeH=Math.round(sr*15);
-    // 中脊柱數量 = 後斜（或右斜）的橫梁數，前斜樑扣掉頂端那隻（成為中脊柱）
-    let ridgeColN = rType===2 ? faces[faces.length-1].n : 0;
-    let frontN    = rType===2 ? faces[0].n - 1 : faces[0].n;
+    // 中脊柱高度：半跨距（不含延伸）× 分水比 / 10。例：3×6m 前後斜 bd=596 → 298×2/10≈60cm
+    let halfWallCm = effDir==='col' ? bd/2 : bw/2;
+    let ridgeH = rType===2 ? Math.round(halfWallCm * sr / 10) : 0;
+    // 中脊柱數量與前後（或左右）斜樑支數一致（已強制對稱）
+    let ridgeColN = rType===2 ? faces[0].n : 0;
+    let frontN    = faces[0].n;
     let backN     = rType===2 ? faces[1].n : 0;
 
     bldRows.push({
@@ -587,11 +594,11 @@ function calcMats(){
     if(rType===2){
       let f0=r.faces[0], f1=r.faces[1];
       h += matLine('中脊柱', `高 ${r.ridgeH} cm`, r.ridgeColN, '隻');
-      h += matLine(f0.label, `${f0.flatCm-15} cm　間距 ${f0.space}cm`, r.frontN, '隻');
-      h += matLine(f1.label, `${f1.flatCm-15} cm　間距 ${f1.space}cm`, r.backN, '隻');
+      h += matLine(f0.label, `${f0.flatCm-15} cm`, `${r.frontN}隻　間距 ${f0.space}cm`, '');
+      h += matLine(f1.label, `${f1.flatCm-15} cm`, `${r.backN}隻　間距 ${f1.space}cm`, '');
     } else {
       let f0=r.faces[0];
-      h += matLine(f0.label, `${f0.flatCm-15} cm　間距 ${f0.space}cm`, f0.n, '隻');
+      h += matLine(f0.label, `${f0.flatCm-15} cm`, `${f0.n}隻　間距 ${f0.space}cm`, '');
     }
     h += matLine('橫梁', `${r.perpCm} cm`, r.totalC, '隻');
   });
@@ -637,7 +644,7 @@ function calcMats(){
 
   // ── 螺絲 / 釘 ──
   h += secHead('🔧', '螺絲 / 釘');
-  let panelScrewSize=panelType==='三合一'?'2"':panelType==='琉璃瓦'?'3.5"':'1.5"';
+  let panelScrewSize=panelType==='琉璃瓦'?'3.5"':'2"';
   h += matLine(`${panelScrewSize} 白鐵頭自攻螺絲`, `${panelType}浪板用`, 3, '包');
   h += matLine('1" 自攻螺絲', 'C型鋼架接合', 1, '包');
   h += matLine('1" 尖釘', '封邊 / 收頭', 1, '包');
