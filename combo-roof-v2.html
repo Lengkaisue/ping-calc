@@ -1724,8 +1724,14 @@ function draw3D(){
 
   // 直接投影整體外框的8個角點取min/max，不手動推導留白公式，
   // 換投影公式時比較不容易算錯(y深度skew、z高度不skew，兩者都要留空間)
+  // 延伸(出簷)：屋頂要真的伸出牆外畫出來，投影範圍先把延伸算進去，不然屋簷會被裁掉
+  const _ovF=parseInt((document.getElementById('ovF')||{}).value)||0;
+  const _ovB=parseInt((document.getElementById('ovB')||{}).value)||0;
+  const _ovL=parseInt((document.getElementById('ovL')||{}).value)||0;
+  const _ovR=parseInt((document.getElementById('ovR')||{}).value)||0;
+  const ovFill='rgba(110,235,150,0.32)', ovStroke='rgba(110,235,150,0.95)'; // 綠＝延伸(出簷)，跟橘色主體屋頂、藍色牆體都要區分得開
   let projMinX=Infinity,projMaxX=-Infinity,projMinY=Infinity,projMaxY=-Infinity;
-  [minX,maxX].forEach(xx=>[minY,maxY].forEach(yy=>[0,maxTotalH].forEach(zz=>{
+  [minX-_ovL,maxX+_ovR].forEach(xx=>[minY-_ovF,maxY+_ovB].forEach(yy=>[0,maxTotalH].forEach(zz=>{
     let{sx,sy}=project3D(xx,yy,zz);
     projMinX=Math.min(projMinX,sx); projMaxX=Math.max(projMaxX,sx);
     projMinY=Math.min(projMinY,sy); projMaxY=Math.max(projMaxY,sy);
@@ -1778,10 +1784,16 @@ function draw3D(){
       // dir='row'→沿W方向傾斜(低邊在ux，高邊在uxx，用bw)
       let lowMid, highMid, runCm, postEnds;
       if(dir==='col'){
+        {let hAt=(yv)=> wallH + (ud>0 ? highSideH*(yv-uy)/ud : 0);
+         drawQuad([[ux-_ovL,uy-_ovF,hAt(uy-_ovF)],[uxx+_ovR,uy-_ovF,hAt(uy-_ovF)],
+                   [uxx+_ovR,uyy+_ovB,hAt(uyy+_ovB)],[ux-_ovL,uyy+_ovB,hAt(uyy+_ovB)]],ovFill,ovStroke);}
         drawQuad([[ux,uy,wallH],[uxx,uy,wallH],[uxx,uyy,wallH+highSideH],[ux,uyy,wallH+highSideH]],roofFill,roofStroke);
         lowMid=[(ux+uxx)/2, uy, wallH]; highMid=[(ux+uxx)/2, uyy, wallH+highSideH]; runCm=ud;
         postEnds=[[ux,uyy],[uxx,uyy]]; // 高邊的左右兩端＝中柱落點(雙C合併左右各一組)
       } else {
+        {let hAt=(xv)=> wallH + (uw>0 ? highSideH*(xv-ux)/uw : 0);
+         drawQuad([[ux-_ovL,uy-_ovF,hAt(ux-_ovL)],[ux-_ovL,uyy+_ovB,hAt(ux-_ovL)],
+                   [uxx+_ovR,uyy+_ovB,hAt(uxx+_ovR)],[uxx+_ovR,uy-_ovF,hAt(uxx+_ovR)]],ovFill,ovStroke);}
         drawQuad([[ux,uy,wallH],[ux,uyy,wallH],[uxx,uyy,wallH+highSideH],[uxx,uy,wallH+highSideH]],roofFill,roofStroke);
         lowMid=[ux, (uy+uyy)/2, wallH]; highMid=[uxx, (uy+uyy)/2, wallH+highSideH]; runCm=uw;
         postEnds=[[uxx,uy],[uxx,uyy]];
@@ -1825,11 +1837,23 @@ function draw3D(){
       let ridgeStart, ridgeEnd;
       if(dir==='col'){
         let midY=(uy+uyy)/2;
+        {let hF=(yv)=> wallH + ((midY-uy)>0 ? ridgeH*(yv-uy)/(midY-uy) : 0);
+         let hB=(yv)=> wallH + ((uyy-midY)>0 ? ridgeH*(uyy-yv)/(uyy-midY) : 0);
+         drawQuad([[ux-_ovL,uy-_ovF,hF(uy-_ovF)],[uxx+_ovR,uy-_ovF,hF(uy-_ovF)],
+                   [uxx+_ovR,midY,wallH+ridgeH],[ux-_ovL,midY,wallH+ridgeH]],ovFill,ovStroke);
+         drawQuad([[ux-_ovL,midY,wallH+ridgeH],[uxx+_ovR,midY,wallH+ridgeH],
+                   [uxx+_ovR,uyy+_ovB,hB(uyy+_ovB)],[ux-_ovL,uyy+_ovB,hB(uyy+_ovB)]],ovFill,ovStroke);}
         drawQuad([[ux,uy,wallH],[uxx,uy,wallH],[uxx,midY,wallH+ridgeH],[ux,midY,wallH+ridgeH]],roofFill,roofStroke);
         drawQuad([[ux,midY,wallH+ridgeH],[uxx,midY,wallH+ridgeH],[uxx,uyy,wallH],[ux,uyy,wallH]],roofFill,roofStroke);
         ridgeStart=[ux,midY]; ridgeEnd=[uxx,midY];
       } else {
         let midX=(ux+uxx)/2;
+        {let hL=(xv)=> wallH + ((midX-ux)>0 ? ridgeH*(xv-ux)/(midX-ux) : 0);
+         let hR=(xv)=> wallH + ((uxx-midX)>0 ? ridgeH*(uxx-xv)/(uxx-midX) : 0);
+         drawQuad([[ux-_ovL,uy-_ovF,hL(ux-_ovL)],[ux-_ovL,uyy+_ovB,hL(ux-_ovL)],
+                   [midX,uyy+_ovB,wallH+ridgeH],[midX,uy-_ovF,wallH+ridgeH]],ovFill,ovStroke);
+         drawQuad([[midX,uy-_ovF,wallH+ridgeH],[midX,uyy+_ovB,wallH+ridgeH],
+                   [uxx+_ovR,uyy+_ovB,hR(uxx+_ovR)],[uxx+_ovR,uy-_ovF,hR(uxx+_ovR)]],ovFill,ovStroke);}
         drawQuad([[ux,uy,wallH],[ux,uyy,wallH],[midX,uyy,wallH+ridgeH],[midX,uy,wallH+ridgeH]],roofFill,roofStroke);
         drawQuad([[midX,uy,wallH+ridgeH],[midX,uyy,wallH+ridgeH],[uxx,uyy,wallH],[uxx,uy,wallH]],roofFill,roofStroke);
         ridgeStart=[midX,uy]; ridgeEnd=[midX,uyy];
