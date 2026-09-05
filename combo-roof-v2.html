@@ -65,6 +65,29 @@ button:active { transform:translateY(5px); box-shadow:0 0 0 #114b9e; background:
 .sz:hover { border-color:#888; }
 .sz.on  { border-color:#1a73e8; background:#1a3a6e; }
 
+/* 預覽區釘在畫面上方：設定(③)會改變畫面(②)，但兩者被畫布隔開，
+   使用者反應「加入畫布後還要往下選料，再回來看3D」很迂迴。
+   釘住之後，往下捲改設定時預覽一直在眼前，改一個數字馬上看到形狀變。 */
+#previewPane {
+  background:#1a1a1a; padding-bottom:8px; z-index:30;
+}
+/* 捲過預覽區之後改成固定在畫面上方，這樣捲到③屋頂設定時預覽還在眼前。
+   (position:sticky 只在自己的容器內有效，跨區塊會失效，所以用 JS 加這個 class) */
+#previewPane.pinned {
+  position:fixed; top:0; left:0; right:0;
+  margin:0 auto; padding:6px 12px 8px;
+  border-bottom:1px solid #333;
+  box-shadow:0 6px 14px -6px rgba(0,0,0,0.95);
+  overflow:auto;
+}
+#previewPane.pinned #canvasWrap, #previewPane.pinned #canvasWrap3d { max-height:34vh; }
+#previewSpacer { display:none; }
+#previewSpacer.on { display:block; }
+#previewPane.collapsed #canvasWrap,
+#previewPane.collapsed #canvasWrap3d,
+#previewPane.collapsed #ctrl3dBar { display:none !important; }
+#previewPane #canvasWrap, #previewPane #canvasWrap3d { max-height:44vh; }
+#previewBar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding-top:6px; }
 #canvasWrap, #canvasWrap3d {
   overflow:auto; margin-top:10px; border:1px solid #333;
   border-radius:8px; background:#111; padding:10px;
@@ -154,18 +177,22 @@ a.back:hover { color:#fff; }
       </span>
     </div>
 
-    <div id="canvasWrap"><canvas id="cv"></canvas></div>
-
-    <div class="ctrl-bar">
-      <button class="btn-sm" id="btn3dToggle" onclick="toggle3DView()">顯示3D示意圖</button>
+    <div id="previewSpacer"></div>
+    <div id="previewPane">
+      <div id="previewBar">
+        <button class="btn-sm" id="btn3dToggle" onclick="toggle3DView()">顯示3D示意圖</button>
+        <button class="btn-sm" onclick="calcMats();document.getElementById('matResult').scrollIntoView({behavior:'smooth',block:'center'})" style="background:#2a5ea8;color:#fff;">計算材料清單</button>
+        <button class="btn-sm" id="btnPinToggle" onclick="togglePreviewPin()" style="margin-left:auto;">收起預覽</button>
+      </div>
+      <div id="canvasWrap"><canvas id="cv"></canvas></div>
+      <div id="ctrl3dBar" class="ctrl-bar" style="display:none;">
+        <button class="btn-sm" onclick="rotate3D(-90)">↺ 轉90°</button>
+        <button class="btn-sm" onclick="rotate3D(90)">轉90° ↻</button>
+        <button class="btn-sm" onclick="rotate3D(0,true)">重置角度</button>
+        <span style="color:#666;font-size:12px;">每次轉90°(從另一面看)，比例保證不會跑掉；紅色短柱＝中柱實際落點</span>
+      </div>
+      <div id="canvasWrap3d" style="display:none;"><canvas id="cv3d"></canvas></div>
     </div>
-    <div id="ctrl3dBar" class="ctrl-bar" style="display:none;">
-      <button class="btn-sm" onclick="rotate3D(-90)">↺ 轉90°</button>
-      <button class="btn-sm" onclick="rotate3D(90)">轉90° ↻</button>
-      <button class="btn-sm" onclick="rotate3D(0,true)">重置角度</button>
-      <span style="color:#666;font-size:12px;">每次轉90°(從另一面看)，比例保證不會跑掉；紅色短柱＝中柱實際落點</span>
-    </div>
-    <div id="canvasWrap3d" style="display:none;"><canvas id="cv3d"></canvas></div>
 
     <div id="groupBar" style="display:none;margin-top:8px;align-items:center;gap:8px;">
       <button class="btn-sm" id="btnGroupAction" onclick="onGroupActionClick()" style="background:#a83232;color:#fff;">強制合併為一組</button>
@@ -1669,6 +1696,45 @@ function calc3DUnitDims(u, unitDefaultDir, rType, sr){
   // 沒有手動標記時，紅柱直接畫在相接面算出來的位置上
   let ridgeColTs = ridgeColMarks.length ? ridgeColMarks : ridgeSeamTs;
   return {dir, highSideH, ridgeH, ridgeColN, ridgeColMarks, ridgeColTs};
+}
+
+// 捲過預覽區就把它固定在畫面上方，捲回去再放回原位。
+// 只在有建物時才啟用(空畫布沒東西好預覽，釘著只是擋畫面)。
+let _pinBaseTop=null;
+function updatePreviewPin(){
+  const pane=document.getElementById('previewPane');
+  const spacer=document.getElementById('previewSpacer');
+  if(!pane||!spacer) return;
+  if(!buildings.length || pane.classList.contains('collapsed')){
+    pane.classList.remove('pinned'); spacer.classList.remove('on'); spacer.style.height=''; return;
+  }
+  if(!pane.classList.contains('pinned')){
+    _pinBaseTop = pane.getBoundingClientRect().top + window.scrollY;
+  }
+  if(window.scrollY > _pinBaseTop){
+    if(!pane.classList.contains('pinned')){
+      spacer.style.height = pane.offsetHeight + 'px';
+      spacer.classList.add('on');
+      pane.classList.add('pinned');
+      pane.style.maxWidth = (document.querySelector('.main-grid')||document.body).clientWidth + 'px';
+    }
+  } else {
+    pane.classList.remove('pinned');
+    spacer.classList.remove('on'); spacer.style.height='';
+  }
+}
+window.addEventListener('scroll', updatePreviewPin, {passive:true});
+window.addEventListener('resize', updatePreviewPin);
+
+// 預覽釘住會吃掉畫面高度，手機上想專心看設定時可以先收起來
+function togglePreviewPin(){
+  let pane=document.getElementById('previewPane');
+  let btn=document.getElementById('btnPinToggle');
+  pane.classList.toggle('collapsed');
+  let col=pane.classList.contains('collapsed');
+  btn.textContent = col ? '展開預覽' : '收起預覽';
+  if(!col){ draw(); redraw3DIfActive(); }
+  updatePreviewPin();
 }
 
 function toggle3DView(){
