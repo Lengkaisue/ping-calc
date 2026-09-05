@@ -199,8 +199,8 @@ a.back:hover { color:#fff; }
       <span style="color:#666;font-size:12px;">已選 <span id="selCount">0</span> 間（紅線＝中脊，可拖端點調整；線上點擊可標記強制落柱點）</span>
     </div>
     <div id="ridgeMarkBar" style="display:none;margin-top:8px;">
-      <button class="btn-sm" onclick="addEndMarks()" style="background:#2a6b2a;color:#fff;">兩端加中柱標記</button>
-      <span style="color:#666;font-size:12px;">手機在端點附近點擊容易誤觸拖曳把手，用這個按鈕直接在兩端加標記</span>
+      <button class="btn-sm" id="btnClearMarks" onclick="clearRidgeMarks()" style="background:#2a6b2a;color:#fff;display:none;">清除標記（改回自動）</button>
+      <span id="ridgeAutoNote" style="color:#666;font-size:12px;">中柱位置<b style="color:#7de87d;">自動落在模組相接面</b>（兩間交接的那道牆），不用手動標。只有現場例外(例如交接處一定要多一支)才點紅線加標記。</span>
       <div id="ridgeMarkNote" style="display:none;color:#c07020;font-size:12px;margin-top:4px;">
         單斜屋頂的中柱固定「左右各一組（共4支）」，落柱標記不會影響算料，這裡先停用。紅色中脊線仍可拖曳，用來決定這組的排水方向。
       </div>
@@ -783,10 +783,14 @@ function draw(){
   document.getElementById('ridgeMarkBar').style.display = manualGroups.length ? 'block' : 'none';
   if(manualGroups.length){
     let single = (_rType===1);
-    let btn=document.querySelector('#ridgeMarkBar button');
     let note=document.getElementById('ridgeMarkNote');
-    if(btn){ btn.disabled=single; btn.style.opacity=single?0.4:1; btn.style.cursor=single?'not-allowed':'pointer'; }
     if(note) note.style.display=single?'block':'none';
+    // 只有真的存在手動標記時，才顯示「清除標記(改回自動)」
+    let hasMarks = manualGroups.some(g=>(g.ridgeColMarks||[]).length>0);
+    let cbtn=document.getElementById('btnClearMarks');
+    if(cbtn) cbtn.style.display = hasMarks ? '' : 'none';
+    let anote=document.getElementById('ridgeAutoNote');
+    if(anote) anote.style.display = (single||hasMarks) ? 'none' : '';
   }
 }
 
@@ -1109,31 +1113,18 @@ function onGroupActionClick(){
 // 導致使用者想加落柱標記卻變成不小心拖動整條線(回報「一直亂跑」)。
 // 斜樑/中柱本來就常見「左右各一組」，所以直接給一個按鈕在兩端內縮一點的
 // 位置(t=0.03/0.97，避開端點把手判定範圍)自動加標記，不用精準點擊。
-function addEndMarks(){
-  // 只加在「目前選取的建物所屬的群組」；沒選任何建物時，只有單一群組才自動套用。
-  // (舊版對所有手動群組一起加標記，多組時材料數量會整批被改掉，使用者不會察覺)
+function clearRidgeMarks(){
+  // 手動標記會覆蓋「自動落在模組相接面」的正確結果，所以要能一鍵清掉改回自動。
+  // (舊的「兩端加中柱標記」按鈕是自動規則做出來之前的權宜之計：它把標記加在
+  //  中脊線兩端，但正確位置是模組相接面，按了反而用錯的蓋掉對的，已移除。)
   let targets=[];
   if(selectedIdxs.size){
     let gids=new Set();
     selectedIdxs.forEach(i=>{ let b=buildings[i]; if(b&&b.groupId!=null) gids.add(b.groupId); });
     targets=manualGroups.filter(g=>gids.has(g.id));
   }
-  if(!targets.length){
-    if(manualGroups.length===1) targets=manualGroups.slice();
-    else if(manualGroups.length>1){
-      alert('目前有多組手動群組。請先點選要加中柱標記的那一組建物，再按這顆按鈕。');
-      return;
-    }
-  }
-  if(!targets.length) return;
-  targets.forEach(g=>{
-    if(!g.ridgeColMarks) g.ridgeColMarks=[];
-    [0.03,0.97].forEach(t=>{
-      let already=g.ridgeColMarks.some(m=>Math.abs(m-t)<0.02);
-      if(!already) g.ridgeColMarks.push(t);
-    });
-    g.ridgeColMarks.sort((a,b)=>a-b);
-  });
+  if(!targets.length) targets=manualGroups.slice();
+  targets.forEach(g=>{ g.ridgeColMarks=[]; });
   draw();
 }
 
@@ -1410,7 +1401,9 @@ function calcMats(){
       let railNote = `斜樑長 ${f.flatCm}−15=<b style="color:#4da3ff">${f.railCm}cm</b>`;
       let countNote = f.doubleC
         ? `雙C合併，左右各一組（2組×2支）＝ ${f.n} 隻`
-        : `與中柱同組數 ＝ ${f.n} 隻（間距 ${f.space} cm）`;
+        : (f.n>1 && f.space!=null
+            ? `與中柱同組數 ＝ ${f.n} 隻（間距 ${f.space} cm）`
+            : `與中柱同組數 ＝ ${f.n} 隻（只有一支，無間距）`); // n=1 時 (flatA-30)/(n-1) 會除以0，舊版直接印出「間距 null cm」
       h+=`<div style="color:#ccc;font-size:13px;margin:4px 0;">
         ${f.label}：板材長 <b style="color:#4da3ff">${f.flatCm}cm</b>
         ${railNote}<br>
