@@ -342,6 +342,48 @@ function computeBBox(members){
   return {minX,minY,maxX,maxY};
 }
 
+// ── 雙斜中脊柱落點：站在「模組相接面」上 ─────────────────────────────
+// 使用者(工班師傅)的硬性規則：中柱要站在人字(中脊)正下方才撐得起左右兩側，
+// 而落點必須對齊下面組合屋模組的牆體——也就是兩間組合屋的「相接面」。
+// 中脊線方向會隨排水方向轉90°，所以相接面要投影到「沿中脊線」那一軸上算。
+//   dir==='col'(前後斜)：中脊沿X走 → 看members在X軸上的內部接縫
+//   dir==='row'(左右斜)：中脊沿Y走 → 看members在Y軸上的內部接縫
+// 回傳沿中脊線 0~1 的比例陣列；單獨一間(沒有相接面)退回兩端各一組[0,1]。
+function computeSeamTs(members, dir){
+  if(!members || members.length<2) return [0,1];
+  const {minX,minY,maxX,maxY}=computeBBox(members);
+  const along = (dir==='col') ? 'x' : 'y';
+  const lo = along==='x' ? minX : minY;
+  const hi = along==='x' ? maxX : maxY;
+  const span = hi-lo;
+  if(span<=0) return [0,1];
+  const TOL=1; // cm，浮點/貼齊誤差容忍
+  // 收集每一間在該軸上的起訖邊界
+  let edges=[];
+  members.forEach(b=>{
+    const {bw,bd}=bDims(b);
+    const s = along==='x' ? b.x : b.y;
+    const e = along==='x' ? b.x+bw : b.y+bd;
+    edges.push(s, e);
+  });
+  // 內部接縫＝落在頭尾之間、且被兩間共用的邊界
+  let seams=[];
+  edges.forEach(v=>{
+    if(v-lo<TOL || hi-v<TOL) return;             // 外牆不算
+    if(seams.some(s=>Math.abs(s-v)<TOL)) return; // 去重
+    let touching = members.filter(b=>{
+      const {bw,bd}=bDims(b);
+      const s = along==='x' ? b.x : b.y;
+      const e = along==='x' ? b.x+bw : b.y+bd;
+      return Math.abs(s-v)<TOL || Math.abs(e-v)<TOL;
+    }).length;
+    if(touching>=2) seams.push(v);               // 兩間共用才是真的相接面
+  });
+  if(!seams.length) return [0,1];
+  seams.sort((a,b)=>a-b);
+  return seams.map(v=>(v-lo)/span);
+}
+
 let bldType='modular';
 function setType(t,el){
   bldType=t;
@@ -1181,7 +1223,12 @@ function calcMats(){
     //   「斜樑確實是依照中脊的隻數來決定」，兩者本來就該是同一件事(每組中脊柱就是
     //   一支斜樑落腳的地方)，不是巧合對得上的兩個數字。
     let ridgeColManual = u.manual && u.ridgeColMarks && u.ridgeColMarks.length>0;
-    let ridgeColN = rType===2 ? (ridgeColManual ? u.ridgeColMarks.length : 2) : 0;
+    // 雙斜中脊柱：預設自動落在「模組相接面」上(見 computeSeamTs 的說明)，
+    // 單獨一間沒有相接面就退回兩端各一組。手動標記仍然優先(現場例外交給人判斷)。
+    let ridgeSeamTs = rType===2 ? computeSeamTs(u.members, u.manual ? u.dir : (u.members[0]&&u.members[0].dir||'col')) : [];
+    let ridgeColN = rType===2 ? (ridgeColManual ? u.ridgeColMarks.length : ridgeSeamTs.length) : 0;
+    let ridgeColAuto = rType===2 && !ridgeColManual && u.members && u.members.length>=2 && ridgeSeamTs.length>0
+      && !(ridgeSeamTs.length===2 && ridgeSeamTs[0]===0 && ridgeSeamTs[1]===1);
     if(rType===1){
       // 單斜：整個斜面。斜樑長＝板材長-15（滴水處板子多出樑15cm）
       let sp=Math.round(dir==='col'?extD:extW);
@@ -1255,7 +1302,7 @@ function calcMats(){
       bwLabel:`${bw}×${bd}`, stateLabel,
       faces, totalC, pcsPerFace,
       perpM:(pp/100).toFixed(2), perpCm:pp,
-      ridgeH, ridgeColN, ridgeColManual, frontN, backN, dir, highSideH, halfWallCm, fullWallCm,
+      ridgeH, ridgeColN, ridgeColManual, ridgeColAuto, frontN, backN, dir, highSideH, halfWallCm, fullWallCm,
       purlinN, purlinSpace, highSideColN
     });
   });
@@ -1355,7 +1402,8 @@ function calcMats(){
     if(rType===2){
       // 中柱雙C合併：每組落柱位置用2支C型鋼拼接（鋼構常見的加強做法），
       // 隻數＝組數×2，不是1組1支
-      let ridgeColNote = r.ridgeColManual ? `手動標記 ${r.ridgeColN} 組` : `自動計算 ${r.ridgeColN} 組`;
+      let ridgeColNote = r.ridgeColManual ? `手動標記 ${r.ridgeColN} 組`
+        : (r.ridgeColAuto ? `模組相接面 ${r.ridgeColN} 組` : `自動計算 ${r.ridgeColN} 組`);
       let ridgeColPcs = r.ridgeColN*2;
       h+=`<div class="mat-row">
         <span class="mat-lbl">中柱 ${r.ridgeH}cm（${ridgeColNote}，雙C合併每組2支）</span>
@@ -1568,18 +1616,20 @@ function calc3DUnitDims(u, unitDefaultDir, rType, sr){
   let halfWallCm = dir==='col' ? (bd/2) : (bw/2); // 雙斜：半跨距
   let highSideH = rType===1 ? Math.round(fullWallCm*sr/10) : 0;
   let ridgeH    = rType===2 ? Math.round(halfWallCm*sr/10) : 0;
-  // ▼ 中脊柱組數：邏輯抄自calcMats()同一段，預設固定2組(左右各一組)，
-  // 手動群組如果有落柱標記(ridgeColMarks)就用標記數量——這樣3D畫出來的紅柱
-  // 數量才會跟材料清單「中柱...共X組」的數字一致，不是另外亂猜。
-  let ridgeColN=0;
+  // ▼ 中脊柱：邏輯跟calcMats()同一套(手動標記優先 → 模組相接面 → 兩端各一組)，
+  // 這樣3D畫出來的紅柱位置跟數量才會跟材料清單「中柱...共X組」完全一致。
+  let ridgeColN=0, ridgeSeamTs=[];
   if(rType===2){
+    ridgeSeamTs = computeSeamTs(u.members, dir);
     ridgeColN = (u.manual && u.ridgeColMarks && u.ridgeColMarks.length>0)
-      ? u.ridgeColMarks.length : 2;
+      ? u.ridgeColMarks.length : ridgeSeamTs.length;
   }
   // ridgeColMarks 一併帶出去給 draw3D 用：紅柱要畫在使用者「實際點的位置」，
   // 不是平均分布（舊版只用數量、丟掉位置，導致點在中間也永遠畫在兩端）
   let ridgeColMarks = (u.manual && u.ridgeColMarks) ? u.ridgeColMarks.slice() : [];
-  return {dir, highSideH, ridgeH, ridgeColN, ridgeColMarks};
+  // 沒有手動標記時，紅柱直接畫在相接面算出來的位置上
+  let ridgeColTs = ridgeColMarks.length ? ridgeColMarks : ridgeSeamTs;
+  return {dir, highSideH, ridgeH, ridgeColN, ridgeColMarks, ridgeColTs};
 }
 
 function toggle3DView(){
@@ -1628,7 +1678,7 @@ function draw3D(){
   let units=roofUnits.map(u=>{
     let bbox=computeBBox(u.members); // 沿用既有的 computeBBox，不重新發明
     let g=calc3DUnitDims(u,(u.members[0].dir||'col'),rType,sr);
-    return {u, bbox, dir:g.dir, highSideH:g.highSideH, ridgeH:g.ridgeH, ridgeColN:g.ridgeColN};
+    return {u, bbox, dir:g.dir, highSideH:g.highSideH, ridgeH:g.ridgeH, ridgeColN:g.ridgeColN, ridgeColTs:g.ridgeColTs};
   });
   let maxRoofH=Math.max(0, ...units.map(g=>Math.max(g.highSideH,g.ridgeH)));
   let maxTotalH=wallH+maxRoofH;
@@ -1664,7 +1714,7 @@ function draw3D(){
 
   ctx.fillStyle='#0e0e0e'; ctx.fillRect(0,0,cv.width,cv.height);
 
-  units.forEach(({u,bbox,dir,highSideH,ridgeH,ridgeColN})=>{
+  units.forEach(({u,bbox,dir,highSideH,ridgeH,ridgeColN,ridgeColTs})=>{
     let{minX:ux,minY:uy,maxX:uxx,maxY:uyy}=bbox;
     let uw=uxx-ux, ud=uyy-uy;
 
@@ -1751,8 +1801,8 @@ function draw3D(){
       // 有手動標記就照「使用者實際點的位置」畫（marks 是沿中脊線 0~1 的比例值）；
       // 沒標記才退回平均分布。舊版只用數量、把位置丟掉，所以點在中間也永遠畫兩端。
       // 數量也不再硬拉到2(舊版 Math.max(2,...))，否則標1組會變成清單寫1組、畫面畫2根。
-      let tList = (ridgeColMarks && ridgeColMarks.length>0)
-        ? ridgeColMarks.slice()
+      let tList = (ridgeColTs && ridgeColTs.length>0)
+        ? ridgeColTs.slice()
         : (function(){ let n=Math.max(2,ridgeColN), a=[]; for(let i=0;i<n;i++) a.push(n===1?0.5:i/(n-1)); return a; })();
       for(let i=0;i<tList.length;i++){
         let t=tList[i];
