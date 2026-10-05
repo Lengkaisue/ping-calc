@@ -89,7 +89,6 @@
     <summary>板型資料（展開寬度可改）</summary>
     <p class="muted">展開寬度＝各邊加總（mm）。改了會記在這支手機上。板子照圖面：3'＝914、4'＝1219、5'＝1524，7'＝2100、10'＝3050（mm）。</p>
     <table id="specTable"></table>
-    <div class="row"><label class="inl">每刀損耗／修邊 <input type="number" id="kerf" class="small" inputmode="decimal" min="0" step="0.5"> mm</label></div>
     <div class="row"><button id="resetSpec">恢復預設</button></div>
   </details>
 </section>
@@ -115,7 +114,6 @@ const LS = "sheetmix_v3";
 const store = (() => { try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch (e) { return {}; } })();
 const state = {
   widths: Object.assign({}, store.widths || {}),
-  kerf: store.kerf != null ? store.kerf : 0,
   mainId: store.mainId || "D",
   mainN: store.mainN != null ? store.mainN : null,
   extras: Object.assign({}, store.extras || {}),
@@ -130,8 +128,8 @@ function profiles() { return DEFAULTS.map(p => Object.assign({}, p, { w: +(state
 function sheetOf(p) { return SHEETS[p.sheet]; }
 function sheetName(t, sh) { return `亜板 ${t} ${sh.label}（${cm(sh.w)} × ${cm(sh.l)}）`; }
 function byId(id) { return profiles().find(p => p.id === id); }
-function kerf() { return Math.max(0, +state.kerf || 0); }
-function cost(p) { return p.w + kerf(); }
+// 液壓切斷，沒有刀損
+function cost(p) { return p.w; }
 function chip(p) { return `<span class="code" style="background:${COLORS[p.id]}">${p.id}</span>`; }
 
 // 無限背包：cap（mm）內混搭，用掉最多＝剩最少；同剩料時支數少的優先。單位 0.1mm
@@ -288,11 +286,8 @@ function renderSpec() {
   }));
 }
 
-function renderTop() { $("kerf").value = state.kerf; }
-function renderAll() { renderTop(); renderKits(); renderCut(); renderQty(); renderSpec(); if ($("packOut").innerHTML) runPack(); }
+function renderAll() { renderKits(); renderCut(); renderQty(); renderSpec(); if ($("packOut").innerHTML) runPack(); }
 
-const resetMain = () => { state.mainN = null; clampAll(); save(); renderAll(); };
-$("kerf").addEventListener("change", () => { state.kerf = Math.max(0, +$("kerf").value || 0); resetMain(); });
 $("resetSpec").addEventListener("click", () => { state.widths = {}; clampAll(); save(); renderAll(); });
 
 clampAll(); renderAll();
