@@ -71,7 +71,7 @@
   <p id="restLine"></p>
   <h3>餘料可以加做（同一種板）</h3>
   <div id="extras"></div>
-  <div class="row"><button class="primary" id="autoMax">自動最大化</button><button id="clearExtra">清除加做</button></div>
+  <div class="row" id="extraBtns"><button class="primary" id="autoMax">自動最大化</button><button id="clearExtra">清除加做</button></div>
   <div id="summary"></div>
 </section>
 
@@ -203,11 +203,12 @@ function renderCut() {
   $("bar").innerHTML = parts.map(p => `<div class="seg-piece" style="flex:0 0 ${(cost(p) / Wd * 100).toFixed(3)}%;background:${COLORS[p.id]}"><b>${p.id}</b>${fmt1(p.w / 10)}</div>`).join("");
   const r = rest();
   $("restLine").innerHTML = `板寬 ${cm(Wd)}　餘料 <span class="big">${cm(r)}</span>`;
-  const list = sameT();
+  const list = sameT().filter(p => (state.extras[p.id] || 0) > 0 || r >= cost(p) - 1e-9);
   $("extras").innerHTML = list.length ? `<table>${list.map(p => {
     const n = state.extras[p.id] || 0, can = r >= cost(p) - 1e-9;
-    return `<tr><td>${chip(p)} ${p.name}<div class="muted">${cm(p.w)}${can ? "" : `　差 ${cm(cost(p) - r)}`}</div></td><td style="text-align:right">${stepper(n, n > 0, can, `data-x="${p.id}" data-d`)}</td></tr>`;
-  }).join("")}</table>` : `<p class="muted">沒有其他款用同一種板。</p>`;
+    return `<tr><td>${chip(p)} ${p.name}<div class="muted">${cm(p.w)}</div></td><td style="text-align:right">${stepper(n, n > 0, can, `data-x="${p.id}" data-d`)}</td></tr>`;
+  }).join("")}</table>` : `<p class="muted">餘料太窄，什麼都加做不了。</p>`;
+  $("extraBtns").style.display = list.length ? "" : "none";
   $("extras").querySelectorAll("button[data-x]").forEach(b => b.addEventListener("click", () => {
     const id = b.dataset.x, p = byId(id);
     if (b.dataset.d === "+") { if (rest() >= cost(p) - 1e-9) state.extras[id] = (state.extras[id] || 0) + 1; }
