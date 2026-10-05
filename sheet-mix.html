@@ -154,8 +154,8 @@ function bestMix(capMm, items) {
 // ── 主流程：要折 N 支 → 幾張板、每張剩多少、餘料還能做什麼 ──
 function W() { return sheetOf(byId(state.mainId)).w; }
 function perSheet() { return Math.max(0, Math.floor(W() / cost(byId(state.mainId)) + 1e-9)); }
-// 能用同一張板：厚度一樣，而且長度不超過板長（短的可以從長板切，例：3050 板的餘料切 2100 連通）
-function sameSheet(p, t, l) { return p.t === t && p.len <= l; }
+// 能用同一張板：厚度不超過板厚（厚板可以折薄款，師傅要的），長度不超過板長（長板可以切短款）
+function sameSheet(p, t, l) { return parseFloat(p.t) <= parseFloat(t) && p.len <= l; }
 function sameT() { const m = byId(state.mainId); return profiles().filter(p => sameSheet(p, m.t, m.len)); }
 // 每張板：先排滿主套件，最後一張放剩下的；加做的料記在哪一張
 function layout() {
@@ -211,7 +211,7 @@ function renderCut() {
   const list = sameT().filter(q => cntAdd[q.id] || slotFor(sheets, q) >= 0);
   $("extras").innerHTML = list.length ? `<table>${list.map(q => {
     const n = cntAdd[q.id] || 0, can = slotFor(sheets, q) >= 0;
-    return `<tr><td>${chip(q)} ${q.name}${q.id === m.id ? "（多折）" : ""}<div class="muted">${cm(q.w)}${q.len < m.len ? `　長 ${q.len}（料頭剩 ${cm(m.len - q.len)}）` : ""}</div></td><td style="text-align:right">${stepper(n, n > 0, can, `data-x="${q.id}" data-d`)}</td></tr>`;
+    return `<tr><td>${chip(q)} ${q.name}${q.id === m.id ? "（多折）" : ""}<div class="muted">${cm(q.w)}${q.t !== m.t ? `　原本 ${q.t}，用 ${m.t} 折` : ""}${q.len < m.len ? `　長 ${q.len}（料頭剩 ${cm(m.len - q.len)}）` : ""}</div></td><td style="text-align:right">${stepper(n, n > 0, can, `data-x="${q.id}" data-d`)}</td></tr>`;
   }).join("")}</table>` : `<p class="muted">餘料太窄，什麼都做不了。</p>`;
   $("extraBtns").style.display = list.length ? "" : "none";
   $("extras").querySelectorAll("button[data-x]").forEach(b => b.addEventListener("click", () => {
@@ -277,7 +277,7 @@ function runPack() {
     h += `</div>`;
   });
   if (skipped.length) h += `<h3 class="bad">未排入</h3><ul>` + skipped.map(x => `<li>${x}</li>`).join("") + `</ul>`;
-  h += `<div class="note">每款用圖面上的板；厚度一樣、長度不超過板長的款才會放進同一張（長板可以切短款）。</div>`;
+  h += `<div class="note">每款用圖面上的板；厚度、長度都不超過那張板的款才會放進同一張（厚板可以折薄款、長板可以切短款）。</div>`;
   $("packOut").innerHTML = h;
 }
 $("runPack").addEventListener("click", runPack);
