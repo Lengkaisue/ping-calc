@@ -65,11 +65,10 @@
 </section>
 
 <section>
-  <h2>② 這張板怎麼切</h2>
+  <h2>② 要折幾支</h2>
   <div id="mainRow"></div>
-  <div class="bar" id="bar"></div>
-  <p id="restLine"></p>
-  <h3>餘料可以加做（同一種板）</h3>
+  <div id="needOut"></div>
+  <h3>餘料還可以做</h3>
   <div id="extras"></div>
   <div class="row" id="extraBtns"><button class="primary" id="autoMax">自動最大化</button><button id="clearExtra">清除加做</button></div>
   <div id="summary"></div>
@@ -110,13 +109,13 @@ const DEFAULTS = [
   { id: "F", name: "扣布",            t: "1t",   folds: "30+40+50+30",     w: 150, sheet: "4x10" },
 ];
 const COLORS = { A: "#1f6feb", B: "#12855c", C: "#0b5d3f", D: "#c2410c", E: "#7c3aed", F: "#be185d" };
-const LS = "sheetmix_v3";
+const LS = "sheetmix_v4";
 const store = (() => { try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch (e) { return {}; } })();
 const state = {
   widths: Object.assign({}, store.widths || {}),
   mainId: store.mainId || "D",
   mainN: store.mainN != null ? store.mainN : null,
-  extras: Object.assign({}, store.extras || {}),
+  add: Array.isArray(store.add) ? store.add : [],
   qty: Object.assign({}, store.qty || {}),
 };
 function save() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} }
@@ -152,36 +151,39 @@ function bestMix(capMm, items) {
   return { used: best / 10, counts };
 }
 
-// ── 主流程 ──
+// ── 主流程：要折 N 支 → 幾張板、每張剩多少、餘料還能做什麼 ──
 function W() { return sheetOf(byId(state.mainId)).w; }
-function mainMax() { return Math.max(0, Math.floor(W() / cost(byId(state.mainId)) + 1e-9)); }
-function used() {
-  let u = state.mainN * cost(byId(state.mainId));
-  Object.entries(state.extras).forEach(([id, n]) => { u += n * cost(byId(id)); });
-  return u;
-}
-function rest() { return W() - used(); }
+function perSheet() { return Math.max(0, Math.floor(W() / cost(byId(state.mainId)) + 1e-9)); }
 // 同一種板＝厚度一樣、長度一樣（長度固定，切不出不同長度）
 function sameSheet(p, t, l) { return p.t === t && p.len === l; }
-function sameT() { const m = byId(state.mainId); return profiles().filter(p => sameSheet(p, m.t, m.len) && p.id !== m.id); }
-function clampAll() {
-  const mx = mainMax();
-  if (state.mainN == null || state.mainN > mx) state.mainN = mx;
-  if (state.mainN < 0) state.mainN = 0;
-  const ids = Object.keys(state.extras);
-  for (let i = ids.length - 1; i >= 0 && rest() < -1e-9; i--) {
-    while (state.extras[ids[i]] > 0 && rest() < -1e-9) state.extras[ids[i]]--;
-    if (!state.extras[ids[i]]) delete state.extras[ids[i]];
-  }
+function sameT() { const m = byId(state.mainId); return profiles().filter(p => sameSheet(p, m.t, m.len)); }
+// 每張板：先排滿主套件，最後一張放剩下的；加做的料記在哪一張
+function layout() {
+  const m = byId(state.mainId), per = perSheet(), Wd = W(), N = state.mainN;
+  const sheets = [];
+  if (per > 0) for (let left = N; left > 0; left -= per) sheets.push({ items: Array(Math.min(per, left)).fill(m.id), rest: Wd - Math.min(per, left) * cost(m) });
+  state.add = state.add.filter(([i, id]) => {
+    const sh = sheets[i], q = byId(id);
+    if (!sh || sh.rest < cost(q) - 1e-9) return false;
+    sh.items.push(id); sh.rest -= cost(q); return true;
+  });
+  return sheets;
 }
+// 加一支：放進「放得下且剩最少」的那張
+function slotFor(sheets, q) {
+  let best = -1;
+  sheets.forEach((sh, i) => { if (sh.rest >= cost(q) - 1e-9 && (best < 0 || sh.rest < sheets[best].rest)) best = i; });
+  return best;
+}
+function setN(n) { state.mainN = Math.max(1, Math.min(999, Math.floor(+n || 1))); state.add = []; save(); renderCut(); }
 
 function renderKits() {
   $("kits").innerHTML = profiles().map(p => `<button class="kit${p.id === state.mainId ? " on" : ""}" data-k="${p.id}"><span>${chip(p)} ${p.name}</span><small>${p.t}・${sheetOf(p).label}・${cm(p.w)}</small></button>`).join("");
   $("kits").querySelectorAll("button[data-k]").forEach(b => b.addEventListener("click", () => {
-    state.mainId = b.dataset.k; state.mainN = null; state.extras = {}; clampAll(); save(); renderAll();
+    state.mainId = b.dataset.k; state.mainN = perSheet() || 1; state.add = []; save(); renderAll();
   }));
   const m = byId(state.mainId);
-  $("kitInfo").innerHTML = `用板 <b>${sheetName(m.t, sheetOf(m))}</b>（自動帶入）<br>展開 ${m.folds}＝${cm(m.w)}　長 ${m.len}`;
+  $("kitInfo").innerHTML = `用板 <b>${sheetName(m.t, sheetOf(m))}</b>（自動帶入）<br>展開 ${m.folds}＝${cm(m.w)}　長 ${m.len}　一張最多 ${perSheet()} 支`;
 }
 
 function stepper(val, minusOk, plusOk, attr) {
@@ -189,41 +191,49 @@ function stepper(val, minusOk, plusOk, attr) {
 }
 
 function renderCut() {
-  const m = byId(state.mainId), Wd = W(), mx = mainMax();
-  $("mainRow").innerHTML = `<div class="row">${chip(m)} <b>${m.name}</b>　${stepper(state.mainN, state.mainN > 0, rest() >= cost(m) - 1e-9, "data-m")}<span class="muted">一張最多 ${mx} 支</span></div>`;
-  $("mainRow").querySelectorAll("button[data-m]").forEach(b => b.addEventListener("click", () => {
-    if (b.dataset.m === "+") { if (rest() >= cost(m) - 1e-9) state.mainN++; } else if (state.mainN > 0) state.mainN--;
-    save(); renderCut();
-  }));
-  const parts = [];
-  for (let i = 0; i < state.mainN; i++) parts.push(m);
-  Object.keys(state.extras).sort().forEach(id => { for (let i = 0; i < state.extras[id]; i++) parts.push(byId(id)); });
-  $("bar").innerHTML = parts.map(p => `<div class="seg-piece" style="flex:0 0 ${(cost(p) / Wd * 100).toFixed(3)}%;background:${COLORS[p.id]}"><b>${p.id}</b>${fmt1(p.w / 10)}</div>`).join("");
-  const r = rest();
-  $("restLine").innerHTML = `板寬 ${cm(Wd)}　餘料 <span class="big">${cm(r)}</span>`;
-  const list = sameT().filter(p => (state.extras[p.id] || 0) > 0 || r >= cost(p) - 1e-9);
-  $("extras").innerHTML = list.length ? `<table>${list.map(p => {
-    const n = state.extras[p.id] || 0, can = r >= cost(p) - 1e-9;
-    return `<tr><td>${chip(p)} ${p.name}<div class="muted">${cm(p.w)}</div></td><td style="text-align:right">${stepper(n, n > 0, can, `data-x="${p.id}" data-d`)}</td></tr>`;
-  }).join("")}</table>` : `<p class="muted">餘料太窄，什麼都加做不了。</p>`;
+  const m = byId(state.mainId), Wd = W(), per = perSheet();
+  if (state.mainN == null) state.mainN = per || 1;
+  $("mainRow").innerHTML = `<div class="row">${chip(m)} <b>${m.name}</b>　<span class="stepper"><button data-m="-" ${state.mainN > 1 ? "" : "disabled"}>−</button><input type="number" id="mainN" class="small" inputmode="numeric" min="1" value="${state.mainN}"><button data-m="+">＋</button></span> 支</div>`;
+  $("mainRow").querySelectorAll("button[data-m]").forEach(b => b.addEventListener("click", () => setN(state.mainN + (b.dataset.m === "+" ? 1 : -1))));
+  $("mainN").addEventListener("change", () => setN($("mainN").value));
+  if (per === 0) { $("needOut").innerHTML = `<p class="bad">這款比板子還寬，做不出來。</p>`; $("extras").innerHTML = ""; $("summary").innerHTML = ""; $("extraBtns").style.display = "none"; return; }
+
+  const sheets = layout();
+  const totalRest = sheets.reduce((a, sh) => a + sh.rest, 0);
+  let h = `<p>要 <span class="big">${sheets.length} 張板</span>　${sheetName(m.t, sheetOf(m))}</p>`;
+  sheets.forEach((sh, i) => {
+    h += `<div class="sheet"><b>第 ${i + 1} 張</b>　剩 <b>${cm(sh.rest)}</b>`;
+    h += `<div class="bar">` + sh.items.map(id => { const q = byId(id); return `<div class="seg-piece" style="flex:0 0 ${(cost(q) / Wd * 100).toFixed(3)}%;background:${COLORS[id]}"><b>${id}</b>${fmt1(q.w / 10)}</div>`; }).join("") + `</div></div>`;
+  });
+  $("needOut").innerHTML = h;
+
+  const cntAdd = {}; state.add.forEach(([, id]) => cntAdd[id] = (cntAdd[id] || 0) + 1);
+  const list = sameT().filter(q => cntAdd[q.id] || slotFor(sheets, q) >= 0);
+  $("extras").innerHTML = list.length ? `<table>${list.map(q => {
+    const n = cntAdd[q.id] || 0, can = slotFor(sheets, q) >= 0;
+    return `<tr><td>${chip(q)} ${q.name}${q.id === m.id ? "（多折）" : ""}<div class="muted">${cm(q.w)}</div></td><td style="text-align:right">${stepper(n, n > 0, can, `data-x="${q.id}" data-d`)}</td></tr>`;
+  }).join("")}</table>` : `<p class="muted">餘料太窄，什麼都做不了。</p>`;
   $("extraBtns").style.display = list.length ? "" : "none";
   $("extras").querySelectorAll("button[data-x]").forEach(b => b.addEventListener("click", () => {
-    const id = b.dataset.x, p = byId(id);
-    if (b.dataset.d === "+") { if (rest() >= cost(p) - 1e-9) state.extras[id] = (state.extras[id] || 0) + 1; }
-    else if (state.extras[id]) { state.extras[id]--; if (!state.extras[id]) delete state.extras[id]; }
+    const id = b.dataset.x;
+    if (b.dataset.d === "+") { const i = slotFor(layout(), byId(id)); if (i >= 0) state.add.push([i, id]); }
+    else { for (let k = state.add.length - 1; k >= 0; k--) if (state.add[k][1] === id) { state.add.splice(k, 1); break; } }
     save(); renderCut();
   }));
-  const cnt = {}; parts.forEach(p => cnt[p.id] = (cnt[p.id] || 0) + 1);
-  let h = `<h3>這張板：${sheetName(m.t, sheetOf(m))}</h3><div>` + Object.keys(cnt).sort().map(id => `<span class="pill">${chip(byId(id))} ${byId(id).name} × ${cnt[id]}</span>`).join("") + `</div>`;
-  h += `<p>最後剩 <b>${cm(r)}</b></p>`;
-  $("summary").innerHTML = h;
+
+  const cnt = {}; sheets.forEach(sh => sh.items.forEach(id => cnt[id] = (cnt[id] || 0) + 1));
+  let t = `<h3>合計</h3><div>` + Object.keys(cnt).sort().map(id => `<span class="pill">${chip(byId(id))} ${byId(id).name} × ${cnt[id]}</span>`).join("") + `</div>`;
+  t += `<p>${sheets.length} 張板，餘料合計 <b>${cm(totalRest)}</b>（` + sheets.map((sh, i) => `第${i + 1}張 ${cm(sh.rest)}`).join("、") + `）</p>`;
+  $("summary").innerHTML = t;
 }
 
 $("autoMax").addEventListener("click", () => {
-  state.extras = {};
-  state.extras = bestMix(rest(), sameT()).counts; save(); renderCut();
+  state.add = [];
+  const sheets = layout(), items = sameT();
+  sheets.forEach((sh, i) => { const mix = bestMix(sh.rest, items); Object.keys(mix.counts).forEach(id => { for (let k = 0; k < mix.counts[id]; k++) state.add.push([i, id]); }); });
+  save(); renderCut();
 });
-$("clearExtra").addEventListener("click", () => { state.extras = {}; save(); renderCut(); });
+$("clearExtra").addEventListener("click", () => { state.add = []; save(); renderCut(); });
 
 // ── 整單排料 ──
 function renderQty() {
@@ -282,15 +292,15 @@ function renderSpec() {
   $("specTable").innerHTML = h;
   $("specTable").querySelectorAll("input[data-w]").forEach(el => el.addEventListener("change", () => {
     const v = +el.value; if (v > 0) state.widths[el.dataset.w] = v; else delete state.widths[el.dataset.w];
-    clampAll(); save(); renderAll();
+    save(); renderAll();
   }));
 }
 
 function renderAll() { renderKits(); renderCut(); renderQty(); renderSpec(); if ($("packOut").innerHTML) runPack(); }
 
-$("resetSpec").addEventListener("click", () => { state.widths = {}; clampAll(); save(); renderAll(); });
+$("resetSpec").addEventListener("click", () => { state.widths = {}; save(); renderAll(); });
 
-clampAll(); renderAll();
+renderAll();
 </script>
 
 </body>
