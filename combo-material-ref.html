@@ -69,6 +69,12 @@
   td.r,th.r{text-align:right;}
   .note{font-size:12.5px;color:var(--ink-soft);margin:10px 0 0;}
 
+  .warn8{background:var(--warn-bg);border:1.5px solid #E8B96B;border-radius:14px;
+    padding:12px 14px;margin-bottom:12px;}
+  .warn8 b{display:block;color:var(--warn);font-size:14.5px;margin-bottom:6px;}
+  .warn8 ol{margin:0;padding-left:20px;font-size:14px;color:var(--ink);}
+  .warn8 li{padding:3px 0;border:none;display:list-item;}
+
   #histQ{width:100%;margin:12px 0 4px;padding:11px 12px;border:1.5px solid var(--line);
     border-radius:11px;font-size:16px;font-family:inherit;background:#fff;color:var(--ink);}
   .hist-item{border-bottom:1px solid var(--line);padding:9px 0;}
@@ -108,6 +114,7 @@
   </div>
 
   <p class="spec" id="specLine"></p>
+  <div id="warn8"></div>
   <div id="result"></div>
 
   <button type="button" class="copy" id="copyBtn">複製材料表傳LINE</button>
@@ -156,11 +163,13 @@
           <tr><td>立柱／角座</td><td class="r">4／8</td><td class="r">4／8</td><td class="r">4／8</td><td>全部場次一致</td></tr>
           <tr><td>地板支架</td><td class="r">14</td><td class="r">14</td><td class="r">19</td><td>6米長都14；8米19</td></tr>
           <tr><td>天花板(主)支架</td><td class="r">2</td><td class="r">2</td><td class="r">3</td><td>10/13 是 3 支</td></tr>
-          <tr><td>天花板支架</td><td class="r">3粗6細</td><td class="r">6粗6細</td><td class="r">4粗8細</td><td>7 場／3 場／10-13</td></tr>
+          <tr><td>天花板支架</td><td class="r">3粗6細</td><td class="r">6粗6細</td><td class="r">4粗8細</td><td>8米＝6米值×4/3</td></tr>
           <tr><td>庫板</td><td class="r">18</td><td class="r">20</td><td class="r">22</td><td>＝2×(短米+長米)</td></tr>
-          <tr><td>1.5×3方管</td><td class="r">18</td><td class="r">18 ?</td><td class="r">22 ?</td><td>4×6 歷史是 18，跟庫板 20 對不上</td></tr>
-          <tr><td>屋頂板</td><td class="r">8</td><td class="r">8</td><td class="r">?</td><td>8米沒叫過</td></tr>
-          <tr><td>天花板裝潢板</td><td class="r">19</td><td class="r">19</td><td class="r">?</td><td>只有 10/27 列過片數</td></tr>
+          <tr><td>1.5×3方管</td><td class="r">18</td><td class="r">20 ?</td><td class="r">22</td><td>同庫板算法；4×6 舊表寫 18</td></tr>
+          <tr><td>屋頂板</td><td class="r">8</td><td class="r">8</td><td class="r">11</td><td>8米＝8×4/3≈11（算的）</td></tr>
+          <tr><td>天花板裝潢板</td><td class="r">19</td><td class="r">19</td><td class="r">25</td><td>8米＝19×4/3≈25（算的）</td></tr>
+          <tr><td>5×5方管</td><td class="r">1</td><td class="r">2</td><td class="r">2</td><td>一樓＝短邊−2、二樓＝短邊，8米再+1</td></tr>
+          <tr><td>抗風柱</td><td class="r">—</td><td class="r">—</td><td class="r">2</td><td>二樓要帶；8米一樓也要</td></tr>
           <tr><td>地板</td><td class="r">10大</td><td class="r">10大5小</td><td class="r">14大</td><td>4×8＝14大7小</td></tr>
           <tr><td>叩布／扣布</td><td class="r">2／2</td><td class="r">2／2</td><td class="r">2／2</td><td>全部場次一致</td></tr>
           <tr><td>短邊面2×4方管</td><td class="r">2</td><td class="r">2</td><td class="r">2</td><td>全部場次一致</td></tr>
@@ -170,8 +179,9 @@
     </div>
     <p class="note"><b>兩棟就是一棟×2</b>：9/16 那場 3×6 兩組，上下樑 8／8、立柱 8、角座 16、地板支架 28、主支架 4、叩布扣布 4／4、1.5×3＝36、庫板 36、地板 20大、止水膠條 2包，全部剛好兩倍。</p>
     <p class="note"><b>地板算法</b>：ceil(長邊實內 ÷ 114.5) 排數，短邊 3米→每排 2 大、4米→2大1小、5米→2大2小。四個規格全中。</p>
-    <p class="note"><b>這些是看現場不是看規格</b>：平板磚、地板片、石板片、地板貼、卡扣地板、千斤頂（有磚才用，基座場不帶）／抗風柱／內扣阿／C型鋼／C槽／壁虎／二樓角座連接器（二樓才要）。</p>
-    <p class="note"><b>還沒確認的三件</b>：① 4×6 的 1.5×3 到底 18 還 20 ② 天花板支架「粗」的數量找不到規律（3／6／4） ③ 8米的屋頂板、天花板裝潢板片數從來沒叫過。</p>
+    <p class="note"><b>8米換算一律用 4/3 倍率</b>（＝8米÷6米）：天花板支架 3粗6細→4粗8細、6粗6細→8粗8細（兩個實例都剛好對上）；屋頂板 8→11片；天花板裝潢板 19→25片。地板不走這條，走 ⌈實內 763÷114.5⌉＝7 排（最後一排裁到剩 76 深）。</p>
+    <p class="note"><b>這些是看現場不是看規格</b>：平板磚、地板片、石板片、地板貼、卡扣地板、千斤頂（有磚才用，基座場不帶）／內扣阿／C型鋼／C槽／壁虎。二樓角座連接器是二樓才要。</p>
+    <p class="note"><b>還沒確認的一件</b>：4×6 的 1.5×3 方管，舊表三場都寫 18，但照「＝2×(短+長)」要 20。現在頁面照算式出 20、標待確認。</p>
   </details>
 
   <details id="histBox">
@@ -183,18 +193,14 @@
 
 <script>
 (function(){
-  var INTERIOR   = {3:280, 4:374, 5:470, 6:572.5, 8:764};
+  var INTERIOR   = {3:280, 4:374, 5:470, 6:572.5, 8:763};  // 8米 2026-10-14 現場實量改763
   var WIDTH      = {3:{big:2,small:0}, 4:{big:2,small:1}, 5:{big:2,small:2}};
   var CEIL_BASE  = {3:{t:3,n:6}, 4:{t:6,n:6}, 5:{t:6,n:6}};
   var FLOOR_BR   = {6:14, 8:19};
   var MAIN_CEIL  = {6:2, 8:3};
-  // 二樓的5×5方管直接查表（用戶定案），不是套一樓那條公式
-  var F55_2F     = {6:{3:3, 4:4, 5:5}, 8:{3:2, 4:6, 5:7}};
-  // 1.5×3方管：歷史實際叫過的數（查表優先）。沒叫過的才用「＝庫板片數」這條規則推
-  var F153       = {'3x6':18, '4x6':18, '3x8':22};
-  // 板材片數：長邊決定。6米是實際叫過的；8米沒叫過，標待確認
-  var ROOF_PC    = {6:8};
-  var CEIL_PC    = {6:19};
+  // 板材片數：長邊決定。6米是實際叫過的；8米是用 4/3 倍率換算（8米/6米）
+  var ROOF_PC    = {6:8,  8:11};   // 8片×4/3=10.67 → 11
+  var CEIL_PC    = {6:19, 8:25};   // 19片×4/3=25.33 → 25
 
   var S = 3, L = 6, N = 1, F2 = false, HASBASE = true;
 
@@ -241,17 +247,14 @@
     add(S + '米叩布', x(2) + '隻');
     add(L + '米扣布', x(2) + '隻');
     add('止水膠條', x(1) + '包');
-    var f55, f55est = false;
-    if(F2){
-      var tb = F55_2F[L];
-      if(tb && tb[S] != null){ f55 = tb[S]; }
-      else { f55 = (S - 2) + (L === 8 ? 1 : 0) + 1; f55est = true; }
-    } else { f55 = (S - 2) + (L === 8 ? 1 : 0); }
-    add('5×5方管（階梯用的另外加）', x(f55) + '隻', f55est);
+    // 5×5方管：一樓＝短邊米數−2、二樓＝短邊米數，長邊8米再+1隻
+    var f55 = (F2 ? S : S - 2) + (L === 8 ? 1 : 0);
+    add('5×5方管（階梯用的另外加）', x(f55) + '隻', F2 && L === 8);
     add('4×6方管', x(1) + '隻');
     var kb = 2 * (S + L);
-    var key = S + 'x' + L, f153 = F153[key];
-    add('1.5×3方管', x(f153 != null ? f153 : kb) + '隻', f153 == null);
+    add('1.5×3方管', x(kb) + '隻', S === 4 && L === 6);
+    // 抗風柱：二樓要帶；長邊8米就算一樓也要（骨架太長要支撐）。6米以下一樓不帶
+    if(F2 || L === 8) add('抗風柱', x(2) + '隻');
 
     cur = '板材';
     var w = WIDTH[S], dr = INTERIOR[L] ? Math.ceil(INTERIOR[L] / 114.5) : null;
@@ -267,7 +270,6 @@
     cur = '看現場才帶（不是每場都有）';
     add('門', '看設計圖');
     add('窗', '看設計圖');
-    add('抗風柱', '看現場（可用5×5方管現場裁切）');
     // 內扣阿＝鐵工術語，就是L型固定座（L角鐵座／角碼），依尺寸分75/100/125/150型
     add('內扣阿（L型固定座）', '', false, ['75型','100型','125型','150型']);
     add('C型鋼', '');
@@ -347,6 +349,13 @@
     document.getElementById('specLine').innerHTML =
       '<b>' + S + '×' + L + '</b> 組合屋 ' + N + ' 棟' + (F2 ? '（二樓）' : '') +
       (HASBASE ? '' : '・要墊高');
+
+    document.getElementById('warn8').innerHTML = (L === 8) ?
+      '<div class="warn8"><b>8米骨架，出料時記住三件事</b><ol>' +
+      '<li><b>安裝要分左右</b>：兩支4米骨架左右裝反，地板支架間距就跟地板接縫對不上</li>' +
+      '<li><b>組裝當下量地板支架間距</b>，對準地板寬 114.5（組裝時量，不是出料前量）</li>' +
+      '<li>8米是兩支4米相接，<b>連接鐵片 4 片</b>不要漏；抗風柱就算一樓也要帶</li>' +
+      '</ol></div>' : '';
 
     var data = rows(), groups = [], seen = {};
     data.forEach(function(r){ if(!seen[r.group]){ seen[r.group] = []; groups.push(r.group); } seen[r.group].push(r); });
