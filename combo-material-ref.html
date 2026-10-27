@@ -83,6 +83,10 @@
       <div class="opts" id="longOpts"></div>
     </div>
     <div class="row">
+      <span class="lbl">棟數</span>
+      <div class="opts" id="unitOpts"></div>
+    </div>
+    <div class="row">
       <span class="lbl">樓層</span>
       <button type="button" class="toggle" id="floorBtn" aria-pressed="false">二樓</button>
     </div>
@@ -130,6 +134,34 @@
     <p class="note">板材（6米）：五溝清版白寬75 → 8片；單層裝潢版白寬35 → 19片。</p>
     <p class="note">待確認：1.5／2／3／4米的「總長−骨架」是32，其餘是33；5米屋頂差值21跟3、4米的19不一致；單層版19×35＝665 比6米大不少。</p>
   </details>
+
+  <details>
+    <summary>數量是怎麼來的（12 場舊分工表對出來的）</summary>
+    <div class="sc">
+      <table>
+        <thead><tr><th>品項</th><th class="r">3×6</th><th class="r">4×6</th><th class="r">3×8</th><th>出處</th></tr></thead>
+        <tbody>
+          <tr><td>短邊／長邊上下樑</td><td class="r">4／4</td><td class="r">4／4</td><td class="r">4／4</td><td>全部場次一致</td></tr>
+          <tr><td>立柱／角座</td><td class="r">4／8</td><td class="r">4／8</td><td class="r">4／8</td><td>全部場次一致</td></tr>
+          <tr><td>地板支架</td><td class="r">14</td><td class="r">14</td><td class="r">19</td><td>6米長都14；8米19</td></tr>
+          <tr><td>天花板(主)支架</td><td class="r">2</td><td class="r">2</td><td class="r">3</td><td>10/13 是 3 支</td></tr>
+          <tr><td>天花板支架</td><td class="r">3粗6細</td><td class="r">6粗6細</td><td class="r">4粗8細</td><td>7 場／3 場／10-13</td></tr>
+          <tr><td>庫板</td><td class="r">18</td><td class="r">20</td><td class="r">22</td><td>＝2×(短米+長米)</td></tr>
+          <tr><td>1.5×3方管</td><td class="r">18</td><td class="r">18 ?</td><td class="r">22 ?</td><td>4×6 歷史是 18，跟庫板 20 對不上</td></tr>
+          <tr><td>屋頂板</td><td class="r">8</td><td class="r">8</td><td class="r">?</td><td>8米沒叫過</td></tr>
+          <tr><td>天花板裝潢板</td><td class="r">19</td><td class="r">19</td><td class="r">?</td><td>只有 10/27 列過片數</td></tr>
+          <tr><td>地板</td><td class="r">10大</td><td class="r">10大5小</td><td class="r">14大</td><td>4×8＝14大7小</td></tr>
+          <tr><td>叩布／扣布</td><td class="r">2／2</td><td class="r">2／2</td><td class="r">2／2</td><td>全部場次一致</td></tr>
+          <tr><td>短邊面2×4方管</td><td class="r">2</td><td class="r">2</td><td class="r">2</td><td>全部場次一致</td></tr>
+          <tr><td>4×6方管／止水膠條</td><td class="r">1／1包</td><td class="r">1／1包</td><td class="r">1／1包</td><td>一棟 1</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note"><b>兩棟就是一棟×2</b>：9/16 那場 3×6 兩組，上下樑 8／8、立柱 8、角座 16、地板支架 28、主支架 4、叩布扣布 4／4、1.5×3＝36、庫板 36、地板 20大、止水膠條 2包，全部剛好兩倍。</p>
+    <p class="note"><b>地板算法</b>：ceil(長邊實內 ÷ 114.5) 排數，短邊 3米→每排 2 大、4米→2大1小、5米→2大2小。四個規格全中。</p>
+    <p class="note"><b>這些是看現場不是看規格</b>：平板磚、地板片、石板片、地板貼、卡扣地板、千斤頂（有磚才用，基座場不帶）／抗風柱／內扣阿／C型鋼／C槽／壁虎／二樓角座連接器（二樓才要）。</p>
+    <p class="note"><b>還沒確認的三件</b>：① 4×6 的 1.5×3 到底 18 還 20 ② 天花板支架「粗」的數量找不到規律（3／6／4） ③ 8米的屋頂板、天花板裝潢板片數從來沒叫過。</p>
+  </details>
 </div>
 
 <script>
@@ -141,14 +173,19 @@
   var MAIN_CEIL  = {6:2, 8:3};
   // 二樓的5×5方管直接查表（用戶定案），不是套一樓那條公式
   var F55_2F     = {6:{3:3, 4:4, 5:5}, 8:{3:2, 4:6, 5:7}};
+  // 1.5×3方管：歷史實際叫過的數（查表優先）。沒叫過的才用「＝庫板片數」這條規則推
+  var F153       = {'3x6':18, '4x6':18, '3x8':22};
+  // 板材片數：長邊決定。6米是實際叫過的；8米沒叫過，標待確認
+  var ROOF_PC    = {6:8};
+  var CEIL_PC    = {6:19};
 
-  var S = 3, L = 6, F2 = false, HASBASE = true;
+  var S = 3, L = 6, N = 1, F2 = false, HASBASE = true;
 
-  function mkOpts(el, vals, get, set){
+  function mkOpts(el, vals, get, set, suf){
     el.innerHTML = '';
     vals.forEach(function(v){
       var b = document.createElement('button');
-      b.type = 'button'; b.className = 'opt'; b.textContent = v + '米';
+      b.type = 'button'; b.className = 'opt'; b.textContent = v + (suf || '米');
       b.setAttribute('aria-pressed', get() === v ? 'true' : 'false');
       b.onclick = function(){ set(v); render(); };
       el.appendChild(b);
@@ -162,69 +199,73 @@
       out.push({name:name, qty:qty, est:!!est, group:cur, sub:sub || null});
     }
     var cur;
+    function x(n){ return n * N; }   // 乘棟數
 
     cur = '骨架';
-    add(S + '米上下樑', '4支');
-    add(L + '米上下樑', '4支');
-    if(L === 8) add('連接鐵片', '4片');
-    add('立柱', '4隻');
-    add('角座', '8顆');
-    if(F2) add('二樓角座連接器', '4隻');
-    add(S + '米地板支架', (FLOOR_BR[L] || '要問') + (FLOOR_BR[L] ? '隻' : ''), !FLOOR_BR[L]);
-    add(S + '米天花板(主)支架', (MAIN_CEIL[L] || '要問') + (MAIN_CEIL[L] ? '支' : ''), !MAIN_CEIL[L]);
+    add(S + '米上下樑', x(4) + '支');
+    add(L + '米上下樑', x(4) + '支');
+    if(L === 8) add('連接鐵片', x(4) + '片');
+    add('立柱', x(4) + '隻');
+    add('角座', x(8) + '顆');
+    if(F2) add('二樓角座連接器', x(4) + '隻');
+    add(S + '米地板支架', FLOOR_BR[L] ? x(FLOOR_BR[L]) + '隻' : '要問', !FLOOR_BR[L]);
+    add(S + '米天花板(主)支架', MAIN_CEIL[L] ? x(MAIN_CEIL[L]) + '支' : '要問', !MAIN_CEIL[L]);
     var cb = CEIL_BASE[S];
     if(cb){
       var m = (L === 8) ? 4/3 : 1;
-      var t = cb.t * m, n = cb.n * m;
+      var t = cb.t * m * N, n = cb.n * m * N;
       var neat = (t % 1 === 0) && (n % 1 === 0);
-      add('天花板支架', (neat ? t : Math.round(t*10)/10) + '粗' + (neat ? n : Math.round(n*10)/10) + '細');
+      // 實際叫過的只有 3×6＝3粗6細、4×6＝6粗6細、3×8＝4粗8細，其餘是推的
+      var cv = (L === 6 && (S === 3 || S === 4)) || (L === 8 && S === 3);
+      add('天花板支架', (neat ? t : Math.round(t*10)/10) + '粗' + (neat ? n : Math.round(n*10)/10) + '細', !neat || !cv);
     } else { add('天花板支架', '要問', true); }
 
     cur = '方管／布';
-    add(S + '米叩布', '2隻');
-    add(L + '米扣布', '2隻');
-    add('止水膠條', '一組');
+    add(S + '米叩布', x(2) + '隻');
+    add(L + '米扣布', x(2) + '隻');
+    add('止水膠條', x(1) + '包');
     var f55, f55est = false;
     if(F2){
       var tb = F55_2F[L];
       if(tb && tb[S] != null){ f55 = tb[S]; }
       else { f55 = (S - 2) + (L === 8 ? 1 : 0) + 1; f55est = true; }
     } else { f55 = (S - 2) + (L === 8 ? 1 : 0); }
-    add('5×5方管', f55 + '隻', f55est);
-    add('4×6方管', '1隻');
+    add('5×5方管（階梯用的另外加）', x(f55) + '隻', f55est);
+    add('4×6方管', x(1) + '隻');
     var kb = 2 * (S + L);
-    add('1.5×3方管', (kb + 2) + '隻');
-    add('抗風柱', '2隻');
+    var key = S + 'x' + L, f153 = F153[key];
+    add('1.5×3方管', x(f153 != null ? f153 : kb) + '隻', f153 == null);
 
     cur = '板材';
     var w = WIDTH[S], dr = INTERIOR[L] ? Math.ceil(INTERIOR[L] / 114.5) : null;
     if(w && dr){
-      var big = w.big * dr, small = w.small * dr;
-      var verified = (S === 3 && L === 6) || (L === 8 && (S === 3 || S === 4 || S === 5));
+      var big = w.big * dr * N, small = w.small * dr * N;
+      var verified = (L === 6 && (S === 3 || S === 4)) || (L === 8 && (S === 3 || S === 4));
       add('地板', big + '大' + (small ? small + '小' : ''), !verified);
     } else { add('地板', '要問', true); }
-    add('木紋庫板', kb + '片');
-    add(S + '米屋頂', '一組');
-    add(S + '米天花板', '一組');
+    add('庫板', x(kb) + '片');
+    add(S + '米屋頂（短5×5方管）', ROOF_PC[L] ? x(ROOF_PC[L]) + '片' : '要問', !ROOF_PC[L]);
+    add(S + '米天花板（裝潢板）', CEIL_PC[L] ? x(CEIL_PC[L]) + '片' : '要問', !CEIL_PC[L]);
 
-    cur = '基座／固定座';
+    cur = '看現場才帶（不是每場都有）';
+    add('門', '看設計圖');
+    add('窗', '看設計圖');
+    add('抗風柱', '看現場（可用5×5方管現場裁切）');
     // 內扣阿＝鐵工術語，就是L型固定座（L角鐵座／角碼），依尺寸分75/100/125/150型
     add('內扣阿（L型固定座）', '', false, ['75型','100型','125型','150型']);
     add('C型鋼', '');
     add('C槽', '');
     add('壁虎', '');
-    add('電鑽', '');
-    add('大槌', '');
-    add('千斤頂', '');
 
     // 墊高類一律列出來，只是必要程度不同：
     // 沒基座鐵板 → 一定要帶；有基座 → 水平有誤差時照樣要墊，所以不能直接隱藏。
     cur = HASBASE ? '墊高類（水平有誤差才要，但要備著）' : '墊高類（沒基座，一定要帶）';
-    add('磚', '');
+    add('平板磚', '看基地（叫過6／10／32／36塊）');
     add('石板片', '');
     add('地板片', '');
     add('卡扣地板', '');
     add('地板貼', '');
+    add('千斤頂', '');
 
     cur = '電料／配電';
     add('電燈', '55W 2顆', false, ['55W','40W','28W','16W']);
@@ -243,11 +284,12 @@
 
     cur = '電焊／動力工具';
     add('電焊機', '一組', false, ['電纜','正負極夾','焊條']);
-    add('噴漆', '', false, ['白','銀','黑']);
+    add('噴漆', '白3箱／銀少量／黑1', false, ['白','銀','黑']);
     add('矽利康', '', false, ['白色','淺灰']);
     add('延長線', '');
     add('電動工具', '');
-    add('庫板鋸台', '一組');
+    add('電鑽', '');
+    add('⚠️ 庫板鋸台（務必檢查）', '一組');
     add('切台', '一組');
     add('C夾', '一組');
 
@@ -268,6 +310,7 @@
     add('長梯', '2');
     add('短梯', '2');
     add('肉路ㄚ', '一組');
+    add('大錘', '');
     add('大小砂輪片', '', false, ['大','小']);
     add('掃把、畚斗、垃圾袋', '一組');
     add('冰桶', '1個');
@@ -278,13 +321,14 @@
   function render(){
     mkOpts(document.getElementById('shortOpts'), [3,4,5], function(){return S;}, function(v){S=v;});
     mkOpts(document.getElementById('longOpts'), [6,8], function(){return L;}, function(v){L=v;});
+    mkOpts(document.getElementById('unitOpts'), [1,2,3], function(){return N;}, function(v){N=v;}, '棟');
     document.getElementById('floorBtn').setAttribute('aria-pressed', F2 ? 'true' : 'false');
     var bb = document.getElementById('baseBtn');
     bb.setAttribute('aria-pressed', HASBASE ? 'true' : 'false');
     bb.textContent = HASBASE ? '客人有基座鐵板' : '沒基座，要墊高';
 
     document.getElementById('specLine').innerHTML =
-      '<b>' + S + '×' + L + '</b> 組合屋一組' + (F2 ? '（二樓）' : '') +
+      '<b>' + S + '×' + L + '</b> 組合屋 ' + N + ' 棟' + (F2 ? '（二樓）' : '') +
       (HASBASE ? '' : '・要墊高');
 
     var data = rows(), groups = [], seen = {};
@@ -314,7 +358,7 @@
   }
 
   function asText(){
-    var data = rows(), out = [S + '×' + L + ' 組合屋一組' + (F2 ? '（二樓）' : '') +
+    var data = rows(), out = [S + '×' + L + ' 組合屋 ' + N + ' 棟' + (F2 ? '（二樓）' : '') +
       (HASBASE ? '' : '・要墊高'), ''];
     var last = '';
     data.forEach(function(r){
