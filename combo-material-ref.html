@@ -68,6 +68,17 @@
   th{background:#F0EADD;font-size:12px;color:var(--ink-soft);}
   td.r,th.r{text-align:right;}
   .note{font-size:12.5px;color:var(--ink-soft);margin:10px 0 0;}
+
+  #histQ{width:100%;margin:12px 0 4px;padding:11px 12px;border:1.5px solid var(--line);
+    border-radius:11px;font-size:16px;font-family:inherit;background:#fff;color:var(--ink);}
+  .hist-item{border-bottom:1px solid var(--line);padding:9px 0;}
+  .hist-item:last-child{border-bottom:none;}
+  .hist-name{font-size:14.5px;font-weight:800;margin-bottom:4px;}
+  .hist-runs{display:flex;flex-wrap:wrap;gap:5px;}
+  .hist-runs span{padding:2px 8px;border-radius:99px;background:#F0EADD;font-size:12px;
+    color:var(--ink-soft);white-space:nowrap;}
+  .hist-runs span b{color:var(--ink);font-weight:800;}
+  .hist-spec{font-size:11px;color:var(--accent);font-weight:800;}
 </style>
 
 <div class="wrap">
@@ -161,6 +172,12 @@
     <p class="note"><b>地板算法</b>：ceil(長邊實內 ÷ 114.5) 排數，短邊 3米→每排 2 大、4米→2大1小、5米→2大2小。四個規格全中。</p>
     <p class="note"><b>這些是看現場不是看規格</b>：平板磚、地板片、石板片、地板貼、卡扣地板、千斤頂（有磚才用，基座場不帶）／抗風柱／內扣阿／C型鋼／C槽／壁虎／二樓角座連接器（二樓才要）。</p>
     <p class="note"><b>還沒確認的三件</b>：① 4×6 的 1.5×3 到底 18 還 20 ② 天花板支架「粗」的數量找不到規律（3／6／4） ③ 8米的屋頂板、天花板裝潢板片數從來沒叫過。</p>
+  </details>
+
+  <details id="histBox">
+    <summary>翻舊帳：以前每一場帶了什麼</summary>
+    <input id="histQ" type="search" placeholder="搜品名　例如：庫板、方管、地板、支架">
+    <div id="histOut"><p class="note">載入中…</p></div>
   </details>
 </div>
 
@@ -393,5 +410,46 @@
   };
 
   render();
+
+  // ── 翻舊帳：16 場實際出工分工表的品項數量（crew-history.json）────────
+  var HIST = null, histBox = document.getElementById('histBox');
+  function specLabel(s){
+    if(!s) return '';
+    if(s.type === '斜屋頂') return '斜屋頂';
+    if(!s.short) return s.type || '';
+    return s.short + '×' + s.long + (s.units > 1 ? ' ' + s.units + '棟' : '') +
+           (s.floor === 2 ? ' 二樓' : '') + (s.partial ? ' 補料' : '');
+  }
+  function drawHist(){
+    var box = document.getElementById('histOut');
+    if(!HIST){ box.innerHTML = '<p class="note">載入失敗，重新整理看看。</p>'; return; }
+    var q = (document.getElementById('histQ').value || '').trim();
+    var names = Object.keys(HIST.items).filter(function(n){ return !q || n.indexOf(q) >= 0; });
+    var jm = {}; HIST.jobs.forEach(function(j){ jm[j.d] = j; });
+    if(!names.length){ box.innerHTML = '<p class="note">沒有這個品名。整張清單有 ' +
+      Object.keys(HIST.items).length + ' 項，換個關鍵字試試。</p>'; return; }
+    var html = '<p class="note">' + HIST.jobs.length + ' 場出工（' + HIST.jobs[0].d.slice(5) +
+      ' ~ ' + HIST.jobs[HIST.jobs.length-1].d.slice(5) + '）・符合 ' + names.length + ' 項</p>';
+    names.slice(0, 40).forEach(function(n){
+      var row = HIST.items[n], ds = Object.keys(row).sort();
+      html += '<div class="hist-item"><div class="hist-name">' + n + '</div><div class="hist-runs">';
+      ds.forEach(function(d){
+        var j = jm[d] || {};
+        html += '<span>' + d.slice(5) + ' <span class="hist-spec">' + specLabel(j.s) +
+                '</span> <b>' + row[d] + '</b></span>';
+      });
+      html += '</div></div>';
+    });
+    if(names.length > 40) html += '<p class="note">還有 ' + (names.length-40) + ' 項，再打細一點。</p>';
+    box.innerHTML = html;
+  }
+  histBox.addEventListener('toggle', function(){
+    if(!histBox.open || HIST) return;
+    fetch('crew-history.json').then(function(r){ return r.json(); })
+      .then(function(d){ HIST = d; drawHist(); })
+      .catch(function(){ document.getElementById('histOut').innerHTML =
+        '<p class="note">載入失敗（要連網才查得到舊帳）。</p>'; });
+  });
+  document.getElementById('histQ').addEventListener('input', function(){ if(HIST) drawHist(); });
 })();
 </script>
