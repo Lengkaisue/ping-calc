@@ -196,7 +196,15 @@
 <script>
 (function(){
   var INTERIOR   = {3:280, 4:374, 5:470, 6:572.5, 8:763};  // 8米 2026-10-14 現場實量改763
-  var WIDTH      = {3:{big:2,small:0}, 4:{big:2,small:1}, 5:{big:2,small:2}};
+  // 地板一排：先鋪 2 片 140 大片，剩下的裁小片（每片約 95，不留太窄的料）
+  //   3米280＝140×2；4米374＝140×2+94；5米470＝140×2+95×2
+  function floorRow(S){
+    var ins = INTERIOR[S];
+    if(!ins) return null;
+    var big  = Math.min(2, Math.floor(ins / 140));   // 短邊小於280時不能硬鋪兩片大的
+    var rest = ins - big * 140;
+    return { big: big, small: rest <= 0 ? 0 : Math.ceil(rest / 95) };
+  }
   // 6米基準值，8米乘 4/3。5米的數量跟4米一樣，只是間距加寬
   //（2026-10-28 師傅：「5x8只是間距加寬　跟4x8一樣多」）
   var CEIL_BASE  = {3:{t:3,n:6}, 4:{t:6,n:6}, 5:{t:6,n:6}};
@@ -268,10 +276,10 @@
     if(F2 || L === 8) add('抗風柱', x(2) + '隻');
 
     cur = '板材';
-    var w = WIDTH[S], dr = INTERIOR[L] ? Math.ceil(INTERIOR[L] / 114.5) : null;
+    var w = floorRow(S), dr = INTERIOR[L] ? Math.ceil(INTERIOR[L] / 114.5) : null;
     if(w && dr){
       var big = w.big * dr * N, small = w.small * dr * N;
-      var verified = (L === 6 && (S === 3 || S === 4)) || (L === 8 && (S === 3 || S === 4));
+      var verified = (S <= 5);   // 3/4米有實證，5米師傅 2026-10-28 確認推得對
       add('地板', big + '大' + (small ? small + '小' : ''), !verified);
     } else { add('地板', '要問', true); }
     add('庫板', x(kb) + '片');
