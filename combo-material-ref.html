@@ -161,7 +161,7 @@
         <tbody>
           <tr><td>短邊／長邊上下樑</td><td class="r">4／4</td><td class="r">4／4</td><td class="r">4／4</td><td>全部場次一致</td></tr>
           <tr><td>立柱／角座</td><td class="r">4／8</td><td class="r">4／8</td><td class="r">4／8</td><td>全部場次一致</td></tr>
-          <tr><td>地板支架</td><td class="r">14</td><td class="r">14</td><td class="r">19</td><td>6米長都14；8米19</td></tr>
+          <tr><td>地板支架</td><td class="r">14</td><td class="r">14</td><td class="r">18</td><td>8米整支18；相接才多帶1隻</td></tr>
           <tr><td>天花板(主)支架</td><td class="r">2</td><td class="r">2</td><td class="r">3</td><td>10/13 是 3 支</td></tr>
           <tr><td>天花板支架</td><td class="r">3粗6細</td><td class="r">6粗6細</td><td class="r">4粗8細</td><td>8米＝6米值×4/3</td></tr>
           <tr><td>庫板</td><td class="r">18</td><td class="r">20</td><td class="r">22</td><td>＝2×(短米+長米)</td></tr>
@@ -199,7 +199,7 @@
   var WIDTH      = {3:{big:2,small:0}, 4:{big:2,small:1}, 5:{big:2,small:2}};
   // 5米的粗細沒有實際料單，不填推測值（師傅說 5×6/5×8 有做過，數字待補）
   var CEIL_BASE  = {3:{t:3,n:6}, 4:{t:6,n:6}};
-  var FLOOR_BR   = {6:14, 8:19};
+  var FLOOR_BR   = {6:14, 8:18};   // 8米整支18隻；相接(裝20呎櫃)才多帶1隻
   var MAIN_CEIL  = {6:2, 8:3};
   // 板材片數：長邊決定。6米是實際叫過的；8米是用 4/3 倍率換算（8米/6米）
   var ROOF_PC    = {6:8,  8:11};   // 8片×4/3=10.67 → 11
@@ -357,11 +357,12 @@
       (HASBASE ? '' : '・要墊高');
 
     document.getElementById('warn8').innerHTML = (L === 8) ?
-      '<div class="warn8"><b>8米骨架，出料時記住四件事</b><ol>' +
+      '<div class="warn8"><b>8米骨架，出料時記住五件事</b><ol>' +
       '<li><b>8米下樑每組一定是一左一右</b>：下樑的耳朵鐵片左右兩支開口不同向，地板支架端頭塞進ㄈ口、兩端對鎖才緊固。拿成兩支同向的就有一端背對著鎖不上。鐵片位置是照支架排序焊的，下樑撿錯整排就錯亂</li>' +
       '<li><b>組裝當下量地板支架間距</b>，對準地板寬 114.5（組裝時量，不是出料前量）</li>' +
       '<li><b>止水膠條 2 包</b>（一包只有6米長，一間不夠）；<b>抗風柱</b>就算一樓也要帶</li>' +
-      '<li><b>最後一片地板只有 76 深是正常的</b>，不是少給料。要裝20呎櫃運（花蓮）才拆兩支4米、帶連接鐵片4片，台南整支載不用帶</li>' +
+      '<li><b>最後一片地板只有 76 深是正常的</b>，不是少給料</li>' +
+      '<li><b>要裝20呎櫃運（花蓮）才拆兩支4米</b>：加帶連接鐵片4片，地板支架也要多帶1隻（整支18隻→19隻）。台南整支載都不用</li>' +
       '</ol></div>' : '';
 
     var data = rows(), groups = [], seen = {};
