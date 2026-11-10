@@ -1,0 +1,494 @@
+<title>4x6 鋼構屋叫料單</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* 版面：單欄卡片流，每張卡＝一種料；桌面寬時兩欄。數字靠右對齊、等寬。 */
+:root{
+  --bg:#eceff3; --surface:#ffffff; --surface2:#f4f6f8;
+  --fg:#111820; --muted:#5d6b78; --line:#d2d9e0;
+  --accent:#0d6b78; --accent-soft:#d8ecef;
+  --hot:#a8481a; --hot-soft:#f6e3d8;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#0e141a; --surface:#172028; --surface2:#1d2831;
+  --fg:#e7edf3; --muted:#90a0ad; --line:#2a3744;
+  --accent:#49b9c6; --accent-soft:#143037;
+  --hot:#e8945c; --hot-soft:#362114;
+  color-scheme:dark; }}
+:root[data-theme="dark"]{
+  --bg:#0e141a; --surface:#172028; --surface2:#1d2831;
+  --fg:#e7edf3; --muted:#90a0ad; --line:#2a3744;
+  --accent:#49b9c6; --accent-soft:#143037;
+  --hot:#e8945c; --hot-soft:#362114;
+  color-scheme:dark; }
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:system-ui,"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+  font-size:15px; line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 48px;
+}
+.wrap{max-width:1040px;margin:0 auto}
+.num{font-family:"Barlow Condensed",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+
+/* 抬頭 */
+header{padding-block:28px 18px;border-bottom:3px solid var(--fg)}
+h1{margin:0;font-family:"Barlow Condensed",system-ui,sans-serif;font-size:34px;font-weight:700;letter-spacing:.01em;line-height:1.1}
+.sub{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+/* 總計條 */
+.totals{display:flex;flex-wrap:wrap;gap:10px;margin-block:18px 26px}
+.tot{flex:1 1 150px;min-width:0;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);padding:10px 13px}
+.tot b{display:block;font-family:"Barlow Condensed",system-ui,sans-serif;font-size:27px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.tot span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+
+/* 分區 */
+h2{
+  margin:34px 0 14px;font-size:15px;font-weight:700;letter-spacing:.08em;
+  color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:7px}
+h2 em{font-style:normal;color:var(--muted);font-weight:500;letter-spacing:0;font-size:13px;float:right}
+
+/* 料卡 */
+.grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:760px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:var(--surface);border:1px solid var(--line);min-width:0;display:flex;flex-direction:column}
+.chead{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-bottom:1px solid var(--line);background:var(--surface2)}
+.cname{flex:1;min-width:0;font-weight:700;font-size:15px;line-height:1.3}
+.cname small{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px}
+.qty{flex:none;text-align:right;line-height:1}
+.qty b{font-family:"Barlow Condensed",system-ui,sans-serif;font-size:30px;font-weight:700;color:var(--hot);font-variant-numeric:tabular-nums}
+.qty span{display:block;font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap}
+
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+thead th{
+  font-size:11px;font-weight:600;color:var(--muted);text-align:right;
+  padding:7px 13px 5px;border-bottom:1px solid var(--line);letter-spacing:.04em}
+thead th:first-child{text-align:left}
+td{padding:4px 13px;font-size:14px;text-align:right;border-bottom:1px solid var(--line)}
+td:first-child{text-align:left;font-family:"Barlow Condensed",system-ui,sans-serif;font-size:17px;font-weight:600}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even){background:var(--surface2)}
+.foot{padding:8px 13px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);background:var(--surface2)}
+.foot.warn{color:var(--hot);background:var(--hot-soft);font-weight:600}
+
+/* 簡表（零件類） */
+.plain{background:var(--surface);border:1px solid var(--line);padding:4px 0}
+.plain tbody tr:nth-child(even){background:var(--surface2)}
+.plain td:first-child{font-family:inherit;font-size:14px;font-weight:400}
+.plain td:last-child{font-family:"Barlow Condensed",system-ui,sans-serif;font-size:17px;font-weight:600;white-space:nowrap}
+
+.note{margin-top:30px;padding:13px 15px;background:var(--accent-soft);border-left:4px solid var(--accent);font-size:13px}
+.note p{margin:0 0 6px}
+.note p:last-child{margin:0}
+</style>
+
+<div class="wrap">
+
+<header>
+  <h1>4x6 鋼構屋　叫料單</h1>
+  <p class="sub">長度單位公分　·　鋼料與板材一律以 6 米料計　·　切法含 0.3 鋸口　·　2026-11-10</p>
+</header>
+
+<div class="totals">
+  <div class="tot"><b>102</b><span>鋼材　6 米料</span></div>
+  <div class="tot"><b>74</b><span>350型裝潢板　6 米料</span></div>
+  <div class="tot"><b>11</b><span>地板　4x8 板</span></div>
+  <div class="tot"><b>8</b><span>屋頂浪板</span></div>
+  <div class="tot"><b>11</b><span>平台塑木　6 米料</span></div>
+</div>
+
+<h2>鋼材<em>合計 6 米料 102 支</em></h2>
+<div class="grid">
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">方管 50x50x2.0<small>隔間、天花板骨架、平台吊頂、欄杆</small></div>
+      <div class="qty"><b>33</b><span>支　／ 83 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>581.0</td><td>3</td></tr>
+      <tr><td>580.0</td><td>3</td></tr>
+      <tr><td>570.0</td><td>6</td></tr>
+      <tr><td>396.1</td><td>1</td></tr>
+      <tr><td>381.9</td><td>1</td></tr>
+      <tr><td>379.9</td><td>2</td></tr>
+      <tr><td>281.0</td><td>1</td></tr>
+      <tr><td>271.0</td><td>2</td></tr>
+      <tr><td>265.5</td><td>8</td></tr>
+      <tr><td>263.0</td><td>4</td></tr>
+      <tr><td>250.5</td><td>13</td></tr>
+      <tr><td>237.8</td><td>1</td></tr>
+      <tr><td>205.7</td><td>1</td></tr>
+      <tr><td>205.6</td><td>1</td></tr>
+      <tr><td>137.0</td><td>4</td></tr>
+      <tr><td>100.0</td><td>1</td></tr>
+      <tr><td>95.0</td><td>4</td></tr>
+      <tr><td>93.5</td><td>1</td></tr>
+      <tr><td>90.0</td><td>2</td></tr>
+      <tr><td>81.0</td><td>1</td></tr>
+      <tr><td>68.8</td><td>11</td></tr>
+      <tr><td>65.5</td><td>11</td></tr>
+      <tr><td>49.8</td><td>1</td></tr>
+    </tbody></table>
+    <div class="foot">總長 192.55 米</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">75型 C 型鋼 75x45x15x2.0<small>間柱、屋頂橫樑、門窗框、平台外緣腳</small></div>
+      <div class="qty"><b>24</b><span>支　／ 50 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>596.0</td><td>8</td></tr>
+      <tr><td>304.6</td><td>1</td></tr>
+      <tr><td>303.4</td><td>1</td></tr>
+      <tr><td>298.4</td><td>9</td></tr>
+      <tr><td>294.2</td><td>1</td></tr>
+      <tr><td>293.3</td><td>1</td></tr>
+      <tr><td>290.8</td><td>1</td></tr>
+      <tr><td>288.3</td><td>1</td></tr>
+      <tr><td>283.7</td><td>1</td></tr>
+      <tr><td>283.2</td><td>1</td></tr>
+      <tr><td>278.4</td><td>1</td></tr>
+      <tr><td>278.2</td><td>1</td></tr>
+      <tr><td>263.8</td><td>1</td></tr>
+      <tr><td>263.0</td><td>8</td></tr>
+      <tr><td>109.0</td><td>4</td></tr>
+      <tr><td>106.9</td><td>1</td></tr>
+      <tr><td>100.0</td><td>3</td></tr>
+      <tr><td>95.9</td><td>2</td></tr>
+      <tr><td>89.8</td><td>1</td></tr>
+      <tr><td>70.5</td><td>1</td></tr>
+      <tr><td>67.0</td><td>2</td></tr>
+    </tbody></table>
+    <div class="foot">總長 140.48 米</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">150型 C 型鋼 150x65x20x2.3<small>地板支架、平台外框（四角 45 度斜接）</small></div>
+      <div class="qty"><b>17</b><span>支　／ 19 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>596.0</td><td>2</td></tr>
+      <tr><td>389.4</td><td>15</td></tr>
+      <tr><td>150.0</td><td>2</td></tr>
+    </tbody></table>
+    <div class="foot">總長 73.33 米　·　389.4 一支只能切一根，剩料 210.6 可留做短料</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">方管 75x75x2.0<small>上樑、斜樑、前方不落地立柱</small></div>
+      <div class="qty"><b>6</b><span>支　／ 6 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>581.0</td><td>2</td></tr>
+      <tr><td>549.9</td><td>2</td></tr>
+      <tr><td>327.4</td><td>2</td></tr>
+    </tbody></table>
+    <div class="foot">總長 29.17 米</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">方管 75x75x2.8<small>角柱（厚的那款，只有柱子用）</small></div>
+      <div class="qty"><b>2</b><span>支　／ 4 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>308.6</td><td>2</td></tr>
+      <tr><td>273.3</td><td>2</td></tr>
+    </tbody></table>
+    <div class="foot">總長 11.64 米　·　一支切「308.6 ＋ 273.3」剛好，剩 17.8</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">100型 C 型鋼 100x50x2.3<small>平台支架</small></div>
+      <div class="qty"><b>5</b><span>支　／ 5 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>583.0</td><td>5</td></tr>
+    </tbody></table>
+    <div class="foot">總長 29.15 米</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">H 型鋼 LH200x100<small>底盤大樑、基座柱</small></div>
+      <div class="qty"><b>5</b><span>支　／ 10 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>589.5</td><td>2</td></tr>
+      <tr><td>400.0</td><td>2</td></tr>
+      <tr><td>99.0</td><td>6</td></tr>
+    </tbody></table>
+    <div class="foot">總長 25.73 米　·　589.5 那兩根腹板兩端各凸出 4.75，翼板 580</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">方管 30x30x2.0<small>平台吊頂墊高條</small></div>
+      <div class="qty"><b>3</b><span>支　／ 11 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>149.0</td><td>11</td></tr>
+    </tbody></table>
+    <div class="foot">總長 16.39 米　·　一支切 4 根</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">方管 30x30x1.5<small>地板支架墊高（通長）</small></div>
+      <div class="qty"><b>2</b><span>支　／ 2 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>580.0</td><td>2</td></tr>
+    </tbody></table>
+    <div class="foot">總長 11.60 米</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">方管 40x60x2.0<small>底盤抵地腳</small></div>
+      <div class="qty"><b>2</b><span>支　／ 10 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>98.8</td><td>10</td></tr>
+    </tbody></table>
+    <div class="foot">總長 9.88 米　·　一支切 6 根</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">方管 20x20x1.5<small>平台欄杆細骨</small></div>
+      <div class="qty"><b>2</b><span>支　／ 19 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>50.0</td><td>17</td></tr>
+      <tr><td>15.0</td><td>2</td></tr>
+    </tbody></table>
+    <div class="foot">總長 8.80 米</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">方管 25x25x1.5<small>天花板吊筋（每根都不一樣長）</small></div>
+      <div class="qty"><b>1</b><span>支　／ 7 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>44.5</td><td>1</td></tr>
+      <tr><td>39.2</td><td>1</td></tr>
+      <tr><td>33.4</td><td>1</td></tr>
+      <tr><td>26.7</td><td>1</td></tr>
+      <tr><td>21.7</td><td>1</td></tr>
+      <tr><td>15.8</td><td>1</td></tr>
+      <tr><td>10.6</td><td>1</td></tr>
+    </tbody></table>
+    <div class="foot">總長 1.92 米　·　七根從同一支切，剩 406.3</div>
+  </div>
+
+</div>
+
+<h2>350型裝潢板　厚 1.8<em>合計 6 米料 74 支</em></h2>
+<div class="grid">
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">內牆＋天花板封板　寬 35<small>350型中一溝</small></div>
+      <div class="qty"><b>41</b><span>支　／ 116 片</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>片數</th></tr></thead><tbody>
+      <tr><td>577.4</td><td>1</td></tr>
+      <tr><td>376.6</td><td>16</td></tr>
+      <tr><td>376.4</td><td>12</td></tr>
+      <tr><td>368.6</td><td>5</td></tr>
+      <tr><td>203.8</td><td>8</td></tr>
+      <tr><td>201.4</td><td>14</td></tr>
+      <tr><td>188.3</td><td>2</td></tr>
+      <tr><td>185.7</td><td>5</td></tr>
+      <tr><td>179.5</td><td>7</td></tr>
+      <tr><td>136.3</td><td>7</td></tr>
+      <tr><td>132.9</td><td>1</td></tr>
+      <tr><td>126.7</td><td>2</td></tr>
+      <tr><td>111.2</td><td>5</td></tr>
+      <tr><td>55.3</td><td>5</td></tr>
+      <tr><td>55.2</td><td>1</td></tr>
+      <tr><td>47.5</td><td>10</td></tr>
+      <tr><td>47.4</td><td>5</td></tr>
+      <tr><td>43.2</td><td>10</td></tr>
+    </tbody></table>
+    <div class="foot warn">另有非標準寬的片（28.2／18.2／15.5／13.7／10.5）要從 35 寬縱切；用零料切＝0 支，全開新板＝再加 6 支</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">外牆板　寬 35<small>350型裝潢板</small></div>
+      <div class="qty"><b>33</b><span>支　／ 62 片</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>片數</th></tr></thead><tbody>
+      <tr><td>599.6</td><td>8</td></tr>
+      <tr><td>396.0</td><td>16</td></tr>
+      <tr><td>362.4</td><td>7</td></tr>
+      <tr><td>352.8</td><td>1</td></tr>
+      <tr><td>237.5</td><td>2</td></tr>
+      <tr><td>219.5</td><td>1</td></tr>
+      <tr><td>150.7</td><td>15</td></tr>
+      <tr><td>147.4</td><td>7</td></tr>
+      <tr><td>137.8</td><td>2</td></tr>
+      <tr><td>66.3</td><td>1</td></tr>
+      <tr><td>49.5</td><td>2</td></tr>
+    </tbody></table>
+    <div class="foot warn">非標準寬的片（43.0／28.0／8.7／7.5）要縱切；用零料＝0 支，全開新板＝再加 3 支</div>
+  </div>
+
+</div>
+
+<h2>屋頂、包角、鋁副料<em>不是 6 米料的另外標</em></h2>
+<div class="grid">
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">五溝三合一浪板 TSL-750<small>有效寬 75、裁切寬 82、浪高 2.5</small></div>
+      <div class="qty"><b>8</b><span>片</span></div>
+    </div>
+    <table><thead><tr><th>沿坡長</th><th>片數</th></tr></thead><tbody>
+      <tr><td>568.0</td><td>8</td></tr>
+    </tbody></table>
+    <div class="foot">訂 5.7 米料 8 支（或 6 米 8 支）</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">包角 A 款　展開寬 43<small>鍍鋅鋼板現折：平 16 ＋ 直下 27</small></div>
+      <div class="qty"><b>2</b><span>支</span></div>
+    </div>
+    <table><thead><tr><th>叫料長</th><th>支數</th></tr></thead><tbody>
+      <tr><td>450.1</td><td>2</td></tr>
+    </tbody></table>
+    <div class="foot">淨長 420.1，每個接頭留 15，小計 9.00 米。屋頂左右側面用</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">包角 B 款　展開寬 47<small>鍍鋅鋼板現折：平 16 ＋ 下 24 ＋ 內 6 斜 1</small></div>
+      <div class="qty"><b>3</b><span>支</span></div>
+    </div>
+    <table><thead><tr><th>叫料長</th><th>支數</th></tr></thead><tbody>
+      <tr><td>629.9</td><td>1</td></tr>
+      <tr><td>165.9</td><td>2</td></tr>
+    </tbody></table>
+    <div class="foot warn">629.9 超過 6 米，正面那支要分兩段接　·　小計 9.62 米</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">403 內外角條<small>德求鋁副料，兩翼各 40</small></div>
+      <div class="qty"><b>2</b><span>支　／ 4 根</span></div>
+    </div>
+    <table><thead><tr><th colspan="2" style="text-align:left;font-weight:400;color:var(--muted);text-transform:none">總長 11.34 米</th></tr></thead><tbody>
+      <tr><td>—</td><td>4 根</td></tr>
+    </tbody></table>
+    <div class="foot">6 米料 2 支</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">763 七字修邊固定條<small>德求鋁副料，外 55 內 40</small></div>
+      <div class="qty"><b>4</b><span>支　／ 5 根</span></div>
+    </div>
+    <table><thead><tr><th colspan="2" style="text-align:left;font-weight:400;color:var(--muted);text-transform:none">總長 19.02 米</th></tr></thead><tbody>
+      <tr><td>—</td><td>5 根</td></tr>
+    </tbody></table>
+    <div class="foot">6 米料 4 支</div>
+  </div>
+
+  <div class="card">
+    <div class="chead">
+      <div class="cname">平台塑木條　寬 14　厚 2.2<small>平台鋪面</small></div>
+      <div class="qty"><b>11</b><span>支　／ 42 根</span></div>
+    </div>
+    <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
+      <tr><td>134.8</td><td>42</td></tr>
+    </tbody></table>
+    <div class="foot">總長 56.62 米　·　6 米料一支切 4 根，剩 59.1</div>
+  </div>
+
+</div>
+
+<h2>地板<em>板材，不是 6 米料</em></h2>
+<div class="grid">
+  <div class="card">
+    <div class="chead">
+      <div class="cname">地板　厚 1.8 板材<small>4x8 板（122 x 244）</small></div>
+      <div class="qty"><b>11</b><span>張</span></div>
+    </div>
+    <table><thead><tr><th>尺寸</th><th>片數</th></tr></thead><tbody>
+      <tr><td>140.0 x 114.5</td><td>2</td></tr>
+      <tr><td>135.4 x 114.5</td><td>2</td></tr>
+      <tr><td>114.5 x 102.5</td><td>2</td></tr>
+      <tr><td>140.0 x 109.9</td><td>1</td></tr>
+      <tr><td>135.4 x 113.3</td><td>1</td></tr>
+      <tr><td>135.4 x 109.9</td><td>1</td></tr>
+      <tr><td>131.3 x 113.3</td><td>1</td></tr>
+      <tr><td>135.4 x 89.7</td><td>1</td></tr>
+      <tr><td>131.3 x 89.7</td><td>1</td></tr>
+      <tr><td>109.9 x 102.5</td><td>1</td></tr>
+      <tr><td>113.3 x 56.1</td><td>1</td></tr>
+      <tr><td>89.7 x 56.1</td><td>1</td></tr>
+      <tr><td>113.3 x 43.9</td><td>1</td></tr>
+      <tr><td>89.7 x 43.9</td><td>1</td></tr>
+      <tr><td>140.0 x 29.1</td><td>1</td></tr>
+      <tr><td>135.4 x 29.1</td><td>1</td></tr>
+      <tr><td>102.5 x 29.1</td><td>1</td></tr>
+    </tbody></table>
+    <div class="foot">共 20 片 / 21.35 ㎡　·　粗排 10 張（利用率 72%）＋ 1 張備用。最寬的片 114.5，板只有 122 寬，一條切一片、剩 7.5 是正常損耗</div>
+  </div>
+</div>
+
+<h2>鐵板、門窗、配電照明</h2>
+<div class="grid">
+
+  <div class="card">
+    <div class="chead"><div class="cname">基座鐵板　1 分厚</div></div>
+    <table class="plain"><tbody>
+      <tr><td>柱頭鐵板　30 x 30</td><td>6 片</td></tr>
+      <tr><td>柱底板　　20 x 20</td><td>6 片</td></tr>
+    </tbody></table>
+    <div class="foot">兩種同厚度，可從同一張裁，總面積 0.78 ㎡</div>
+  </div>
+
+  <div class="card">
+    <div class="chead"><div class="cname">門窗</div></div>
+    <table class="plain"><tbody>
+      <tr><td>鋁窗　外框 109 x 80</td><td>3 樘</td></tr>
+      <tr><td>鐵窗　框 109 x 84</td><td>3 樘</td></tr>
+      <tr><td>百葉門扇</td><td>1 樘</td></tr>
+    </tbody></table>
+    <div class="foot">鋁窗每樘含內外推窗扇各 1；鐵窗豎桿 10、橫桿 7；百葉片 63 x 4.2 x 2.6 共 20 片、鉸鏈 3 個</div>
+  </div>
+
+  <div class="card">
+    <div class="chead"><div class="cname">配電／照明</div></div>
+    <table class="plain"><tbody>
+      <tr><td>CD 管　2 分</td><td>48.3 米</td></tr>
+      <tr><td>暗盒　7 x 4.5 x 12</td><td>14 個</td></tr>
+      <tr><td>天花板出線盒　10 x 10 x 5</td><td>4 個</td></tr>
+      <tr><td>配電箱　18 迴　外掛</td><td>1 台</td></tr>
+      <tr><td>崁燈　外徑 11.5　面 9.2</td><td>4 顆</td></tr>
+    </tbody></table>
+    <div class="foot">崁燈都在平台　·　CD 管共 40 段</div>
+  </div>
+
+</div>
+
+<div class="note">
+  <p><b>長度怎麼來的：</b>每一支都是從模型實際量的（量八個角、套群組變換），不是看名字推的。零件來源 705 件，停用／垃圾／圖面標籤的件沒有算進去。</p>
+  <p><b>排料怎麼算的：</b>每種料先把所有長度湊進 6 米，每刀算 0.3 鋸口，湊不滿的才開新支。</p>
+  <p><b>要注意兩處：</b>包角 B 款正面那支 629.9 超過 6 米，現場要分兩段接；裝潢板的非標準寬片能從零料縱切就不用另外開板。</p>
+</div>
+
+</div>
