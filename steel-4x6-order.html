@@ -122,13 +122,18 @@ tbody tr:nth-child(even){background:var(--surface2)}
 .viewer.pin .vbar button{padding:0 4px}
 #nofind{display:none;padding:18px 13px;background:var(--hot-soft);color:var(--hot);font-weight:600;
   border:1px solid var(--line)}
-/* 桌面：料單在左、圖釘在右 */
-@media(min-width:900px){
+/* 桌面、還有手機橫拿：料單在左、圖釘在右（條件就是最上面那個 WIDE，程式裡 isPhone 也用同一條） */
+@media (min-width:900px),(orientation:landscape) and (min-width:560px){
   .steelzone{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
   .viewer{order:2;position:sticky;top:10px}
   #view3d{height:calc(100vh - 140px);min-height:320px}
   #steelgrid{grid-template-columns:1fr}
   #foldbtn{display:none}
+}
+/* 手機橫拿畫面很矮：圖加兩排按鈕要整個塞進畫面裡 */
+@media (orientation:landscape) and (min-width:560px) and (max-height:560px){
+  .viewer{top:4px}
+  #view3d{height:calc(100vh - 112px);height:calc(100dvh - 112px);min-height:130px}
 }
 
 /* 鋼材料卡：一列兩行（長度／根數／斜切，下面一行寫用在哪），整列都能按 */
@@ -149,10 +154,13 @@ tbody tr:nth-child(even){background:var(--surface2)}
 #steelgrid tr.len td:first-child{font-size:21px;line-height:1.15}
 #steelgrid td.ct{font-size:16px;font-weight:600}
 #steelgrid td.ct small{font-size:12px;font-weight:400;color:var(--muted)}
-#steelgrid td.bv{font-size:13.5px;color:var(--hot);font-weight:600;white-space:normal;line-height:1.35}
-#steelgrid td.wh{grid-column:1/4;font-size:12.5px;color:var(--muted);line-height:1.4;margin-top:2px}
+/* 斜切尺寸自己一行；一列裡有兩種斜切就一種一行 */
+#steelgrid td.bv{grid-column:1/4;grid-row:2;font-size:13.5px;color:var(--hot);font-weight:600;line-height:1.4}
+#steelgrid td.bv div{margin-top:2px}
+#steelgrid td.wh{grid-column:1/4;grid-row:3;font-size:12.5px;color:var(--muted);line-height:1.4;margin-top:2px}
+#steelgrid .qty span{line-height:1.35}
 /* 清點打勾：勾選框自己一格，整格 48 都能按 */
-#steelgrid td.ck{grid-column:4;grid-row:1/span 2;align-self:stretch;display:flex}
+#steelgrid td.ck{grid-column:4;grid-row:1/span 3;align-self:stretch;display:flex}
 #steelgrid td.ck label{flex:1;display:flex;align-items:center;justify-content:center;min-height:48px;cursor:pointer}
 #steelgrid td.ck input{width:28px;height:28px;margin:0;accent-color:var(--accent);cursor:pointer}
 #steelgrid tr.len.done{background:var(--accent-soft)!important}
@@ -185,6 +193,27 @@ tbody tr:nth-child(even){background:var(--surface2)}
 #steelgrid tr.len.here{outline:3px solid var(--accent);outline-offset:-3px}
 #steelgrid tr.len.on{background:var(--hot-soft)!important;box-shadow:inset 4px 0 0 var(--hot)}
 #steelgrid tr.len.on td.wh{color:var(--fg)}
+
+/* ---- 其他區（裝潢板／浪板包角鋁配件／塑木）：列加高、數量靠近長度、每列可打勾 ---- */
+.grid:not(#steelgrid) table{table-layout:fixed}
+.grid:not(#steelgrid) thead th,.grid:not(#steelgrid) td{text-align:left}
+.grid:not(#steelgrid) thead th:first-child:not([colspan]),.grid:not(#steelgrid) td:first-child{width:6.4em}
+.grid:not(#steelgrid) td{height:48px;padding-block:6px;font-size:17px;font-weight:600}
+.grid:not(#steelgrid) td:first-child{font-size:21px;line-height:1.15}
+.grid:not(#steelgrid) thead th.ckh{width:56px;padding-inline:0;text-align:center}
+.grid:not(#steelgrid) td.ck{width:56px;padding:0}
+.grid:not(#steelgrid) td.ck label{display:flex;align-items:center;justify-content:center;min-height:48px;cursor:pointer}
+.grid:not(#steelgrid) td.ck input{width:28px;height:28px;margin:0;accent-color:var(--accent);cursor:pointer}
+tr.xrow{cursor:pointer;-webkit-tap-highlight-color:transparent}
+tr.xrow.done{background:var(--accent-soft)!important}
+tr.xrow.done td:not(.ck){opacity:.42}
+thead th{font-size:12.5px}
+.foot{font-size:13.5px}
+/* 總計條四格：按了跳到那一區 */
+a.tot{position:relative;color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+a.tot::after{content:"↓";position:absolute;right:11px;top:9px;font-size:20px;font-weight:700;color:var(--accent)}
+a.tot:active{background:var(--accent-soft)}
+[id^="sec-"]{scroll-margin-top:calc(var(--pintop,0px) + 10px)}
 </style>
 
 <div class="wrap">
@@ -195,13 +224,13 @@ tbody tr:nth-child(even){background:var(--surface2)}
 </header>
 
 <div class="totals">
-  <div class="tot"><b>104</b><span>鋼材　6 米料</span></div>
-  <div class="tot"><b>74</b><span>350型裝潢板　6 米料</span></div>
-  <div class="tot"><b>8</b><span>屋頂浪板</span></div>
-  <div class="tot"><b>10</b><span>平台塑木　6 米料</span></div>
+  <a class="tot" href="#sec-steel"><b>104</b><span>鋼材　6 米料</span></a>
+  <a class="tot" href="#sec-board"><b>74</b><span>350型裝潢板　6 米料</span></a>
+  <a class="tot" href="#sec-roof"><b>8</b><span>屋頂浪板</span></a>
+  <a class="tot" href="#sec-deck"><b>10</b><span>平台塑木　6 米料</span></a>
 </div>
 
-<h2>鋼材<em>合計 6 米料 104 支（已含 75 型備用 3 支）</em></h2>
+<h2 id="sec-steel">鋼材<em>合計 6 米料 104 支（已含 75 型備用 3 支）</em></h2>
 
 <div class="steelzone">
 <div class="viewer" id="viewer">
@@ -233,7 +262,7 @@ tbody tr:nth-child(even){background:var(--surface2)}
 </div>
 </div>
 
-<h2>350型裝潢板　厚 1.8<em>合計 6 米料 74 支</em></h2>
+<h2 id="sec-board">350型裝潢板　厚 1.8<em>合計 6 米料 74 支</em></h2>
 <div class="grid">
 
   <div class="card">
@@ -287,7 +316,7 @@ tbody tr:nth-child(even){background:var(--surface2)}
 
 </div>
 
-<h2>屋頂、包角、鋁配件<em>不是 6 米料的另外標</em></h2>
+<h2 id="sec-roof">屋頂、包角、鋁配件<em>不是 6 米料的另外標</em></h2>
 <div class="grid">
 
   <div class="card">
@@ -346,7 +375,7 @@ tbody tr:nth-child(even){background:var(--surface2)}
     <div class="foot">6 米料 4 支</div>
   </div>
 
-  <div class="card">
+  <div class="card" id="sec-deck">
     <div class="chead">
       <div class="cname">平台塑木條　寬 15　厚 2.2<small>平台鋪面</small></div>
       <div class="qty"><b>10</b><span>支　／ 39 根</span></div>
@@ -383,13 +412,13 @@ var D = {"parts":[{"n":"隔間A_立柱1_50x50x2.0","s":"方管 50x50x2.0","L":25
                + (sp>0 ? '　· 另備用 '+sp+' 支六米' : ''))
             : '不是 6 米長料，只算片數')+'</small></div>'
       +  '<div class="qty"><b>'+(r.bar?tot:r.pieces)+'</b><span>'
-      +  (r.bar ? ('支'+(sp>0?('（含備用'+sp+'）'):'')+'　／ '+r.pieces+' 根') : '片')
+      +  (r.bar ? ('支　／ '+r.pieces+' 根'+(sp>0?('<br>含備用 '+sp+' 支'):'')) : '片')
       +  '</span></div></div>'
-      +  '<table><thead><tr><th>叫料長度</th><th>根數</th><th class="bvh">斜切尺寸</th><th class="ckh">已點</th></tr></thead><tbody>';
+      +  '<table><thead><tr><th>叫料長度</th><th>根數</th><th class="bvh"></th><th class="ckh">已點</th></tr></thead><tbody>';
     r.lens.forEach(function(L){
       h += '<tr class="len" data-spec="'+r.spec+'" data-len="'+L[0]+'" onclick="pick(this)">'
         +  '<td>'+L[0]+'</td><td class="ct">'+L[1]+'<small> 根</small></td>'
-        +  '<td class="bv">'+(L[3]||'')+'</td>'
+        +  '<td class="bv">'+(L[3] ? ('<div>'+String(L[3]).split('；').join('</div><div>')+'</div>') : '')+'</td>'
         +  '<td class="wh">'+((L[2]||[]).join('、'))+'</td>'
         +  '<td class="ck"><label onclick="event.stopPropagation()">'
         +  '<input type="checkbox" aria-label="已點" onchange="tick(this)"></label></td></tr>';
@@ -399,7 +428,25 @@ var D = {"parts":[{"n":"隔間A_立柱1_50x50x2.0","s":"方管 50x50x2.0","L":25
   document.getElementById('steelgrid').innerHTML = h;
 })();
 
+/* ---- 其他區（裝潢板／浪板包角鋁配件／塑木）的表格是原本寫死的：每列補一個勾選框，整列按了就是打勾 ---- */
+(function(){
+  document.querySelectorAll('.grid:not(#steelgrid) .card').forEach(function(card){
+    var name = card.querySelector('.cname').firstChild.textContent.trim();
+    var hr = card.querySelector('thead tr');
+    if(hr) hr.insertAdjacentHTML('beforeend', '<th class="ckh">已點</th>');
+    card.querySelectorAll('tbody tr').forEach(function(tr){
+      tr.className = 'xrow';
+      tr.setAttribute('data-spec', name);
+      tr.setAttribute('data-len', tr.cells[0].textContent.trim());
+      tr.insertAdjacentHTML('beforeend', '<td class="ck"><label onclick="event.stopPropagation()">'
+        + '<input type="checkbox" aria-label="已點" onchange="tick(this)"></label></td>');
+      tr.onclick = function(){ var b = tr.querySelector('.ck input'); b.checked = !b.checked; tick(b); };
+    });
+  });
+})();
+
 /* ---- 現場清點打勾（存在這支手機／電腦裡，重開還在） ---- */
+var TROWS = '#steelgrid tr.len, tr.xrow';      /* 所有能打勾的列：鋼材＋其他區 */
 var TKEY = 'steel4x6-order-ticks', ticks = {};
 try{ ticks = JSON.parse(localStorage.getItem(TKEY) || '{}') || {}; }catch(e){ ticks = {}; }
 function tickKey(tr){ return tr.getAttribute('data-spec')+'|'+tr.getAttribute('data-len'); }
@@ -408,10 +455,10 @@ function tickSave(){
        else localStorage.removeItem(TKEY); }catch(e){}
 }
 function tickShow(){
-  var rows = document.querySelectorAll('#steelgrid tr.len'), c = 0;
-  rows.forEach(function(tr){ var d = !!ticks[tickKey(tr)];
-    tr.classList.toggle('done', d); tr.querySelector('.ck input').checked = d; if(d) c++; });
-  document.getElementById('tickcnt').textContent = '已點 '+c+' / '+rows.length+' 列';
+  var c = 0, n = 0;                             /* 上面那條進度只算鋼材 */
+  document.querySelectorAll(TROWS).forEach(function(tr){ var d = !!ticks[tickKey(tr)], st = tr.classList.contains('len');
+    tr.classList.toggle('done', d); tr.querySelector('.ck input').checked = d; if(st){ n++; if(d) c++; } });
+  document.getElementById('tickcnt').textContent = '已點 '+c+' / '+n+' 列';
 }
 function tick(box){
   var k = tickKey(box.closest('tr'));
@@ -420,12 +467,12 @@ function tick(box){
 }
 function tickClear(){
   if(!Object.keys(ticks).length) return;
-  if(!confirm('要把全部的勾清掉嗎？')) return;
+  if(!confirm('要把全部的勾清掉嗎？（鋼材、裝潢板、屋頂、塑木都會清）')) return;
   ticks = {}; tickSave(); tickShow();
 }
 (function(){ /* 料單改過以後，舊的勾對不到列就丟掉 */
   var have = {}, keep = {};
-  document.querySelectorAll('#steelgrid tr.len').forEach(function(tr){ have[tickKey(tr)] = 1; });
+  document.querySelectorAll(TROWS).forEach(function(tr){ have[tickKey(tr)] = 1; });
   Object.keys(ticks).forEach(function(k){ if(have[k]) keep[k] = 1; });
   ticks = keep; tickShow();
 })();
@@ -526,7 +573,7 @@ window.addEventListener('resize', function(){ layoutView(); });
 /* ---- 手機：圖預設收起；打開就固定在最上面，內容往下讓位。收／開記在這支手機裡 ---- */
 var VKEY='steel4x6-order-view', viewShut=true, fitted=false;
 try{ if(localStorage.getItem(VKEY)==='open') viewShut=false; }catch(e){}
-function isPhone(){ return window.matchMedia('(max-width:899px)').matches; }
+function isPhone(){ return !window.matchMedia('(min-width:900px),(orientation:landscape) and (min-width:560px)').matches; }   /* 直拿的手機才算；橫拿跟桌面一樣左右分欄 */
 function layoutView(){
   var v=document.getElementById('viewer'), phone=isPhone();
   var shut=phone&&viewShut, pin=phone&&!viewShut;      /* 桌面不收也不釘，照左右分欄 */
