@@ -214,20 +214,31 @@ a.tot{position:relative;color:inherit;text-decoration:none;-webkit-tap-highlight
 a.tot::after{content:"↓";position:absolute;right:11px;top:9px;font-size:20px;font-weight:700;color:var(--accent)}
 a.tot:active{background:var(--accent-soft)}
 [id^="sec-"]{scroll-margin-top:calc(var(--pintop,0px) + 10px)}
+/* 手機直拿、往下捲了以後：最底下一條「回最上面」。整頁底部多留一樣高的空白，所以不會擋到任何一列；
+   回到最上面它就收掉、空白也一起收。桌面和橫拿不出現（由程式加 body 的 totop 記號決定） */
+#totop{display:none;position:fixed;left:0;right:0;bottom:0;z-index:6;
+  height:calc(44px + env(safe-area-inset-bottom,0px));padding:0 0 env(safe-area-inset-bottom,0px);
+  border:none;border-top:1px solid var(--line);background:var(--surface2);color:var(--fg);
+  font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#totop:active{background:var(--accent);color:#fff}
+body.totop #totop{display:block}
+body.totop{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+/* 320 寬的小手機：標題跟斜切那行縮一點，才不會多折一行 */
+@media(max-width:340px){ h1{font-size:28px} #steelgrid tr{padding-left:8px} #steelgrid td.bv{font-size:12px} }
 </style>
 
 <div class="wrap">
 
 <header>
   <h1>4x6 鋼構屋　叫料單</h1>
-  <p class="sub">長度單位公分、<b>無條件進位</b>　·　斜切尺寸照實際不進位　·　鋼料與板材一律以 6 米料計　·　切法含 0.3 鋸口　·　75 型 C 鋼另備 3 支　·　2026-11-11</p>
+  <p class="sub">長度單位公分、<b>無條件進位</b>　·　斜切尺寸照實際不進位　·　鋼料與板材以 6 米料計、塑木 4 米料　·　切法含 0.3 鋸口　·　75 型 C 鋼另備 3 支　·　2026-11-11</p>
 </header>
 
 <div class="totals">
   <a class="tot" href="#sec-steel"><b>104</b><span>鋼材　6 米料</span></a>
   <a class="tot" href="#sec-board"><b>74</b><span>350型裝潢板　6 米料</span></a>
   <a class="tot" href="#sec-roof"><b>8</b><span>屋頂浪板</span></a>
-  <a class="tot" href="#sec-deck"><b>10</b><span>平台塑木　6 米料</span></a>
+  <a class="tot" href="#sec-deck"><b>39</b><span>平台塑木　根</span></a>
 </div>
 
 <h2 id="sec-steel">鋼材<em>合計 6 米料 104 支（已含 75 型備用 3 支）</em></h2>
@@ -261,6 +272,7 @@ a.tot:active{background:var(--accent-soft)}
   <div class="grid" id="steelgrid"></div>
 </div>
 </div>
+<button type="button" id="totop" onclick="goTop()">↑ 回最上面</button>
 
 <h2 id="sec-board">350型裝潢板　厚 1.8<em>合計 6 米料 74 支</em></h2>
 <div class="grid">
@@ -378,12 +390,12 @@ a.tot:active{background:var(--accent-soft)}
   <div class="card" id="sec-deck">
     <div class="chead">
       <div class="cname">平台塑木條　寬 15　厚 2.2<small>平台鋪面</small></div>
-      <div class="qty"><b>10</b><span>支　／ 39 根</span></div>
+      <div class="qty"><b>39</b><span>根</span></div>
     </div>
     <table><thead><tr><th>長度</th><th>根數</th></tr></thead><tbody>
       <tr><td>134.7</td><td>39</td></tr>
     </tbody></table>
-    <div class="foot">總長 52.53 米　·　6 米料一支切 4 根（含鋸口 539.7），剩 60.3　·　兩邊各讓 1.5 給壓條，最後一片縱切成 10 寬</div>
+    <div class="foot">總長 52.53 米　·　4 米料　·　兩邊各讓 1.5 給壓條，最後一片縱切成 10 寬</div>
   </div>
 
 </div>
@@ -583,7 +595,12 @@ function layoutView(){
   document.documentElement.style.setProperty('--pintop', pin ? (v.offsetHeight+'px') : '0px');
   resize();
   if(!fitted && wrap.clientWidth && wrap.clientHeight){ fitted=true; setView('iso'); }
+  topBar();
 }
+/* 最底下那條「回最上面」：手機直拿、而且已經往下捲了才出現 */
+function topBar(){ document.body.classList.toggle('totop', isPhone() && window.scrollY > 300); }
+function goTop(){ window.scrollTo(0, 0); topBar(); }
+window.addEventListener('scroll', topBar, {passive:true});
 function foldView(open){
   var v=document.getElementById('viewer');
   var want = (open===true) ? false : !viewShut;
