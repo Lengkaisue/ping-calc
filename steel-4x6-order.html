@@ -546,6 +546,10 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 wrap.appendChild(renderer.domElement);
 var controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = 0.12;
+// 電腦滾輪縮放放慢（觸控板慣性會一次送很多事件，預設太快）；手機雙指縮放維持原速
+controls.zoomSpeed = 0.4;
+renderer.domElement.addEventListener('wheel', function(){ controls.zoomSpeed = 0.4; }, {passive:true, capture:true});
+renderer.domElement.addEventListener('touchstart', function(){ controls.zoomSpeed = 1; }, {passive:true, capture:true});
 scene.add(new THREE.AmbientLight(0xffffff, 0.74));
 var l1 = new THREE.DirectionalLight(0xffffff, 0.52); l1.position.set(-400,-700,900); scene.add(l1);
 var l2 = new THREE.DirectionalLight(0xffffff, 0.28); l2.position.set(600,400,300); scene.add(l2);
