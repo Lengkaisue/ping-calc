@@ -1,4 +1,5 @@
 <title>4x6 鋼構屋叫料單</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap">
 <style>
@@ -85,28 +86,97 @@ tbody tr:nth-child(even){background:var(--surface2)}
 .note p:last-child{margin:0}
  td.wh{font-size:12px;color:var(--mut,#5d6b78);line-height:1.4}
  @media(max-width:600px){td.wh{font-size:11px}}
-
 /* 3D 對料 */
-.viewer{position:relative;background:var(--surface);border:1px solid var(--line);margin-bottom:16px}
-#view3d{height:52vh;min-height:300px;touch-action:none}
+.steelzone{margin-bottom:8px}
+.viewer{position:sticky;top:0;z-index:5;background:var(--surface);border:1px solid var(--line);
+  margin-bottom:12px;box-shadow:0 6px 10px -8px rgba(0,0,0,.45)}
+.v3wrap{position:relative}
+#view3d{height:34vh;min-height:200px;touch-action:none}
 #view3d canvas{display:block}
-#tip3d{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.76);color:#fff;
-  padding:7px 11px;font-size:12.5px;line-height:1.5;max-width:74%;pointer-events:none;
+#tip3d{position:absolute;left:8px;top:8px;background:rgba(0,0,0,.78);color:#fff;
+  padding:7px 11px;font-size:13px;line-height:1.5;max-width:80%;pointer-events:none;
   opacity:0;transition:opacity .15s;border-radius:3px}
 #tip3d.on{opacity:1}
-.vbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px;
+#cnt3d{position:absolute;left:8px;bottom:6px;font-size:12px;color:var(--muted);
+  background:var(--surface);padding:2px 7px;border-radius:3px;pointer-events:none;max-width:95%}
+#cnt3d.hot{background:var(--hot);color:#fff;font-weight:700;font-size:13px}
+.vbar{display:flex;align-items:stretch;gap:6px;padding:6px 8px;
   border-top:1px solid var(--line);background:var(--surface2)}
-.vbar button{background:var(--surface);border:1px solid var(--line);color:var(--fg);
-  padding:5px 11px;font-size:12.5px;cursor:pointer;border-radius:3px}
+.vbar button{flex:1 1 auto;background:var(--surface);border:1px solid var(--line);color:var(--fg);
+  min-height:40px;padding:0 6px;font-size:14px;font-family:inherit;cursor:pointer;border-radius:3px;white-space:nowrap}
 .vbar button:active{background:var(--accent);color:#fff;border-color:var(--accent)}
-#cnt3d{font-size:12px;color:var(--muted);margin-left:4px}
+.vfind button{flex:0 0 auto;padding:0 12px}
+#findbox{flex:1 1 0;min-width:0;min-height:40px;padding:0 10px;font-size:16px;font-family:inherit;
+  color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:3px}
+#findbox:focus{outline:2px solid var(--accent);outline-offset:-1px}
+#findclr{display:none}
+.finding #findclr{display:block;background:var(--accent);color:#fff;border-color:var(--accent)}
+.viewer.shut .v3wrap,.viewer.shut .vviews{display:none}
+#nofind{display:none;padding:18px 13px;background:var(--hot-soft);color:var(--hot);font-weight:600;
+  border:1px solid var(--line)}
+/* 矮螢幕（手機橫拿）不釘住，免得圖把料單擋光 */
+@media(max-height:520px){.viewer{position:static}}
+/* 桌面：料單在左、圖釘在右 */
+@media(min-width:900px){
+  .steelzone{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+  .viewer{order:2;top:10px;box-shadow:none}
+  #view3d{height:calc(100vh - 140px);min-height:320px}
+  #steelgrid{grid-template-columns:1fr}
+  #foldbtn{display:none}
+}
+
+/* 鋼材料卡：一列兩行（長度／根數／斜切，下面一行寫用在哪），整列都能按 */
 .chead{cursor:pointer}
-.chead.on{background:var(--hot-soft)}
-tbody tr.len{cursor:pointer}
-tbody tr.len.on{background:var(--hot-soft)!important}
-td.bv{font-size:12px;color:var(--hot);font-weight:600;text-align:left;white-space:nowrap}
-thead th.bvh{text-align:left}
-@media(max-width:600px){td.bv{font-size:11px}}
+.chead.on{background:var(--hot-soft);box-shadow:inset 4px 0 0 var(--hot)}
+#steelgrid table,#steelgrid thead,#steelgrid tbody{display:block}
+#steelgrid tr{display:grid;grid-template-columns:4.6em 4.2em minmax(0,1fr) 48px;column-gap:8px;
+  align-items:baseline;padding:0 4px 0 13px}
+#steelgrid thead th.ckh{text-align:center}
+#steelgrid thead tr{border-bottom:1px solid var(--line)}
+#steelgrid thead th{padding:7px 0 5px;border:none;text-align:left}
+#steelgrid td{padding:0;border:none;text-align:left}
+#steelgrid tr.len{cursor:pointer;min-height:48px;padding-block:7px;align-content:center;
+  border-bottom:1px solid var(--line);-webkit-tap-highlight-color:transparent}
+#steelgrid tbody tr.len:last-child{border-bottom:none}
+#steelgrid tr.len td:first-child{font-size:21px;line-height:1.15}
+#steelgrid td.ct{font-size:16px;font-weight:600}
+#steelgrid td.ct small{font-size:12px;font-weight:400;color:var(--muted)}
+#steelgrid td.bv{font-size:13.5px;color:var(--hot);font-weight:600;white-space:normal;line-height:1.35}
+#steelgrid td.wh{grid-column:1/4;font-size:12.5px;color:var(--muted);line-height:1.4;margin-top:2px}
+/* 清點打勾：勾選框自己一格，整格 48 都能按 */
+#steelgrid td.ck{grid-column:4;grid-row:1/span 2;align-self:stretch;display:flex}
+#steelgrid td.ck label{flex:1;display:flex;align-items:center;justify-content:center;min-height:48px;cursor:pointer}
+#steelgrid td.ck input{width:28px;height:28px;margin:0;accent-color:var(--accent);cursor:pointer}
+#steelgrid tr.len.done{background:var(--accent-soft)!important}
+#steelgrid tr.len.done td:not(.ck){opacity:.42}
+.tickbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:6px 8px 6px 13px;
+  background:var(--surface);border:1px solid var(--line)}
+#tickcnt{flex:1;font-weight:700;font-size:15px}
+.tickbar button{min-height:40px;padding:0 12px;font-size:14px;font-family:inherit;cursor:pointer;
+  background:var(--surface2);border:1px solid var(--line);color:var(--fg);border-radius:3px}
+/* 斜切一覽 */
+#bevbox{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--hot);margin-bottom:12px}
+#bevbox summary{cursor:pointer;min-height:48px;display:flex;align-items:center;gap:8px;padding:0 8px 0 13px;
+  font-weight:700;font-size:15px;color:var(--hot);list-style:none}
+#bevbox summary::-webkit-details-marker{display:none}
+#bevbox summary em{font-style:normal;font-weight:400;font-size:13px;color:var(--muted)}
+#bevbox summary::after{content:"收起";margin-left:auto;font-size:14px;font-weight:400;color:var(--fg);
+  background:var(--surface2);border:1px solid var(--line);border-radius:3px;padding:8px 12px}
+#bevbox:not([open]) summary::after{content:"打開"}
+.bvspec{padding:6px 13px;font-size:12.5px;font-weight:700;background:var(--surface2);border-top:1px solid var(--line)}
+.bvitem{display:grid;grid-template-columns:4.6em minmax(0,1fr);column-gap:8px;align-items:baseline;
+  align-content:center;min-height:48px;padding:7px 13px;border-top:1px solid var(--line);cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.bvitem b{font-family:"Barlow Condensed",system-ui,sans-serif;font-size:21px;font-weight:600;line-height:1.15}
+.bvitem span{font-size:13.5px;color:var(--hot);font-weight:600}
+.bvitem small{grid-column:1/-1;font-size:12.5px;color:var(--muted);margin-top:2px}
+.bvitem.on{background:var(--hot-soft);box-shadow:inset 4px 0 0 var(--hot)}
+.bvitem.on small{color:var(--fg)}
+.viewer.finding ~ .steellist #bevbox{display:none}
+/* 從 3D 點過來的那一列 */
+#steelgrid tr.len.here{outline:3px solid var(--accent);outline-offset:-3px}
+#steelgrid tr.len.on{background:var(--hot-soft)!important;box-shadow:inset 4px 0 0 var(--hot)}
+#steelgrid tr.len.on td.wh{color:var(--fg)}
 </style>
 
 <div class="wrap">
@@ -126,20 +196,35 @@ thead th.bvh{text-align:left}
 
 <h2>鋼材<em>合計 6 米料 104 支（已含 75 型備用 3 支）</em></h2>
 
-<div class="viewer">
-  <div id="view3d"></div>
-  <div id="tip3d"></div>
-  <div class="vbar">
+<div class="steelzone">
+<div class="viewer" id="viewer">
+  <div class="v3wrap">
+    <div id="view3d"></div>
+    <div id="tip3d"></div>
+    <div id="cnt3d">點料單任一列，那支料就在圖上變紅</div>
+  </div>
+  <div class="vbar vviews">
     <button type="button" onclick="setView('iso')">斜看</button>
     <button type="button" onclick="setView('front')">正面</button>
     <button type="button" onclick="setView('side')">側面</button>
     <button type="button" onclick="setView('top')">俯視</button>
     <button type="button" onclick="clearAll()">清除紅色</button>
-    <span id="cnt3d">點下面料單任一列，這支料就在圖上變紅</span>
+  </div>
+  <div class="vbar vfind">
+    <input type="search" id="findbox" placeholder="找料：打長度或位置"
+           autocomplete="off" enterkeyhint="search" oninput="findLen(this.value)">
+    <button type="button" id="findclr" onclick="findReset()">全部</button>
+    <button type="button" id="foldbtn" onclick="foldView()">收起圖</button>
   </div>
 </div>
 
-<div class="grid" id="steelgrid"></div>
+<div class="steellist">
+  <div class="tickbar"><span id="tickcnt"></span><button type="button" onclick="tickClear()">清掉所有勾</button></div>
+  <details id="bevbox" open><summary>斜切一覽<em id="bevsum"></em></summary><div id="bevlist"></div></details>
+  <div id="nofind">找不到這個長度或位置，按「全部」看整張料單</div>
+  <div class="grid" id="steelgrid"></div>
+</div>
+</div>
 
 <h2>350型裝潢板　厚 1.8<em>合計 6 米料 74 支</em></h2>
 <div class="grid">
@@ -323,17 +408,94 @@ var D = {"parts":[{"n":"隔間A_立柱1_50x50x2.0","s":"方管 50x50x2.0","L":25
       +  '<div class="qty"><b>'+(r.bar?tot:r.pieces)+'</b><span>'
       +  (r.bar ? ('支'+(sp>0?('（含備用'+sp+'）'):'')+'　／ '+r.pieces+' 根') : '片')
       +  '</span></div></div>'
-      +  '<table><thead><tr><th>叫料長度</th><th>根數</th><th class="bvh">斜切尺寸</th><th>用在哪</th></tr></thead><tbody>';
+      +  '<table><thead><tr><th>叫料長度</th><th>根數</th><th class="bvh">斜切尺寸</th><th class="ckh">已點</th></tr></thead><tbody>';
     r.lens.forEach(function(L){
       h += '<tr class="len" data-spec="'+r.spec+'" data-len="'+L[0]+'" onclick="pick(this)">'
-        +  '<td>'+L[0]+'</td><td>'+L[1]+'</td>'
+        +  '<td>'+L[0]+'</td><td class="ct">'+L[1]+'<small> 根</small></td>'
         +  '<td class="bv">'+(L[3]||'')+'</td>'
-        +  '<td class="wh">'+((L[2]||[]).join('、'))+'</td></tr>';
+        +  '<td class="wh">'+((L[2]||[]).join('、'))+'</td>'
+        +  '<td class="ck"><label onclick="event.stopPropagation()">'
+        +  '<input type="checkbox" aria-label="已點" onchange="tick(this)"></label></td></tr>';
     });
     h += '</tbody></table></div>';
   });
   document.getElementById('steelgrid').innerHTML = h;
 })();
+
+/* ---- 現場清點打勾（存在這支手機／電腦裡，重開還在） ---- */
+var TKEY = 'steel4x6-order-ticks', ticks = {};
+try{ ticks = JSON.parse(localStorage.getItem(TKEY) || '{}') || {}; }catch(e){ ticks = {}; }
+function tickKey(tr){ return tr.getAttribute('data-spec')+'|'+tr.getAttribute('data-len'); }
+function tickSave(){
+  try{ if(Object.keys(ticks).length) localStorage.setItem(TKEY, JSON.stringify(ticks));
+       else localStorage.removeItem(TKEY); }catch(e){}
+}
+function tickShow(){
+  var rows = document.querySelectorAll('#steelgrid tr.len'), c = 0;
+  rows.forEach(function(tr){ var d = !!ticks[tickKey(tr)];
+    tr.classList.toggle('done', d); tr.querySelector('.ck input').checked = d; if(d) c++; });
+  document.getElementById('tickcnt').textContent = '已點 '+c+' / '+rows.length+' 列';
+}
+function tick(box){
+  var k = tickKey(box.closest('tr'));
+  if(box.checked) ticks[k] = 1; else delete ticks[k];
+  tickSave(); tickShow();
+}
+function tickClear(){
+  if(!Object.keys(ticks).length) return;
+  if(!confirm('要把全部的勾清掉嗎？')) return;
+  ticks = {}; tickSave(); tickShow();
+}
+(function(){ /* 料單改過以後，舊的勾對不到列就丟掉 */
+  var have = {}, keep = {};
+  document.querySelectorAll('#steelgrid tr.len').forEach(function(tr){ have[tickKey(tr)] = 1; });
+  Object.keys(ticks).forEach(function(k){ if(have[k]) keep[k] = 1; });
+  ticks = keep; tickShow();
+})();
+
+/* ---- 斜切一覽：要斜切的每一支列出來（哪幾列有斜切看料單資料，尺寸取自料件名稱） ---- */
+(function(){
+  var h = '', last = '', c = 0;
+  D.rows.forEach(function(r){ r.lens.forEach(function(L){
+    if(!L[3]) return;
+    D.parts.forEach(function(p, i){
+      if(p.s !== r.spec || String(p.L) !== String(L[0])) return;
+      var bv = bevelOf(p); if(!bv) return;
+      if(last !== r.spec){ h += '<div class="bvspec">'+r.spec+'</div>'; last = r.spec; }
+      h += '<div class="bvitem" data-pi="'+i+'" onclick="pickPart(this)"><b>'+p.L+'</b><span>'+bv
+        +  '</span><small>'+p.g+'</small></div>';
+      c++;
+    });
+  }); });
+  document.getElementById('bevlist').innerHTML = h;
+  document.getElementById('bevsum').textContent = '共 '+c+' 支';
+})();
+
+/* ---- 找料：打長度或位置，料單只留對得上的列 ---- */
+var HAY = {};
+D.parts.forEach(function(p){ var k=p.s+'|'+p.L; HAY[k]=(HAY[k]||'')+' '+p.g; });
+function findLen(q){
+  q = String(q||'').replace(/\s+/g,'').toLowerCase();
+  var shown = 0;
+  document.querySelectorAll('#steelgrid .card').forEach(function(card){
+    var spec = card.querySelector('.chead').getAttribute('data-spec');
+    var all = !q || spec.replace(/\s+/g,'').toLowerCase().indexOf(q) >= 0, any = false;
+    card.querySelectorAll('tr.len').forEach(function(tr){
+      var ok = all;
+      if(!ok){
+        var hay = (tr.getAttribute('data-len')+' '+tr.textContent+' '
+                  +(HAY[spec+'|'+tr.getAttribute('data-len')]||'')).replace(/\s+/g,'').toLowerCase();
+        ok = hay.indexOf(q) >= 0;
+      }
+      tr.style.display = ok ? '' : 'none';
+      if(ok){ any = true; shown++; }
+    });
+    card.style.display = any ? '' : 'none';
+  });
+  document.getElementById('viewer').classList.toggle('finding', !!q);
+  document.getElementById('nofind').style.display = (q && !shown) ? 'block' : 'none';
+}
+function findReset(){ var b=document.getElementById('findbox'); b.value=''; findLen(''); }
 
 /* ---- 3D ---- */
 var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -341,7 +503,7 @@ var COL_BASE = dark ? 0x76848f : 0xb6c0c8, COL_HOT = 0xd93b2b;
 var wrap = document.getElementById('view3d');
 var scene = new THREE.Scene();
 scene.background = new THREE.Color(dark ? 0x172028 : 0xffffff);
-var camera = new THREE.PerspectiveCamera(42, 1, 1, 8000);
+var camera = new THREE.PerspectiveCamera(42, 1, 1, 12000);
 camera.up.set(0, 0, 1);
 var renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -370,42 +532,83 @@ D.parts.forEach(function(p){
 cx/=n; cy/=n; cz/=n;
 
 function setView(k){
-  var R=1000;
+  /* 畫面窄（手機直拿）就站遠一點，整棟才看得到 */
+  var a = wrap.clientWidth / Math.max(1, wrap.clientHeight);
+  var R = 800 * Math.max(1, 1.15 / (a || 1.15));
   if(k==='iso')   camera.position.set(cx-R*0.95, cy-R*0.95, cz+R*0.70);
   if(k==='front') camera.position.set(cx, cy+R*1.40, cz+R*0.15);
   if(k==='side')  camera.position.set(cx+R*1.45, cy, cz+R*0.15);
   if(k==='top')   camera.position.set(cx+1, cy+1, cz+R*1.55);
   controls.target.set(cx,cy,cz); controls.update();
 }
-setView('iso');
 function resize(){ var w=wrap.clientWidth,h=wrap.clientHeight; if(!w||!h)return;
   camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h,false); }
 window.addEventListener('resize', resize); resize();
+setView('iso');
 (function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene,camera); })();
 
-var picked=[];
+function foldView(open){
+  var v=document.getElementById('viewer');
+  var shut = (open===true) ? false : !v.classList.contains('shut');
+  v.classList.toggle('shut', shut);
+  document.getElementById('foldbtn').textContent = shut ? '打開圖' : '收起圖';
+  if(!shut) resize();
+}
+
+var picked=[], pickedParts={};
 function match(p,spec,len){ if(p.s!==spec) return false;
   if(len===null||len==='') return true; return String(p.L)===String(len); }
 function applyHot(){
   var hot=[]; for(var i=0;i<D.parts.length;i++) hot.push(false);
   picked.forEach(function(s){ D.parts.forEach(function(p,i){ if(match(p,s[0],s[1])) hot[i]=true; }); });
+  Object.keys(pickedParts).forEach(function(i){ hot[+i]=true; });
   var c=0;
   meshes.forEach(function(m,i){ m.material.color.setHex(hot[i]?COL_HOT:COL_BASE);
     edges[i].visible=!hot[i]; if(hot[i]) c++; });
-  document.getElementById('cnt3d').textContent =
-    c>0 ? (c+' 支標紅了') : '點下面料單任一列，這支料就在圖上變紅';
+  /* 有標紅時其他料變淡，紅的那幾支才找得到 */
+  meshes.forEach(function(m,i){ var dim=(c>0 && !hot[i]);
+    m.material.transparent=dim; m.material.opacity=dim?0.16:1; m.material.depthWrite=!dim;
+    edges[i].material.transparent=dim; edges[i].material.opacity=dim?0.3:1; });
+  var el=document.getElementById('cnt3d');
+  el.textContent = c>0 ? (c+' 支標紅了') : '點料單任一列，那支料就在圖上變紅';
+  el.classList.toggle('hot', c>0);
 }
 function pick(el){
   el.classList.toggle('on');
-  picked=[];
+  picked=[]; pickedParts={};
   document.querySelectorAll('.on[data-spec]').forEach(function(x){
     picked.push([x.getAttribute('data-spec'), x.getAttribute('data-len')]); });
+  document.querySelectorAll('.bvitem.on').forEach(function(x){ pickedParts[x.getAttribute('data-pi')]=1; });
   applyHot();
-  if(picked.length) document.querySelector('.viewer').scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(!picked.length && !Object.keys(pickedParts).length) return;
+  var v=document.getElementById('viewer');
+  if(v.classList.contains('shut')) foldView(true);
+  /* 圖平常釘在畫面上不用捲；只有圖不在畫面裡（手機橫拿）才捲過去 */
+  var r=v.getBoundingClientRect();
+  if(r.bottom<60 || r.top>window.innerHeight-60) v.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+function pickPart(el){ pick(el); }
 function clearAll(){
   document.querySelectorAll('.on').forEach(function(x){ x.classList.remove('on'); });
-  picked=[]; applyHot();
+  picked=[]; pickedParts={}; applyHot();
+}
+
+/* 點 3D 上的料 → 料單捲到那一列、框起來 */
+function gotoRow(p){
+  document.querySelectorAll('#steelgrid tr.here').forEach(function(x){ x.classList.remove('here'); });
+  if(!p) return;
+  var tr=null;
+  document.querySelectorAll('#steelgrid tr.len').forEach(function(x){
+    if(x.getAttribute('data-spec')===p.s && x.getAttribute('data-len')===String(p.L)) tr=x; });
+  if(!tr) return;
+  if(!tr.offsetParent) findReset();           /* 被找料篩掉了就先還原 */
+  tr.classList.add('here');
+  var v=document.getElementById('viewer'), vr=v.getBoundingClientRect(), r=tr.getBoundingClientRect();
+  var above = getComputedStyle(v).position==='sticky' && vr.left<r.right && vr.right>r.left;
+  if(above){   /* 手機：圖釘在上面會擋住，要捲到「圖下面那塊」的正中間 */
+    var mid = vr.height + (window.innerHeight - vr.height)/2;
+    window.scrollTo({top: window.scrollY + r.top + r.height/2 - mid, behavior:'smooth'});
+  } else tr.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
 var ray=new THREE.Raycaster(), mv=new THREE.Vector2();
@@ -425,7 +628,8 @@ renderer.domElement.addEventListener('pointerup', function(e){
     tip.innerHTML='<b>'+p.g+'</b><br>'+p.s+'　叫料長 '+p.L+' cm'
       +(bv?('<br><span style="color:#ff9b8a">斜切　'+bv+'</span>'):'');
     tip.classList.add('on');
-  } else tip.classList.remove('on');
+    gotoRow(p);
+  } else { tip.classList.remove('on'); gotoRow(null); }
   down=null;
 });
 function bevelOf(p){
