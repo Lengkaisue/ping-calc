@@ -1,0 +1,227 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>玉里屋頂 對料</title>
+<style>
+:root{--bg:#eef1f4;--card:#fff;--fg:#141a20;--mut:#5d6b78;--line:#d4dade;--hot:#c0392b;--acc:#0d6b78;--warn:#fff4d6;--warnfg:#7a5300}
+@media(prefers-color-scheme:dark){:root{--bg:#10161d;--card:#1b242d;--fg:#e6edf3;--mut:#93a2ae;--line:#2c3945;--hot:#ff6b4a;--acc:#49b9c6;--warn:#3a3015;--warnfg:#f3d38a}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 "Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;display:flex;flex-direction:column}
+#view{position:relative;flex:0 0 50vh;background:var(--card);border-bottom:1px solid var(--line);touch-action:none}
+#view canvas{display:block}
+#tip{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.74);color:#fff;padding:7px 10px;border-radius:4px;font-size:12px;max-width:74%;line-height:1.45;pointer-events:none;opacity:0;transition:opacity .15s}
+#tip.on{opacity:1}
+#hud{position:absolute;right:10px;top:10px;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+#hud button{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:5px 9px;font-size:12px;cursor:pointer}
+#hud button:active{background:var(--acc);color:#fff}
+#panel{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px 28px}
+h1{font-size:16px;margin:0 0 2px}
+.sub{color:var(--mut);font-size:11.5px;margin-bottom:8px}
+.warn{background:var(--warn);color:var(--warnfg);border-radius:6px;padding:8px 11px;font-size:12.5px;margin-bottom:9px}
+.warn label{display:inline-flex;align-items:center;gap:5px;margin:5px 14px 0 0;font-weight:600}
+.warn input{width:58px;font-size:15px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--fg)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;margin-bottom:9px;overflow:hidden}
+.ch{display:flex;align-items:center;gap:8px;padding:8px 11px;cursor:pointer}
+.ch:hover{background:rgba(125,125,125,.09)}
+.ch.on{background:#e8850c;color:#fff}
+.ch .nm{flex:1;font-weight:700;font-size:13px}
+.ch b{font-size:18px;color:var(--hot);font-variant-numeric:tabular-nums}
+.ch.on b{color:#fff}
+.ch small{font-size:10.5px;color:var(--mut)}
+.ch.on small{color:rgba(255,255,255,.85)}
+.meta{padding:0 11px 7px;font-size:10.5px;color:var(--mut)}
+table{width:100%;border-collapse:collapse}
+td{padding:4px 11px;font-size:12.5px;border-top:1px solid var(--line);vertical-align:top}
+tr.hd td{font-size:10px;color:var(--mut);border-top:none;padding:5px 11px 2px;font-weight:600}
+tr.len{cursor:pointer}
+tr.len:hover{background:rgba(125,125,125,.12)}
+tr.len.on{background:#e8850c;color:#fff}
+td.r{text-align:right;white-space:nowrap}
+td.ln{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600}
+td.wh{font-size:10.5px;color:var(--mut);line-height:1.3}
+tr.len.on td.wh{color:rgba(255,255,255,.92)}
+.how{font-size:11.5px;color:var(--mut);line-height:1.6;margin-top:4px}
+.bar{position:sticky;top:0;background:var(--bg);padding:6px 0 8px;z-index:3;display:flex;align-items:center;gap:8px}
+.bar button{background:var(--card);border:1px solid var(--line);color:var(--fg);border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer}
+#cnt{font-size:11.5px;color:var(--mut)}
+@media(min-width:900px){
+  body{flex-direction:row}
+  #view{flex:1 1 auto;height:100vh;border-bottom:none;border-right:1px solid var(--line)}
+  #panel{flex:0 0 440px;height:100vh}
+}
+</style></head><body>
+<div id="view">
+  <div id="tip"></div>
+  <div id="hud"><button onclick="setView('iso')">斜看</button><button onclick="setView('front')">正面</button><button onclick="setView('side')">側面</button><button onclick="setView('top')">俯視</button></div>
+</div>
+<div id="panel">
+  <h1>玉里屋頂　對料</h1>
+  <div class="sub">點料單任一列 → 圖上那幾支變橘色　·　點圖上的料 → 看它是哪一支<br>長度公分　·　廠商照長度切好　·　圖的斜度只是示意　·　2026-11-17 22:38</div>
+  <div class="warn">左邊橫樑起頭<b>吃上次的斜樑半隻</b>（往外推 5，圖上紅色那支，不叫料），<b>這次斜樑只做右邊 1 組</b>。一組＝前斜樑、後斜樑、中脊柱、前面墊高各一組雙C（各 2 支C）。改這裡，圖跟料單會一起變：<br>
+    <label>斜樑 <input id="ng" type="number" min="1" max="20" inputmode="numeric"> 組</label>
+  </div>
+  <div class="bar"><button onclick="clearAll()">全部清除</button><span id="cnt">還沒選</span></div>
+  <div id="list"></div>
+  <div class="how" id="how"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+var P = {"spec": "100型C鋼 100x50x20x2.3", "purlin_len": 599, "front_len": 431, "front_gap": 69, "back_len": 381, "back_gap": 73, "ridge_inset": 15, "ridge_post": 45.5, "pad_hi": 16.5, "pad_lo": 14.5, "groups": 1, "pitch_deg": 8};
+var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+var COL_BASE = dark ? 0x7d8b98 : 0xb9c3cb, COL_HOT = 0xff9a1f, COL_BG = dark ? 0x1b242d : 0xffffff;
+
+var wrap = document.getElementById('view');
+var scene = new THREE.Scene(); scene.background = new THREE.Color(COL_BG);
+var camera = new THREE.PerspectiveCamera(42, 1, 1, 8000);
+var renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+wrap.appendChild(renderer.domElement);
+camera.up.set(0, 0, 1);
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.12;
+controls.zoomSpeed = 0.25; controls.rotateSpeed = 0.6; controls.panSpeed = 0.6;   // 師傅：電腦滾輪縮放太快
+scene.add(new THREE.AmbientLight(0xffffff, 0.74));
+var dl = new THREE.DirectionalLight(0xffffff, 0.52); dl.position.set(-400, -700, 900); scene.add(dl);
+var dl2 = new THREE.DirectionalLight(0xffffff, 0.28); dl2.position.set(600, 400, 300); scene.add(dl2);
+
+var IDX = [0,1,3, 0,3,2, 4,6,7, 4,7,5, 0,4,5, 0,5,1, 2,3,7, 2,7,6, 0,2,6, 0,6,4, 1,5,7, 1,7,3];
+function add(a,b){return [a[0]+b[0],a[1]+b[1],a[2]+b[2]];}
+function mul(a,s){return [a[0]*s,a[1]*s,a[2]*s];}
+// 一支料＝一個方盒：o 起點，u 寬、v 高、w 長 三個方向向量
+function box(o,u,v,w){ var c=[]; for(var k=0;k<8;k++){ var p=o; if(k&1)p=add(p,u); if(k&2)p=add(p,v); if(k&4)p=add(p,w); c.push(p);} return c; }
+
+// 橫樑位置：第 1 支離中脊端 ridge_inset，最後一支在簷口端，中間平均分
+function purlinPos(len, gap){
+  var run = len - P.ridge_inset, seg = Math.round(run / gap), out = [];
+  for (var i=0;i<=seg;i++) out.push(P.ridge_inset + run*i/seg);
+  return {pos:out, real: run/seg};
+}
+
+var meshes=[], edges=[], parts=[], center=[0,0,0];
+function build(nf, nb){
+  meshes.forEach(function(m){scene.remove(m);}); edges.forEach(function(e){scene.remove(e);});
+  meshes=[]; edges=[]; parts=[];
+  var t = P.pitch_deg*Math.PI/180, W = P.purlin_len;
+  var sides = [
+    {nm:'前', dir:+1, len:P.front_len, gap:P.front_gap, n:nf},
+    {nm:'後', dir:-1, len:P.back_len,  gap:P.back_gap,  n:nb}];
+  sides.forEach(function(S){
+    var down = [0, S.dir*Math.cos(t), -Math.sin(t)];      // 沿斜面往簷口
+    var up   = [0, S.dir*Math.sin(t)*1, Math.cos(t)];      // 垂直斜面朝上
+    if (S.dir<0) up = [0, -Math.sin(t), Math.cos(t)];
+    if (S.dir>0) up = [0,  Math.sin(t), Math.cos(t)];
+    // 斜樑（頂面貼著斜面線）
+    for (var i=0;i<S.n;i++){
+      var x = (S.n===1) ? (W-10) : (W-10)*i/(S.n-1);
+      var o = add([x,0,0], mul(up,-10));
+      parts.push({g:S.nm+'斜樑 第'+(i+1)+'組（雙C對焊10x10，兩端封口板）', s:P.spec, L:S.len, kind:S.nm+'斜樑',
+                  c:box(o,[10,0,0],mul(up,10),mul(down,S.len))});
+    }
+    var xs=[]; for (var q=0;q<S.n;q++) xs.push(S.n===1 ? (W-10) : (W-10)*q/(S.n-1));
+    if (S.dir>0) xs.forEach(function(x,q){
+      // 中脊柱：斜樑中脊端底下
+      var zt = -10/Math.cos(t);
+      parts.push({g:'中脊柱 第'+(q+1)+'組（雙C）', s:P.spec, L:P.ridge_post, kind:'中脊柱',
+                  c:box([x,-5,zt-P.ridge_post],[10,0,0],[0,10,0],[0,0,P.ridge_post])});
+      // 前面墊高：前斜樑簷口端底下
+      var e = add(mul(down, S.len-10), mul(up,-10));
+      parts.push({g:'前面墊高 第'+(q+1)+'組（雙C，斜切 高'+P.pad_hi+'／低'+P.pad_lo+'）', s:P.spec, L:P.pad_hi, kind:'前墊高',
+                  c:box([x,e[1],e[2]-P.pad_hi],[10,0,0],[0,10,0],[0,0,P.pad_hi])});
+    });
+    // 左端：上次的斜樑（參考，不叫料），橫樑起頭吃它半隻
+    parts.push({g:S.nm+'斜面 上次的斜樑（已經有了，不叫料）', s:'既有', L:S.len, kind:'既有', ghost:true,
+                c:box(add([-5,0,0],mul(up,-10)),[10,0,0],mul(up,10),mul(down,S.len))});
+    // 橫樑（坐在斜樑頂面上）
+    var pp = purlinPos(S.len, S.gap); S.real = pp.real; S.cnt = pp.pos.length;
+    pp.pos.forEach(function(d,j){
+      var o = add(mul(down, Math.min(d, S.len-5)), [0,0,0]);
+      parts.push({g:S.nm+'斜面 橫樑 第'+(j+1)+'支（離中脊端 '+d.toFixed(1)+'）', s:P.spec, L:P.purlin_len, kind:S.nm+'橫樑',
+                  c:box(o,mul(down,5),mul(up,10),[W,0,0])});
+    });
+  });
+  var sx=0,sy=0,sz=0,n=0;
+  parts.forEach(function(p){
+    var pos=new Float32Array(24);
+    for(var k=0;k<8;k++){pos[k*3]=p.c[k][0];pos[k*3+1]=p.c[k][1];pos[k*3+2]=p.c[k][2];sx+=p.c[k][0];sy+=p.c[k][1];sz+=p.c[k][2];n++;}
+    var g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setIndex(IDX); g.computeVertexNormals();
+    var m=new THREE.Mesh(g,new THREE.MeshLambertMaterial(p.ghost?{color:0xd62828,side:THREE.DoubleSide}:{color:COL_BASE,side:THREE.DoubleSide})); m.userData={p:p};
+    scene.add(m); meshes.push(m);
+    var e=new THREE.LineSegments(new THREE.EdgesGeometry(g,1),new THREE.LineBasicMaterial({color:dark?0x44515d:0x8d99a4}));
+    scene.add(e); edges.push(e);
+  });
+  center=[sx/n,sy/n,sz/n];
+  return sides;
+}
+
+function setView(k){
+  var R=900*Math.max(1,1.3/(camera.aspect||1)), c=center;
+  if(k==='iso')   camera.position.set(c[0]-R*0.95,c[1]-R*0.95,c[2]+R*0.75);
+  if(k==='front') camera.position.set(c[0],c[1]+R*1.4,c[2]+R*0.15);
+  if(k==='side')  camera.position.set(c[0]+R*1.45,c[1],c[2]+R*0.15);
+  if(k==='top')   camera.position.set(c[0]+1,c[1]+1,c[2]+R*1.55);
+  controls.target.set(c[0],c[1],c[2]); controls.update();
+}
+function resize(){ var w=wrap.clientWidth,h=wrap.clientHeight; if(!w||!h)return; camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h,false); }
+window.addEventListener('resize',resize);
+(function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);})();
+
+var picked=[];
+function applyHot(){
+  var cnt=0;
+  meshes.forEach(function(m,i){
+    var p=parts[i], hot=picked.some(function(s){ return s[0]==='all' || (s[0]===p.kind) || (s[0]==='L'+p.L && /橫樑/.test(p.kind)); });
+    if(p.ghost)return; m.material.color.setHex(hot?COL_HOT:COL_BASE); edges[i].visible=!hot; if(hot)cnt++; });
+  document.getElementById('cnt').textContent = cnt>0 ? (cnt+' 支標橘色了') : '還沒選';
+}
+function pick(el){
+  el.classList.toggle('on'); picked=[];
+  document.querySelectorAll('.on[data-k]').forEach(function(x){ picked.push([x.getAttribute('data-k')]); });
+  applyHot();
+}
+function clearAll(){ document.querySelectorAll('.on').forEach(function(x){x.classList.remove('on');}); picked=[]; applyHot(); }
+
+var ray=new THREE.Raycaster(), mv=new THREE.Vector2(), tip=document.getElementById('tip'), downAt=null;
+function xy(ev){var r=renderer.domElement.getBoundingClientRect();return{x:ev.clientX-r.left,y:ev.clientY-r.top,w:r.width,h:r.height};}
+renderer.domElement.addEventListener('pointerdown',function(ev){downAt=xy(ev);});
+renderer.domElement.addEventListener('pointerup',function(ev){
+  if(!downAt)return; var u=xy(ev);
+  if(Math.abs(u.x-downAt.x)>6||Math.abs(u.y-downAt.y)>6){downAt=null;return;}
+  mv.x=(u.x/u.w)*2-1; mv.y=-(u.y/u.h)*2+1; ray.setFromCamera(mv,camera);
+  var res=ray.intersectObjects(meshes,false);
+  if(res.length){var p=res[0].object.userData.p; tip.innerHTML='<b>'+p.g+'</b><br>'+p.s+'　長 '+p.L+' cm'; tip.classList.add('on');}
+  else tip.classList.remove('on');
+  downAt=null;
+});
+
+function render(){
+  var nf=Math.max(1,Math.min(20,parseInt(document.getElementById('ng').value)||1)), nb=nf;
+  var S=build(nf,nb); applyHot();
+  var F=S[0], B=S[1];
+  var lens=[
+    [P.purlin_len, F.cnt+B.cnt, '橫樑：前斜面 '+F.cnt+' 支＋後斜面 '+B.cnt+' 支', 'L'+P.purlin_len],
+    [P.front_len, nf*2, '前斜樑：雙C對焊，'+nf+' 組×2', '前斜樑'],
+    [P.back_len,  nb*2, '後斜樑：雙C對焊，'+nb+' 組×2', '後斜樑'],
+    [P.ridge_post, nf*2, '中脊柱：雙C，'+nf+' 組×2', '中脊柱'],
+    ['高'+P.pad_hi+'／低'+P.pad_lo, nf*2, '前面墊高：雙C，斜切高低點，'+nf+' 組×2', '前墊高']];
+  var pieces=0; lens.forEach(function(L){pieces+=L[1];});
+  var h='<div class="card"><div class="ch" data-k="all" onclick="pick(this)"><span class="nm">'+P.spec+'</span>'
+    +'<span><b>'+pieces+'</b> <small>支</small></span></div>'
+    +'<div class="meta">照下面長度叫，廠商切好</div>'
+    +'<table><tr class="hd"><td>長度 cm</td><td class="r">支數</td><td>位置</td></tr>';
+  lens.forEach(function(L){
+    h+='<tr class="len" data-k="'+L[3]+'" onclick="pick(this)"><td class="ln">'+L[0]+'</td><td class="r">'+L[1]+' 根</td><td class="wh">'+L[2]+'</td></tr>'; });
+  h+='</table></div>';
+  h+='<div class="card"><div class="ch" data-k="前斜樑" onclick="pick(this)"><span class="nm">封口板 10x10 1.2t</span><span><b>'+(nf+nb)*2+'</b> <small>片</small></span></div>'
+    +'<div class="meta">斜樑兩端各焊一片</div></div>';
+  document.getElementById('list').innerHTML=h;
+  document.getElementById('how').innerHTML='<b>橫樑怎麼算</b>：第 1 支離中脊端 '+P.ridge_inset+'，最後一支在簷口端。<br>'
+    +'前斜面 '+P.front_len+'－'+P.ridge_inset+'＝'+(P.front_len-P.ridge_inset)+'，間距 '+P.front_gap+' → '+(F.cnt-1)+' 格 '+F.cnt+' 支（實際每格 '+F.real.toFixed(1)+'）<br>'
+    +'後斜面 '+P.back_len+'－'+P.ridge_inset+'＝'+(P.back_len-P.ridge_inset)+'，間距 '+P.back_gap+' → '+(B.cnt-1)+' 格 '+B.cnt+' 支（實際每格 '+B.real.toFixed(1)+'）<br>'
+    +'<b>斜樑、中脊柱、前面墊高都是雙C</b>（兩支C開口對開口焊成10x10），所以支數＝組數×2。';
+}
+var first=true;
+document.getElementById('ng').addEventListener('input',function(){render();});
+document.getElementById('ng').value=P.groups;
+render(); resize(); setView('iso');
+</script></body></html>
