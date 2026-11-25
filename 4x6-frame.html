@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4x6鋼構屋 骨架施工圖</title>
+<style>
+:root{--bg:#f6f7f8;--fg:#1d2328;--mut:#5d6b78;--card:#fff;--line:#d9dee3;--acc:#2f6f9f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15191c;--fg:#e6eaee;--mut:#9aa7b3;--card:#1f2428;--line:#333b42;--acc:#7fb3dc}}
+:root[data-theme="dark"]{--bg:#15191c;--fg:#e6eaee;--mut:#9aa7b3;--card:#1f2428;--line:#333b42;--acc:#7fb3dc}
+*{box-sizing:border-box}
+body{margin:0;padding:12px 16px 40px;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,"Microsoft JhengHei",sans-serif}
+h1{font-size:20px;margin:4px 0 2px}
+.note{color:var(--mut);font-size:14px;margin:0 0 12px}
+nav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;position:sticky;top:0;background:var(--bg);padding:6px 0;z-index:2}
+nav a{padding:6px 12px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--fg);text-decoration:none;font-size:15px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;margin:0 0 16px;overflow:hidden}
+.card h2{font-size:17px;margin:0;padding:10px 12px;border-bottom:1px solid var(--line)}
+.card h2 small{display:block;font-weight:normal;color:var(--mut);font-size:13px}
+.card a.img{display:block;background:#fff}
+.card img{display:block;width:100%;height:auto}
+.tip{color:var(--mut);font-size:13px;padding:6px 12px}
+</style>
+</head>
+<body>
+<h1>4x6鋼構屋 骨架施工圖</h1>
+<p class="note">尺寸單位公分。間距＝中心到中心，從底盤外緣量起；牆骨架鋼料外面離底盤外緣內縮 2。門窗標的是淨洞口。點圖可以放大看。</p>
+<nav>
+  <a href="#front">正面</a><a href="#back">背面</a><a href="#left">左牆</a><a href="#right">右牆</a><a href="#floor">地板支架</a><a href="#roof">屋頂橫樑</a>
+</nav>
+
+<div class="card" id="front"><h2>正面牆<small>從屋外看・門洞 89.8 × 250・牆高 298.4</small></h2>
+<a class="img" href="img/4x6-frame/front.png"><img src="img/4x6-frame/front.png" alt="正面牆骨架" loading="lazy"></a></div>
+
+<div class="card" id="back"><h2>背面牆<small>從屋外看・浴室窗 67 × 48（台高 140）・窗 109 × 88（台高 100）・牆高 263</small></h2>
+<a class="img" href="img/4x6-frame/back.png"><img src="img/4x6-frame/back.png" alt="背面牆骨架" loading="lazy"></a></div>
+
+<div class="card" id="left"><h2>左牆<small>從屋外看・窗 109 × 88（台高 100）・含前面平台不落地柱</small></h2>
+<a class="img" href="img/4x6-frame/left.png"><img src="img/4x6-frame/left.png" alt="左牆骨架" loading="lazy"></a></div>
+
+<div class="card" id="right"><h2>右牆<small>從屋外看・含前面平台不落地柱</small></h2>
+<a class="img" href="img/4x6-frame/right.png"><img src="img/4x6-frame/right.png" alt="右牆骨架" loading="lazy"></a></div>
+
+<div class="card" id="floor"><h2>地板支架<small>從上往下看・150型C鋼・支架頭尾離底盤外緣 5.3・隔間底下多加 1 支（離左邊那支 12.5）</small></h2>
+<a class="img" href="img/4x6-frame/floor.png"><img src="img/4x6-frame/floor.png" alt="地板支架平面" loading="lazy"></a></div>
+
+<div class="card" id="roof"><h2>屋頂橫樑<small>從左邊看・沿斜樑量・第一支與最後一支貼齊斜樑兩端</small></h2>
+<a class="img" href="img/4x6-frame/roof.png"><img src="img/4x6-frame/roof.png" alt="屋頂橫樑間距" loading="lazy"></a></div>
+
+<p class="tip">柱旁的 5x5 補強貼著柱子，圖上不另外拉尺寸。</p>
+</body>
+</html>
