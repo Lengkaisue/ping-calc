@@ -71,18 +71,6 @@ button:active { transform:translateY(5px); box-shadow:0 0 0 #114b9e; background:
 #previewPane {
   background:#1a1a1a; padding-bottom:8px; z-index:30;
 }
-/* 捲過預覽區之後改成固定在畫面上方，這樣捲到③屋頂設定時預覽還在眼前。
-   (position:sticky 只在自己的容器內有效，跨區塊會失效，所以用 JS 加這個 class) */
-#previewPane.pinned {
-  position:fixed; top:0; left:0; right:0;
-  margin:0 auto; padding:6px 12px 8px;
-  border-bottom:1px solid #333;
-  box-shadow:0 6px 14px -6px rgba(0,0,0,0.95);
-  overflow:auto;
-}
-#previewPane.pinned #canvasWrap, #previewPane.pinned #canvasWrap3d { max-height:34vh; }
-#previewSpacer { display:none; }
-#previewSpacer.on { display:block; }
 #previewPane.collapsed #canvasWrap,
 #previewPane.collapsed #canvasWrap3d,
 #previewPane.collapsed #ctrl3dBar { display:none !important; }
@@ -163,69 +151,8 @@ a.back:hover { color:#fff; }
     <button onclick="addBuildings()">＋ 加入畫布</button>
   </div>
 
-  <div class="container wide">
-    <h2>② 平面排列（俯視）</h2>
-
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-      <span style="color:#555;font-size:13px;">點擊＝轉向　拖曳＝移位　右鍵＝刪除　Shift+點擊(電腦)或按下方「多選模式」再點建物(手機)＝多選　紅色中脊線上點擊＝新增落柱標記(白點)／點白點＝刪除</span>
-      <button class="btn-sm" id="btnMultiSelect" onclick="toggleMultiSelect()" style="border-color:#666;">多選模式：關</button>
-      <span style="margin-left:auto;display:flex;gap:6px;">
-        <button class="btn-sm" onclick="adjZoom(1.15)">＋</button>
-        <button class="btn-sm" onclick="adjZoom(0.87)">－</button>
-        <button class="btn-sm" onclick="adjZoom(0)" style="font-size:11px">⊙</button>
-        <button class="btn-sm" onclick="clearCanvas()" style="color:#f66;">清空</button>
-      </span>
-    </div>
-
-    <div id="previewSpacer"></div>
-    <div id="previewPane">
-      <div id="previewBar">
-        <button class="btn-sm" id="btn3dToggle" onclick="toggle3DView()">顯示3D示意圖</button>
-        <button class="btn-sm" onclick="calcMats();document.getElementById('matResult').scrollIntoView({behavior:'smooth',block:'center'})" style="background:#2a5ea8;color:#fff;">計算材料清單</button>
-        <button class="btn-sm" id="btnPinToggle" onclick="togglePreviewPin()" style="margin-left:auto;">收起預覽</button>
-      </div>
-      <div id="canvasWrap"><canvas id="cv"></canvas></div>
-      <div id="ctrl3dBar" class="ctrl-bar" style="display:none;">
-        <button class="btn-sm" onclick="rotate3D(-90)">↺ 轉90°</button>
-        <button class="btn-sm" onclick="rotate3D(90)">轉90° ↻</button>
-        <button class="btn-sm" onclick="rotate3D(0,true)">重置角度</button>
-        <span style="color:#666;font-size:12px;">每次轉90°(從另一面看)，比例保證不會跑掉；紅色短柱＝中柱實際落點</span>
-      </div>
-      <div id="canvasWrap3d" style="display:none;"><canvas id="cv3d"></canvas></div>
-    </div>
-
-    <div id="groupBar" style="display:none;margin-top:8px;align-items:center;gap:8px;">
-      <button class="btn-sm" id="btnGroupAction" onclick="onGroupActionClick()" style="background:#a83232;color:#fff;">強制合併為一組</button>
-      <span style="color:#666;font-size:12px;">已選 <span id="selCount">0</span> 間（紅線＝中脊，可拖端點調整；線上點擊可標記強制落柱點）</span>
-    </div>
-    <div id="ridgeMarkBar" style="display:none;margin-top:8px;">
-      <button class="btn-sm" id="btnClearMarks" onclick="clearRidgeMarks()" style="background:#2a6b2a;color:#fff;display:none;">清除標記（改回自動）</button>
-      <span id="ridgeAutoNote" style="color:#666;font-size:12px;">中柱位置<b style="color:#7de87d;">自動落在模組相接面</b>（兩間交接的那道牆），不用手動標。只有現場例外(例如交接處一定要多一支)才點紅線加標記。</span>
-      <div id="ridgeMarkNote" style="display:none;color:#c07020;font-size:12px;margin-top:4px;">
-        單斜屋頂的中柱固定「左右各一組（共4支）」，落柱標記不會影響算料，這裡先停用。紅色中脊線仍可拖曳，用來決定這組的排水方向。
-      </div>
-    </div>
-
-    <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:#666;flex-wrap:wrap;">
-      <span>🔵 正向（W×D）</span><span style="color:#c07020">🟠 轉向90°（D×W）</span><span style="color:#4db84d">🟢 塑木平台</span>
-    </div>
-
-    <!-- ▼ 提示：轉向後計算邏輯說明 -->
-    <div style="margin-top:8px;padding:8px 12px;background:#1c1c0a;border-left:3px solid #c07020;border-radius:6px;font-size:13px;color:#aaa;">
-      💡 點擊建築物轉向會直接交換 W／D，材料計算（中脊、斜樑、延伸方向）跟著轉向後的邊重算。
-    </div>
-    <!-- ▼ 提示：排水方向箭頭說明 -->
-    <div style="margin-top:8px;padding:8px 12px;background:#1c1c0a;border-left:3px solid #ffe14d;border-radius:6px;font-size:13px;color:#aaa;">
-      💡 每棟右上角的 ↕／↔ 圖示才是決定坡向的開關：點它直接切換，旁邊會即時顯示算出來的中柱/中脊高度，不用再對照 W/D 是哪一邊。
-    </div>
-
-    <div class="result-box" id="layoutInfo" style="text-align:center;margin-top:8px;">
-      點格子設定排列
-    </div>
-  </div>
-
   <div class="container">
-    <h2>③ 屋頂設定</h2>
+    <h2>② 屋頂設定</h2>
     <div class="row">
       <label>斜面</label>
       <select id="roofType" onchange="draw(); redraw3DIfActive()">
@@ -285,7 +212,7 @@ a.back:hover { color:#fff; }
         <option value="白色">白色</option>
         <option value="蘋果綠">蘋果綠</option>
         <option value="鐵灰">鐵灰</option>
-        <option value="紅色">紅色</option>
+        <option value="鋁紅色">鋁紅色（琉璃瓦叫吉祥紅）</option>
         <option value="黑色">黑色</option>
       </select>
     </div>
@@ -324,7 +251,79 @@ a.back:hover { color:#fff; }
         <span style="color:#aaa;font-size:14px;">mm</span>
       </div>
     </div>
+    <div class="row">
+      <label>桁條間距上限</label>
+      <div style="display:flex;align-items:center;gap:6px;flex:1;">
+        <input type="number" id="purlinMax" value="78" min="30" max="150" step="0.5" inputmode="decimal" style="flex:1;">
+        <span style="color:#aaa;font-size:14px;">cm</span>
+      </div>
+    </div>
+    <div style="color:#777;font-size:12px;margin:-4px 0 8px 0;line-height:1.6;">
+      桁條(橫梁)超過這個間距就多加一支。實單反推：前斜配置長720要排11支(間距72)、後斜620要排9支(間距77.5)，
+      上限必須落在 77.5～79.9 之間，這三個值在本案結果一樣，先預設 78。改這個數字會影響約兩成的尺寸，
+      不確定就照實際做過的案子回填。
+    </div>
     <button onclick="calcMats()">計算材料清單</button>
+  </div>
+
+  <div class="container wide">
+    <h2>③ 平面排列與預覽（俯視／3D）</h2>
+
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+      <span style="color:#555;font-size:13px;">點擊＝轉向　拖曳＝移位　右鍵＝刪除　Shift+點擊(電腦)或按下方「多選模式」再點建物(手機)＝多選　中柱位置自動落在模組相接面，不用手動標</span>
+      <button class="btn-sm" id="btnMultiSelect" onclick="toggleMultiSelect()" style="border-color:#666;">多選模式：關</button>
+      <span style="margin-left:auto;display:flex;gap:6px;">
+        <button class="btn-sm" onclick="adjZoom(1.15)">＋</button>
+        <button class="btn-sm" onclick="adjZoom(0.87)">－</button>
+        <button class="btn-sm" onclick="adjZoom(0)" style="font-size:11px">⊙</button>
+        <button class="btn-sm" onclick="clearCanvas()" style="color:#f66;">清空</button>
+      </span>
+    </div>
+
+    <div id="previewPane">
+      <div id="previewBar">
+        <button class="btn-sm" id="btn3dToggle" onclick="toggle3DView()">顯示3D示意圖</button>
+        <button class="btn-sm" onclick="calcMats();document.getElementById('matResult').scrollIntoView({behavior:'smooth',block:'center'})" style="background:#2a5ea8;color:#fff;">計算材料清單</button>
+        <button class="btn-sm" id="btnPinToggle" onclick="togglePreviewPin()" style="margin-left:auto;">收起預覽</button>
+      </div>
+      <div id="canvasWrap"><canvas id="cv"></canvas></div>
+      <div id="ctrl3dBar" class="ctrl-bar" style="display:none;">
+        <button class="btn-sm" onclick="rotate3D(-90)">↺ 轉90°</button>
+        <button class="btn-sm" onclick="rotate3D(90)">轉90° ↻</button>
+        <button class="btn-sm" onclick="rotate3D(0,true)">重置角度</button>
+        <span style="color:#666;font-size:12px;">每次轉90°(從另一面看)，比例保證不會跑掉；紅色短柱＝中柱實際落點</span>
+      </div>
+      <div id="canvasWrap3d" style="display:none;"><canvas id="cv3d"></canvas></div>
+    </div>
+
+    <div id="groupBar" style="display:none;margin-top:8px;align-items:center;gap:8px;">
+      <button class="btn-sm" id="btnGroupAction" onclick="onGroupActionClick()" style="background:#a83232;color:#fff;">強制合併為一組</button>
+      <span style="color:#666;font-size:12px;">已選 <span id="selCount">0</span> 間（紅線＝中脊，可拖端點調整；線上點擊可標記強制落柱點）</span>
+    </div>
+    <div id="ridgeMarkBar" style="display:none;margin-top:8px;">
+      <button class="btn-sm" id="btnClearMarks" onclick="clearRidgeMarks()" style="background:#2a6b2a;color:#fff;display:none;">清除標記（改回自動）</button>
+      <span id="ridgeAutoNote" style="color:#666;font-size:12px;">中柱位置<b style="color:#7de87d;">自動落在模組相接面</b>（兩間交接的那道牆），不用手動標。只有現場例外(例如交接處一定要多一支)才點紅線加標記。</span>
+      <div id="ridgeMarkNote" style="display:none;color:#c07020;font-size:12px;margin-top:4px;">
+        單斜屋頂的中柱固定「左右各一組（共4支）」，落柱標記不會影響算料，這裡先停用。紅色中脊線仍可拖曳，用來決定這組的排水方向。
+      </div>
+    </div>
+
+    <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:#666;flex-wrap:wrap;">
+      <span>🔵 正向（W×D）</span><span style="color:#c07020">🟠 轉向90°（D×W）</span><span style="color:#4db84d">🟢 塑木平台</span>
+    </div>
+
+    <!-- ▼ 提示：轉向後計算邏輯說明 -->
+    <div style="margin-top:8px;padding:8px 12px;background:#1c1c0a;border-left:3px solid #c07020;border-radius:6px;font-size:13px;color:#aaa;">
+      💡 點擊建築物轉向會直接交換 W／D，材料計算（中脊、斜樑、延伸方向）跟著轉向後的邊重算。
+    </div>
+    <!-- ▼ 提示：排水方向箭頭說明 -->
+    <div style="margin-top:8px;padding:8px 12px;background:#1c1c0a;border-left:3px solid #ffe14d;border-radius:6px;font-size:13px;color:#aaa;">
+      💡 每棟右上角的 ↕／↔ 圖示才是決定坡向的開關：點它直接切換，旁邊會即時顯示算出來的中柱/中脊高度，不用再對照 W/D 是哪一邊。
+    </div>
+
+    <div class="result-box" id="layoutInfo" style="text-align:center;margin-top:8px;">
+      點格子設定排列
+    </div>
   </div>
 
   <div class="container">
@@ -349,12 +348,12 @@ let selectedIdxs=new Set();
 //   只做選取(加入/移出 selectedIdxs)，不觸發拖曳/轉向。跟 Shift+點擊共用同一套
 //   selectedIdxs / updateGroupBtn() 邏輯，桌面版 Shift+點擊行為完全不受影響。
 let multiSelectMode=false;
-// manualGroups: {id, ridge:{x1,y1,x2,y2}, ridgeColMarks:[t,...]}
+// manualGroups: {id, ridgeColMarks:[t,...]}
 //   ridgeColMarks 是使用者在中脊線上手動點出的「落柱」標記，每個值是沿中脊線
 //   從端點1到端點2的比例位置(0~1)，用比例而非絕對cm是為了拖曳端點調整中脊線時
 //   標記點還能跟著線一起等比例移動，不會跑位。有標記點時中脊柱組數改用
 //   標記點數量(calcMats() 判斷)，取代原本跟斜樑支數(faces[0].n)綁定的自動公式。
-let manualGroups=[]; // {id, ridge:{x1,y1,x2,y2}, ridgeColMarks:[t,...]}
+let manualGroups=[]; // {id, ridgeColMarks:[t,...]}（中脊線已移除，方向改由建物 dir 決定）
 let groupIdSeq=1;
 
 function bDims(b){ return b.state===2?{bw:b.d,bd:b.w}:{bw:b.w,bd:b.d}; }
@@ -495,6 +494,13 @@ function noteRoofDirScope(){
 // 延伸只進材料計算、圖上沒有任何表示，使用者設了「前面延伸150」卻看不到，
 // 無法用眼睛核對到底延伸出去多少、往哪邊延伸。
 // 參數是「世界座標(cm)」的建物範圍，函式內自己轉成螢幕座標。
+// 【方向約定 — 2026-09-09 用戶確認，暫時固定，不要自作主張改】
+//   前 = 畫布上方(−Y)、後 = 畫布下方(+Y)、左 = −X、右 = +X。
+//   注意這跟「平面圖正面畫在下方」的一般製圖慣例相反，但這是用戶要的，別去「修正」它。
+//   佐證：實單前挑簷150 -> 前斜面 750、斜樑 735，跟師傅手稿旁註記「前11支 72cm」
+//   (720 = 735−15) 完全對得起來，所以現在的定義是對的。
+//   前後對調不會改變叫料總量(斜樑 735x4 + 635x4、桁條 20 隻都一樣)，
+//   但會害現場把長的那支裝到錯的一頭，所以要改之前一定要先問用戶。
 function drawRoofOutline(ctx,wx1,wy1,wx2,wy2,ovF,ovB,ovL,ovR,sc,ox,oy){
   if(!(ovF||ovB||ovL||ovR)) return;
   const S=(wx,wy)=>({x:PAD+(wx-ox)*sc, y:PAD+(wy-oy)*sc});
@@ -711,10 +717,11 @@ function draw(){
     // 合併後是同一個共用屋頂，延伸(出簷)算在整組外圍，不是每間各自延伸
     drawRoofOutline(ctx, gx, gy, gx+u.w, gy+u.d, _ovF,_ovB,_ovL,_ovR, sc, minX, minY);
 
-    // 自動合併(非手動)群組：整組共用「一個」方向切換鈕＋數字，畫在合併框右上角，
+    // 群組(自動合併或手動分組)共用「一個」方向切換鈕＋數字，畫在合併框右上角，
     // 用u.w/u.d(合併後的整體跨距)算，不是單一成員自己的尺寸；點擊會同步寫入u.members全部成員的dir。
-    // 手動分組已經有紅色中脊線當方向指示，不需要再疊一個箭頭。
-    if(!u.manual){
+    // 手動分組原本靠紅色中脊線的角度反推方向，但那條線同時會影響中柱位置、
+    // 拖一下就默默把整組排水方向翻掉，使用者看不出來，已移除，改用跟其他建物一樣的箭頭鈕。
+    {
       let dir = u.members[0].dir || 'col';
       let fullWallCm = dir==='col' ? u.d : u.w;
       let btnSize=18;
@@ -739,30 +746,6 @@ function draw(){
       ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(gpx+2,gpy+gph-16,tw+6,16);
       ctx.fillStyle='#4dffb8'; ctx.fillText(numText,gpx+5,gpy+gph-4);
     }
-  });
-
-  // 手動群組的中脊線：紅色實線＋兩端可拖曳的圓形把手
-  manualGroups.forEach(g=>{
-    let x1=PAD+(g.ridge.x1-minX)*sc, y1=PAD+(g.ridge.y1-minY)*sc;
-    let x2=PAD+(g.ridge.x2-minX)*sc, y2=PAD+(g.ridge.y2-minY)*sc;
-    ctx.save();
-    ctx.strokeStyle='#ff2d2d'; ctx.lineWidth=2.5;
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    ctx.fillStyle='#ff2d2d';
-    [[x1,y1],[x2,y2]].forEach(([hx,hy])=>{
-      ctx.beginPath(); ctx.arc(hx,hy,5,0,Math.PI*2); ctx.fill();
-    });
-    ctx.restore();
-
-    // 手動落柱標記點：白色實心圓＋黑色描邊，跟紅色中脊線/端點把手區隔
-    (g.ridgeColMarks||[]).forEach(t=>{
-      let mx=x1+(x2-x1)*t, my=y1+(y2-y1)*t;
-      ctx.save();
-      ctx.beginPath(); ctx.arc(mx,my,5,0,Math.PI*2);
-      ctx.fillStyle='#fff'; ctx.fill();
-      ctx.strokeStyle='#000'; ctx.lineWidth=1.5; ctx.stroke();
-      ctx.restore();
-    });
   });
 
   // 選取中的建物：黃色虛線外框
@@ -827,53 +810,7 @@ function snapEdges(idx){
 function adjZoom(f){ _zoom=f?Math.min(5,Math.max(0.15,_zoom*f)):1; draw(); }
 
 // 中脊線端點命中測試：座標轉換方式跟 hitTest 一致(螢幕像素→世界座標cm)
-function hitRidgeEndpoint(ex,ey){
-  const cv=document.getElementById('cv'), rect=cv.getBoundingClientRect();
-  let px=(ex-rect.left)*(cv.width/rect.width)-PAD;
-  let py=(ey-rect.top)*(cv.height/rect.height)-PAD;
-  let cx=px/_sc+_ox, cy=py/_sc+_oy;
-  const R=Math.max(15,40/_sc);
-  for(const g of manualGroups){
-    if(Math.hypot(cx-g.ridge.x1,cy-g.ridge.y1)<R) return {groupId:g.id, which:1};
-    if(Math.hypot(cx-g.ridge.x2,cy-g.ridge.y2)<R) return {groupId:g.id, which:2};
-  }
-  return null;
-}
-
-// 中脊線本體命中測試(不含端點)：用來新增／刪除手動落柱標記。
-// 呼叫時機在 onDown 裡排在 hitRidgeEndpoint 之後，所以端點附近的點擊
-// 一定先被當成拖曳把手處理掉，不會誤觸這裡。
-// 回傳 {groupId, markIdx, t}：markIdx>=0 代表點在既有標記點上(用來刪除)，
-// markIdx===-1 代表點在中脊線空白處(用來新增，t 是新標記的比例位置)。
-function hitRidgeLine(ex,ey){
-  const cv=document.getElementById('cv'), rect=cv.getBoundingClientRect();
-  let px=(ex-rect.left)*(cv.width/rect.width)-PAD;
-  let py=(ey-rect.top)*(cv.height/rect.height)-PAD;
-  let cx=px/_sc+_ox, cy=py/_sc+_oy;
-  const LINE_T=Math.max(10,20/_sc);  // 判定「點在線上」的垂直距離容許值(cm)
-  const MARK_R=Math.max(12,30/_sc);  // 判定「點在既有標記點上」的半徑(cm)
-  for(const g of manualGroups){
-    let{x1,y1,x2,y2}=g.ridge;
-    let dx=x2-x1, dy=y2-y1;
-    let lenSq=dx*dx+dy*dy;
-    if(lenSq<1) continue;
-    let t=((cx-x1)*dx+(cy-y1)*dy)/lenSq;
-    if(t<0||t>1) continue; // 落在線段延伸範圍外，不算點在線上
-    let nx=x1+dx*t, ny=y1+dy*t;
-    if(Math.hypot(cx-nx,cy-ny)>LINE_T) continue; // 離線太遠，不算
-
-    let marks=g.ridgeColMarks||[];
-    for(let mi=0;mi<marks.length;mi++){
-      let mx=x1+dx*marks[mi], my=y1+dy*marks[mi];
-      if(Math.hypot(cx-mx,cy-my)<MARK_R) return {groupId:g.id, markIdx:mi, t:marks[mi]};
-    }
-    return {groupId:g.id, markIdx:-1, t};
-  }
-  return null;
-}
-
 let _di=-1, _ds=null, _do=null, _drag=false;
-let _rdrag=null; // 中脊端點拖曳中：{groupId, which}
 const THRESH=6;
 function evXY(e){ return e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY}; }
 
@@ -899,35 +836,6 @@ function onDown(e){
     if(idx!==-1 && buildings[idx].type!=='deck'){
       if(selectedIdxs.has(idx)) selectedIdxs.delete(idx); else selectedIdxs.add(idx);
       updateGroupBtn(); draw();
-    }
-    return;
-  }
-
-  // 中脊線端點優先於一般建物拖曳判斷
-  let rh=hitRidgeEndpoint(x,y);
-  if(rh){
-    _rdrag=rh;
-    document.addEventListener('mousemove',onRidgeMove);
-    document.addEventListener('mouseup',onRidgeUp);
-    document.addEventListener('touchmove',onRidgeMove,{passive:false});
-    document.addEventListener('touchend',onRidgeUp);
-    return;
-  }
-
-  // 中脊線本體：點線上空白處＝新增落柱標記，點既有標記＝刪除。
-  // 排在端點判斷之後、一般建物判斷之前，這樣點中脊線不會誤觸底下建物的轉向/拖曳。
-  let rl=hitRidgeLine(x,y);
-  if(rl){
-    let g=manualGroups.find(g=>g.id===rl.groupId);
-    if(g){
-      if(!g.ridgeColMarks) g.ridgeColMarks=[];
-      if(rl.markIdx>=0){
-        g.ridgeColMarks.splice(rl.markIdx,1);
-      } else {
-        g.ridgeColMarks.push(rl.t);
-        g.ridgeColMarks.sort((a,b)=>a-b);
-      }
-      draw();
     }
     return;
   }
@@ -963,31 +871,7 @@ function onDown(e){
   document.addEventListener('touchend',onUp);
 }
 
-function onRidgeMove(e){
-  if(!_rdrag) return; e.preventDefault();
-  let{x,y}=evXY(e);
-  const cv=document.getElementById('cv'), rect=cv.getBoundingClientRect();
-  let px=(x-rect.left)*(cv.width/rect.width)-PAD;
-  let py=(y-rect.top)*(cv.height/rect.height)-PAD;
-  let cx=px/_sc+_ox, cy=py/_sc+_oy;
-  let g=manualGroups.find(g=>g.id===_rdrag.groupId);
-  if(!g) return;
-  // 不允許把中脊線拖到長度接近0：長度<1時整條線點不到，標記也刪不掉，變成死線。
-  // 這裡先算出新位置，長度不足就直接不套用這次移動(線停在最短可用長度)。
-  const MIN_RIDGE=40; // 世界座標cm，約等於半個模組寬，肉眼還抓得到
-  let nx1=g.ridge.x1, ny1=g.ridge.y1, nx2=g.ridge.x2, ny2=g.ridge.y2;
-  if(_rdrag.which===1){ nx1=cx; ny1=cy; } else { nx2=cx; ny2=cy; }
-  if(Math.hypot(nx2-nx1, ny2-ny1) < MIN_RIDGE) return;
-  g.ridge.x1=nx1; g.ridge.y1=ny1; g.ridge.x2=nx2; g.ridge.y2=ny2;
-  draw();
-}
-function onRidgeUp(){
-  document.removeEventListener('mousemove',onRidgeMove);
-  document.removeEventListener('mouseup',onRidgeUp);
-  document.removeEventListener('touchmove',onRidgeMove);
-  document.removeEventListener('touchend',onRidgeUp);
-  _rdrag=null;
-}
+
 function onMove(e){
   if(_di===-1) return; e.preventDefault();
   let{x,y}=evXY(e), dx=x-_ds.x, dy=y-_ds.y;
@@ -1087,16 +971,10 @@ function onGroupActionClick(){
     let members=[...selectedIdxs].map(i=>buildings[i]);
     members.forEach(b=>b.groupId=gid);
     let{minX,minY,maxX,maxY}=computeBBox(members);
-    // 建議中脊線：沿 bounding box 最長邊方向、通過中點
-    let ridge;
-    if((maxX-minX)>=(maxY-minY)){
-      let midY=(minY+maxY)/2;
-      ridge={x1:minX,y1:midY,x2:maxX,y2:midY};
-    } else {
-      let midX=(minX+maxX)/2;
-      ridge={x1:midX,y1:minY,x2:midX,y2:maxY};
-    }
-    manualGroups.push({id:gid, ridge, ridgeColMarks:[]});
+    // 群組的排水方向沿用成員自己的 dir（畫布上箭頭鈕切換），沒設過就用外框長邊當預設。
+    // 中柱位置由 computeSeamTs() 自動落在模組相接面，不需要中脊線這個中介物。
+    if(!members[0].dir) members.forEach(b=>b.dir=(maxX-minX)>=(maxY-minY)?'col':'row');
+    manualGroups.push({id:gid, ridgeColMarks:[]});
     selectedIdxs.clear();
     cleanupGroups();
     // 分組成功後自動關閉多選模式：手機使用者選完建物按下合併後，
@@ -1109,10 +987,6 @@ function onGroupActionClick(){
 }
 
 // 合併/刪除動作可能讓某個手動群組只剩不足2間成員，這種殘餘群組要整組解散回自動偵測
-// 手機在中脊線兩端點附近點擊，容易被端點拖曳把手(hitRidgeEndpoint)搶走，
-// 導致使用者想加落柱標記卻變成不小心拖動整條線(回報「一直亂跑」)。
-// 斜樑/中柱本來就常見「左右各一組」，所以直接給一個按鈕在兩端內縮一點的
-// 位置(t=0.03/0.97，避開端點把手判定範圍)自動加標記，不用精準點擊。
 function clearRidgeMarks(){
   // 手動標記會覆蓋「自動落在模組相接面」的正確結果，所以要能一鍵清掉改回自動。
   // (舊的「兩端加中柱標記」按鈕是自動規則做出來之前的權宜之計：它把標記加在
@@ -1162,15 +1036,12 @@ function groupBuildings(mods){
     }
     let{minX,minY,maxX,maxY}=computeBBox(members);
     let g=manualGroups.find(g=>String(g.id)===String(gid));
-    let gdir, ridgeColMarks=[];
-    if(g){
-      let dx=Math.abs(g.ridge.x2-g.ridge.x1), dy=Math.abs(g.ridge.y2-g.ridge.y1);
-      gdir = dx>=dy ? 'col' : 'row';
-      ridgeColMarks = g.ridgeColMarks || [];
-    } else {
-      // 找不到對應中脊資料(理論上不該發生)，用bbox長邊當保底判斷
-      gdir = (maxX-minX)>=(maxY-minY) ? 'col' : 'row';
-    }
+    // 群組方向：直接用成員自己的 dir（畫布上箭頭鈕寫入的值），沒設過才用外框長邊當預設。
+    // 舊版是從紅色中脊線的角度反推(dx>=dy?'col':'row')，那條線一被拖動就會默默翻掉
+    // 整組的排水方向、連帶改掉中柱位置與材料數量，畫面上完全沒有提示。
+    let gdir = (members[0] && members[0].dir) ? members[0].dir
+             : ((maxX-minX)>=(maxY-minY) ? 'col' : 'row');
+    let ridgeColMarks=[];
     units.push({w:maxX-minX, d:maxY-minY, count:members.length, isRect:true, members, manual:true, dir:gdir, ridgeColMarks});
   });
 
@@ -1241,9 +1112,15 @@ function calcMats(){
   let rType    = parseInt(document.getElementById('roofType').value);
   let wW       = parseInt(document.getElementById('waveW').value);
   let sr       = parseFloat(document.getElementById('slopeR').value)||1;
+  // 桁條(橫梁)間距上限，可在②屋頂設定填。實單反推必須落在 [77.5, 80)，預設 78。
+  let PMAX     = parseFloat(document.getElementById('purlinMax').value)||78;
+  if(PMAX<30||PMAX>150) PMAX=78;
   let panelType= document.getElementById('panelType').value;
   let panelMaterial=document.getElementById('panelMaterial').value;
   let panelColor=document.getElementById('panelColor').value;
+  // 同一個顏色在不同板材有不同叫法：鋁紅色的琉璃瓦，業界(跟師傅叫料單上)叫「吉祥紅」。
+  // 用戶2026-09-09口述。叫料單上要印師傅實際叫得出口的名字，不要自己統一成「紅色」。
+  let panelColorLabel = (panelType==='琉璃瓦' && panelColor==='鋁紅色') ? '吉祥紅' : panelColor;
   let trimMaterial=document.getElementById('trimMaterial').value;
   let cTypeVal = document.getElementById('cType').value;
   let cThick   = parseFloat(document.getElementById('cThick').value)||2.3;
@@ -1272,7 +1149,9 @@ function calcMats(){
     fm+=extW*extD/10000;
 
     let faces=[];
-    let purlinN=0, purlinSpace=0, purlinTotal=0;  // 單斜專用：橫梁(桁條)支數/間距/含滴水收邊的總支數
+    let purlinN=0, purlinSpace=0, purlinTotal=0;  // 橫梁(桁條)支數/間距/總支數
+    // 雙斜專用：前後(左右)兩片斜面各自的桁條支數與間距（2026-09-09 補，見下面雙斜區塊註解）
+    let purlinA=0, purlinB=0, purlinSpaceA=0, purlinSpaceB=0;
     // ▼ 中脊柱組數(雙斜)：手動群組有落柱標記(ridgeColMarks)就用標記數量(交接處強制落柱這種
     //   結構例外)，沒標記時固定2組(雙C合併左右各一組，比照單斜同一套慣例，見下面highSideColN)。
     //   要提到「雙斜」的斜樑支數，一定要用這同一個數字，不能另外用bestCSpacing算——
@@ -1293,13 +1172,13 @@ function calcMats(){
       // 斜樑支數：雙C合併，左右各一組（2組×2支＝4支），不是沿斜面等分的公式。
       // 支數固定4支，跟跨距/坡度無關；「間距」對這種端點配置沒有意義，改標「雙C合併」。
       // 中柱(墊高支撐柱)跟斜樑用同一套規則：雙C合併，左右各一組＝4支。
-      faces.push({label:'斜樑', flatCm:sp, n:4, space:null, railCm, doubleC:true});
+      faces.push({label:'斜樑', flatCm:sp, panelCm:sp, n:4, grp:2, pcs:4, space:null, railCm, doubleC:true});
 
       // 橫梁(桁條)：沿斜面配置，首隻貼高側邊緣(不縮15)、尾隻在斜樑末端(railCm處，
       // 即滴水側板材懸出15cm的起點)。可用配置長=railCm，只扣滴水單邊15，不是兩端各扣。
       // 不另外加滴水側收邊料——用戶現場確認樑上就只塞得下這個等間距算出來的支數(purlinN)，
       // 尾隻本身已經在滴水側板材懸出的起點(railCm處)，不需要再多一支承接。
-      purlinN=Math.max(2, Math.ceil(railCm/80)+1);
+      purlinN=Math.max(2, Math.ceil(railCm/PMAX)+1);
       purlinSpace=+(railCm/(purlinN-1)).toFixed(1);
       purlinTotal=purlinN;
     } else {
@@ -1312,21 +1191,52 @@ function calcMats(){
         flatA=Math.round(bw/2+ovL); flatB=Math.round(bw/2+ovR);
         labelA='左斜樑'; labelB='右斜樑';
       }
-      // 斜樑支數＝中脊柱組數(上面已經算好的ridgeColN)，不是另外用bestCSpacing算；
-      // 斜樑長(flatA/flatB)只用來算橫梁間距：首支扣15，其餘等分
+      // 斜樑組數＝中脊柱組數(上面已經算好的ridgeColN)，不是另外用bestCSpacing算。
+      // ▼ 2026-09-09 用師傅實單(4×6兩間合併=400×1200、雙斜2分水、延伸前150/後50/左右50)反推修正：
+      //   實單「前斜樑7350×4、後斜樑6350×4」是4隻，舊版這裡把「組數2」直接當隻數印出來變2隻，
+      //   同一個「2組」在中柱那邊卻印組數×2=4隻——兩邊不一致，斜樑因此少叫一半的料。
+      //   斜樑跟中柱一樣是雙C合併(每組落柱位置2支拼一組)，隻數一律＝組數×2。
       let n=ridgeColN;
+      let railPcs=n*2;
       let spaceA=n>1?+((flatA-30)/(n-1)).toFixed(1):null;
       let spaceB=n>1?+((flatB-30)/(n-1)).toFixed(1):null;
-      faces.push({label:labelA, flatCm:flatA, n, space:spaceA, railCm:flatA-15});
-      faces.push({label:labelB, flatCm:flatB, n, space:spaceB, railCm:flatB-15});
+      // ▼ 板材長：雙斜的板材在中脊端要多伸出5cm讓中脊蓋住(實單 7550/6550 vs 斜樑 7350/6350)，
+      //   滴水端則是板材比斜樑多15cm(跟單斜同一條規則)，所以板材−斜樑＝20cm。
+      //   單斜沒有中脊端，維持板材長＝flatCm(舊版已用實單驗證過的480/465)。
+      faces.push({label:labelA, flatCm:flatA, panelCm:flatA+5, n, grp:n, pcs:railPcs, space:spaceA, railCm:flatA-15, doubleC:true});
+      faces.push({label:labelB, flatCm:flatB, panelCm:flatB+5, n, grp:n, pcs:railPcs, space:spaceB, railCm:flatB-15, doubleC:true});
+
+      // ▼ 橫梁(桁條)：舊版雙斜根本沒算桁條，「橫梁」那一欄印的是「斜樑支數加總+2」(=6隻)。
+      //   雙斜兩片斜面各自排桁條，沿用單斜同一條公式，兩片各算各的、總數直接相加。
+      //   兩個不同的 15 不要混成「兩端各扣15」：
+      //     ① 板材長→斜樑長 的 −15＝滴水(舊公式本來就有，railCm 已經扣掉了)
+      //     ② 首支桁條從斜樑端內縮 15cm＝只扣這一隻
+      //   所以桁條配置長＝railCm−15。
+      //
+      //   2026-09-09 修正紀錄（重要，不要再改回去）：
+      //   舊註解寫「實單驗證：前720→10支(間距80) … 10+9=19 ✓（實單5000×19）」是錯的。
+      //   那是先認定總數要湊到手稿的 19，再回頭挑常數，並沒有對過手稿旁邊那行間距註記。
+      //   手稿實際寫的是「前11支 72cm／後9支 77.5cm」，兩行都整除：
+      //       720 ÷ 10格 = 72.0、620 ÷ 8格 = 77.5
+      //   用戶確認：中脊不共用（骨架不可能焊在缺口處），所以正確答案是 11+9=20 支，
+      //   手稿 C型鋼那行的「5000×19」才是寫錯的那個數字。
+      //   反推間距上限必須落在 [77.5, 80)，77.5/78/79 在本案結果相同，分不出來，
+      //   所以改成可填欄位 #purlinMax（預設 78），不再寫死。
+      let runA=(flatA-15)-15, runB=(flatB-15)-15;
+      purlinA=Math.max(2, Math.ceil(runA/PMAX)+1);
+      purlinB=Math.max(2, Math.ceil(runB/PMAX)+1);
+      purlinSpaceA=+(runA/(purlinA-1)).toFixed(1);
+      purlinSpaceB=+(runB/(purlinB-1)).toFixed(1);
+      purlinTotal=purlinA+purlinB;
     }
 
     let pcsPerFace=Math.ceil(pp/wW);
     ts+=pcsPerFace*faces.length;
     if(rType===2) tr+=pp/100;
-    // 單斜的「橫梁」支數改用桁條公式(purlinTotal)，不是斜樑支數+2；
-    // 雙斜維持原本「斜樑支數加總+2支封邊」的邏輯不變
-    let totalC=rType===1 ? purlinTotal : faces.reduce((s,f)=>s+f.n,0)+2;
+    // 單斜/雙斜的「橫梁」支數都改用桁條公式(purlinTotal)。
+    // 舊版雙斜是「斜樑支數加總+2支封邊」，那個數字既不是桁條也不是任何實際料項(實單19支 vs 舊版6支)，
+    // 2026-09-09 拿實單反推後改掉，見上面雙斜區塊的 purlinA/purlinB 註解。
+    let totalC=purlinTotal;
 
     // ▼ 中柱高度（雙斜）：只用建物本身尺寸（不含延伸），整數化後 600/2=300 × sr/10
     //   「中柱」＝墊高用的支撐柱（結構材），跟「中脊」（雙斜屋脊收邊配件，isLiuli/ridgeType那段）是兩回事，命名不要混用
@@ -1360,7 +1270,9 @@ function calcMats(){
       faces, totalC, pcsPerFace,
       perpM:(pp/100).toFixed(2), perpCm:pp,
       ridgeH, ridgeColN, ridgeColManual, ridgeColAuto, frontN, backN, dir, highSideH, halfWallCm, fullWallCm,
-      purlinN, purlinSpace, highSideColN
+      purlinN, purlinSpace, highSideColN,
+      purlinA, purlinB, purlinSpaceA, purlinSpaceB,
+      frontPcs: faces[0]?faces[0].pcs:0, backPcs: (rType===2&&faces[1])?faces[1].pcs:0
     });
   });
 
@@ -1383,7 +1295,7 @@ function calcMats(){
     <div class="mat-row"><span class="mat-lbl">屋頂延伸</span><span class="mat-val">${ovNote}</span></div>
     <div class="mat-row"><span class="mat-lbl">坡度</span><span class="mat-val">1:${sr}（${(Math.atan(sr/10)*180/Math.PI).toFixed(1)}°）</span></div>
     <div class="mat-row"><span class="mat-lbl">水平面積</span><span class="mat-val">${fm.toFixed(1)} m²（${ping} 坪）</span></div>
-    <div class="mat-row"><span class="mat-lbl">浪板規格</span><span class="mat-val">${panelType}（${panelMaterial}）／${panelColor}／${wW}cm寬</span></div>
+    <div class="mat-row"><span class="mat-lbl">浪板規格</span><span class="mat-val">${panelType}（${panelMaterial}）／${panelColorLabel}／${wW}cm寬</span></div>
     <hr style="border-color:#333;margin:10px 0;">`;
 
   copyLines.push(`組合屋：${modBuildings.length}間${unitNote}　${slopeDir}　${rType===1?'單斜':'雙斜'}`);
@@ -1400,12 +1312,13 @@ function calcMats(){
     r.faces.forEach(f=>{
       let railNote = `斜樑長 ${f.flatCm}−15=<b style="color:#4da3ff">${f.railCm}cm</b>`;
       let countNote = f.doubleC
-        ? `雙C合併，左右各一組（2組×2支）＝ ${f.n} 隻`
-        : (f.n>1 && f.space!=null
-            ? `與中柱同組數 ＝ ${f.n} 隻（間距 ${f.space} cm）`
-            : `與中柱同組數 ＝ ${f.n} 隻（只有一支，無間距）`); // n=1 時 (flatA-30)/(n-1) 會除以0，舊版直接印出「間距 null cm」
+        ? `雙C合併，${f.grp} 組 × 2支 ＝ ${f.pcs} 隻${f.grp>2&&f.space!=null?`（間距 ${f.space} cm）`:''}`
+        : `與中柱同組數 ＝ ${f.pcs} 隻`;
+      let panelNote = (f.panelCm!==f.flatCm)
+        ? `板材長 <b style="color:#4da3ff">${f.panelCm}cm</b>（斜面 ${f.flatCm}＋中脊端5）`
+        : `板材長 <b style="color:#4da3ff">${f.panelCm}cm</b>`;
       h+=`<div style="color:#ccc;font-size:13px;margin:4px 0;">
-        ${f.label}：板材長 <b style="color:#4da3ff">${f.flatCm}cm</b>
+        ${f.label}：${panelNote}
         ${railNote}<br>
         <span style="color:#888;padding-left:8px;">${countNote}　浪板 ${r.pcsPerFace} 片</span>
       </div>`;
@@ -1426,25 +1339,28 @@ function calcMats(){
     if(rType===1){
       h+=`<div style="color:#888;font-size:13px;margin-top:4px;">
         橫梁(桁條)：首隻 + ${r.purlinN-1} = ${r.purlinN} 隻（間距 ${r.purlinSpace} cm）<br>
-        總結算：斜樑 ${r.faces[0].n} 隻 ＋ 中柱 ${r.highSideColN} 隻 ＋ 橫梁 ${r.totalC} 隻 = C型鋼共 ${r.faces[0].n+r.highSideColN+r.totalC} 隻
+        總結算：斜樑 ${r.faces[0].pcs} 隻 ＋ 中柱 ${r.highSideColN} 隻 ＋ 橫梁 ${r.totalC} 隻 = C型鋼共 ${r.faces[0].pcs+r.highSideColN+r.totalC} 隻
       </div>`;
     } else {
-      let faceNs=r.faces.map(f=>f.n).join(' + ');
+      let railPcsSum=r.faces.reduce((s,f)=>s+f.pcs,0);
+      let ridgeColPcs=r.ridgeColN*2;
       h+=`<div style="color:#888;font-size:13px;margin-top:4px;">
-        總結算：C型鋼 [${faceNs}] 隻 + 封邊 2 隻 = 總共 ${r.totalC} 隻
+        橫梁(桁條)：${r.faces[0].label.replace('斜樑','')}面 ${r.purlinA} 隻（間距 ${r.purlinSpaceA} cm）＋
+        ${r.faces[1].label.replace('斜樑','')}面 ${r.purlinB} 隻（間距 ${r.purlinSpaceB} cm）= ${r.totalC} 隻<br>
+        總結算：斜樑 ${r.faces.map(f=>f.pcs).join(' + ')} 隻 ＋ 中柱 ${ridgeColPcs} 隻 ＋ 橫梁 ${r.totalC} 隻 = C型鋼共 ${railPcsSum+ridgeColPcs+r.totalC} 隻
       </div>`;
     }
     h+=`</div>`;
 
     copyLines.push(`【第${idx+1}棟】${r.bwLabel} cm (${r.stateLabel})　${r.dir==='col'?'前後斜':'左右斜'}`);
     r.faces.forEach(f=>{
-      let countTxt = f.doubleC ? `雙C合併左右各一組 × ${f.n}隻` : `${f.n}隻（間距${f.space}cm）`;
+      let countTxt = f.doubleC ? `${f.pcs}隻（雙C合併 ${f.grp}組×2支）` : `${f.pcs}隻（間距${f.space}cm）`;
       copyLines.push(`  ${f.label} ${f.railCm}cm × ${countTxt}`);
-      copyLines.push(`  浪板 ${f.flatCm}cm × ${r.pcsPerFace}片`);
+      copyLines.push(`  浪板 ${f.panelCm}cm × ${r.pcsPerFace}片`);
     });
     if(rType===2){
-      copyLines.push(`  中柱高 ${r.ridgeH}cm`);
-      copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.totalC}隻`);
+      copyLines.push(`  中柱高 ${r.ridgeH}cm × ${r.ridgeColN*2}隻`);
+      copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.totalC}隻（前${r.purlinA}+後${r.purlinB}）`);
     } else {
       copyLines.push(`  中柱高 ${r.highSideH}cm × ${r.highSideColN}隻（雙C合併左右各一組）`);
       copyLines.push(`  橫梁 ${r.perpCm}cm × ${r.totalC}隻（間距${r.purlinSpace}cm）`);
@@ -1471,17 +1387,16 @@ function calcMats(){
       copyLines.push(`中柱 ${r.ridgeH}cm（${ridgeColNote}，雙C合併每組2支）：${ridgeColPcs}隻`);
 
       let f0=r.faces[0], f1=r.faces[1];
-      h+=`<div class="mat-row">
-        <span class="mat-lbl">${f0.label}</span>
-        <span class="mat-val">${f0.railCm}cm　${r.frontN}隻　間距${f0.space}cm</span>
-      </div>`;
-      copyLines.push(`${f0.label} ${f0.railCm}cm　${r.frontN}隻　間距${f0.space}cm`);
-
-      h+=`<div class="mat-row">
-        <span class="mat-lbl">${f1.label}</span>
-        <span class="mat-val">${f1.railCm}cm　${r.backN}隻　間距${f1.space}cm</span>
-      </div>`;
-      copyLines.push(`${f1.label} ${f1.railCm}cm　${r.backN}隻　間距${f1.space}cm`);
+      // 斜樑：跟中柱同一套「雙C合併每組2支」，隻數＝組數×2。組數只有2組(左右各一)時
+      // 「間距」沒有意義(等於整個斜面長)，不印，免得師傅照著那個數字去排柱。
+      [f0,f1].forEach(f=>{
+        let spaceTxt = (f.grp>2 && f.space!=null) ? `　間距${f.space}cm` : '';
+        h+=`<div class="mat-row">
+          <span class="mat-lbl">${f.label}（雙C合併 ${f.grp}組×2支）</span>
+          <span class="mat-val">${f.railCm}cm　${f.pcs}隻${spaceTxt}</span>
+        </div>`;
+        copyLines.push(`${f.label} ${f.railCm}cm　${f.pcs}隻（雙C合併 ${f.grp}組×2支）${spaceTxt}`);
+      });
     } else {
       let f0=r.faces[0];
       h+=`<div class="mat-row">
@@ -1492,9 +1407,9 @@ function calcMats(){
 
       h+=`<div class="mat-row">
         <span class="mat-lbl">${f0.label}（雙C合併左右各一組）</span>
-        <span class="mat-val">${f0.railCm}cm　${f0.n}隻</span>
+        <span class="mat-val">${f0.railCm}cm　${f0.pcs}隻</span>
       </div>`;
-      copyLines.push(`${f0.label} ${f0.railCm}cm（雙C合併左右各一組）　${f0.n}隻`);
+      copyLines.push(`${f0.label} ${f0.railCm}cm（雙C合併左右各一組）　${f0.pcs}隻`);
     }
     if(rType===1){
       h+=`<div class="mat-row">
@@ -1504,10 +1419,19 @@ function calcMats(){
       copyLines.push(`橫梁 ${r.perpCm}cm：${r.totalC}隻(間距${r.purlinSpace}cm)`);
     } else {
       h+=`<div class="mat-row">
-        <span class="mat-lbl">橫梁 ${r.perpCm}cm</span>
+        <span class="mat-lbl">橫梁(桁條) ${r.perpCm}cm<br><span style="color:#888;font-size:12px;">${r.faces[0].label.replace('斜樑','')}面${r.purlinA}隻(間距${r.purlinSpaceA})＋${r.faces[1].label.replace('斜樑','')}面${r.purlinB}隻(間距${r.purlinSpaceB})</span></span>
         <span class="mat-val">${r.totalC} 隻</span>
       </div>`;
-      copyLines.push(`橫梁 ${r.perpCm}cm：${r.totalC}隻`);
+      copyLines.push(`橫梁 ${r.perpCm}cm：${r.totalC}隻（${r.faces[0].label.replace('斜樑','')}面${r.purlinA}隻/間距${r.purlinSpaceA}cm＋${r.faces[1].label.replace('斜樑','')}面${r.purlinB}隻/間距${r.purlinSpaceB}cm）`);
+
+      // ▼ 斜樑支撐（實單的 C型鋼 1000×4）：用戶2026-09-09說明「那4隻額外的，為了在斜樑做支撐」。
+      //   目前照實單固定 100cm×4隻（跟中脊柱組數×2＝4 一致）。
+      //   ⚠️ 長度100cm與支數4是不是會隨跨距/組數變，還沒問到，先不自己推公式。
+      h+=`<div class="mat-row">
+        <span class="mat-lbl">斜樑支撐 100cm</span>
+        <span class="mat-val">${r.ridgeColN*2} 隻</span>
+      </div>`;
+      copyLines.push(`斜樑支撐 100cm：${r.ridgeColN*2}隻`);
     }
   });
   h+=`</div>`;
@@ -1520,22 +1444,35 @@ function calcMats(){
   bldRows.forEach(r=>{
     r.faces.forEach(f=>{
       h+=`<div class="mat-row">
-        <span class="mat-lbl">浪板 ${f.flatCm}cm　${panelType}（${panelMaterial}）／${panelColor}</span>
+        <span class="mat-lbl">浪板 ${f.panelCm}cm　${panelType}（${panelMaterial}）／${panelColorLabel}</span>
         <span class="mat-val">${r.pcsPerFace} 片</span>
       </div>`;
-      copyLines.push(`浪板 ${f.flatCm}cm ${panelType}(${panelMaterial})/${panelColor}：${r.pcsPerFace}片`);
+      copyLines.push(`浪板 ${f.panelCm}cm ${panelType}(${panelMaterial})/${panelColorLabel}：${r.pcsPerFace}片`);
     });
   });
 
   // 包角
   if(rType===2){
+    // ▼ 2026-09-09 用實單反推修正：包角是「斜面兩端各留30」＝斜面長+60，不是舊版的+30(只算一端)；
+    //   而且超過600cm要對切(沿用單斜本來就有的門檻)，一片斜面2隻、對切後變4隻。
+    //   實單：前斜面750 → 810 對切 405×4 ✓　後斜面650 → 710 對切 355×4 ✓
     bldRows.forEach(r=>{
       r.faces.forEach(f=>{
-        h+=`<div class="mat-row">
-          <span class="mat-lbl">包角（${trimMaterial}）${f.flatCm+30}cm（${f.label}）</span>
-          <span class="mat-val">2 隻</span>
-        </div>`;
-        copyLines.push(`包角（${trimMaterial}）${f.flatCm+30}cm（${f.label}）：2隻`);
+        let tLen=f.flatCm+60;
+        if(tLen>600){
+          let half=Math.round(tLen/2);
+          h+=`<div class="mat-row">
+            <span class="mat-lbl">包角（${trimMaterial}）${half}cm（${f.label}，${tLen}cm超過600對切）</span>
+            <span class="mat-val">4 隻</span>
+          </div>`;
+          copyLines.push(`包角（${trimMaterial}）${half}cm（${f.label}，${tLen}對切）：4隻`);
+        } else {
+          h+=`<div class="mat-row">
+            <span class="mat-lbl">包角（${trimMaterial}）${tLen}cm（${f.label}）</span>
+            <span class="mat-val">2 隻</span>
+          </div>`;
+          copyLines.push(`包角（${trimMaterial}）${tLen}cm（${f.label}）：2隻`);
+        }
       });
     });
   } else {
@@ -1571,20 +1508,23 @@ function calcMats(){
   // 中脊（雙斜才有）
   if(rType===2){
     let ridgeType=isLiuli?'半圓中脊':'一般中脊';
-    let ridgeM=parseFloat(ridgeTotalM);
-    if(ridgeM<7){
+    // ▼ 2026-09-09 用實單反推修正：中脊長＝屋脊長(橫梁長pp)＋兩端各30＝pp+60，
+    //   舊版直接印 pp(沒加兩端)，也沒給對切後的實際下料長度。
+    //   實單：橫梁500 → 中脊560 → 對切 280×2 ✓（師傅實際是切兩段下料，所以一律附對切長度）
+    let ridgeCm=Math.round(parseFloat(ridgeTotalM)*100)+60;
+    let ridgeHalf=Math.round(ridgeCm/2);
+    if(ridgeCm>600){
       h+=`<div class="mat-row">
-        <span class="mat-lbl">${ridgeType}</span>
-        <span class="mat-val">1 隻（${ridgeTotalM}m）</span>
+        <span class="mat-lbl">${ridgeType} ${ridgeHalf}cm（總長${ridgeCm}cm，超過600對切）</span>
+        <span class="mat-val">2 隻</span>
       </div>`;
-      copyLines.push(`${ridgeType}：1隻（${ridgeTotalM}m）`);
+      copyLines.push(`${ridgeType} ${ridgeHalf}cm（總長${ridgeCm}對切）：2隻`);
     } else {
-      let halfLen=((ridgeM/2)*100+30).toFixed(0);
       h+=`<div class="mat-row">
-        <span class="mat-lbl">${ridgeType}（對切）</span>
-        <span class="mat-val">各 1 隻（${halfLen}cm×2）</span>
+        <span class="mat-lbl">${ridgeType} ${ridgeCm}cm<br><span style="color:#888;font-size:12px;">整支下料1隻；要切兩段就是 ${ridgeHalf}cm×2隻</span></span>
+        <span class="mat-val">1 隻</span>
       </div>`;
-      copyLines.push(`${ridgeType}（對切）：各1隻（${halfLen}cm×2）`);
+      copyLines.push(`${ridgeType} ${ridgeCm}cm：1隻（切兩段＝${ridgeHalf}cm×2隻）`);
     }
   }
 
@@ -1601,15 +1541,27 @@ function calcMats(){
   //   單斜雙斜共用同一套，不分rType） ──
   h+=`<div style="background:#141414;border:1px solid #444;border-radius:8px;padding:12px;margin:10px 0;">`;
   h+=`<div style="color:#fff;font-size:14px;font-weight:bold;margin-bottom:10px;">🔧 螺絲 / 釘</div>`;
-  let panelScrewSize = panelType==='琉璃瓦' ? '3.5"' : '2"';
-  h+=`<div class="mat-row"><span class="mat-lbl">${panelScrewSize} 白鐵頭自攻螺絲（${panelType}浪板用）</span><span class="mat-val">3 包</span></div>`;
-  h+=`<div class="mat-row"><span class="mat-lbl">1" 自攻螺絲（C型鋼架接合）</span><span class="mat-val">1 包</span></div>`;
-  h+=`<div class="mat-row"><span class="mat-lbl">1" 尖釘（封邊/收頭）</span><span class="mat-val">1 包</span></div>`;
+  // ▼ 2026-09-09 改成會隨規模長大：舊版不管幾間都固定 3包/1包/1包，
+  //   但兩份實單對不上——4×6單斜一間(9片)是 2"×3包/1"×1包/尖釘1包，
+  //   4×6兩間合併雙斜(14片)是 2.5"×4包/1"×2包/尖釘2包。
+  //   反推出來的規則：白鐵頭＝每4片1包(至少3包)、1"自攻與尖釘＝每間1包；
+  //   尺寸則跟板材厚度走：清版2"／三合一2.5"／琉璃瓦3.5"。
+  let panelScrewSize = panelType==='琉璃瓦' ? '3.5"' : (panelType==='三合一' ? '2.5"' : '2"');
+  let panelScrewBags = Math.max(3, Math.ceil(ts/4));
+  let bldBags = modBuildings.length;
+  h+=`<div class="mat-row"><span class="mat-lbl">${panelScrewSize} 白鐵頭自攻螺絲（${panelType}浪板用）</span><span class="mat-val">${panelScrewBags} 包</span></div>`;
+  h+=`<div class="mat-row"><span class="mat-lbl">1" 自攻螺絲（C型鋼架接合）</span><span class="mat-val">${bldBags} 包</span></div>`;
+  h+=`<div class="mat-row"><span class="mat-lbl">1" 尖釘（封邊/收頭）</span><span class="mat-val">${bldBags} 包</span></div>`;
+  // ▼ 鍍鋅角鐵：用戶2026-09-09說明「角鐵是外面包角要鎖的」。實單為 1.5"×5，
+  //   照實單固定5支；⚠️支數是不是跟包角隻數/棟數連動還沒問到，先不自己推公式。
+  h+=`<div class="mat-row"><span class="mat-lbl">1.5" 鍍鋅角鐵（鎖外面包角用）</span><span class="mat-val">5 支</span></div>`;
+  h+=`<div style="color:#666;font-size:12px;margin-top:6px;">包數＝浪板每4片1包（至少3包）、C鋼螺絲與尖釘每間1包；角鐵固定5支</div>`;
   h+=`</div>`;
   copyLines.push('--- 螺絲/釘 ---');
-  copyLines.push(`${panelScrewSize} 白鐵頭自攻螺絲（${panelType}浪板用）：3包`);
-  copyLines.push('1" 自攻螺絲（C型鋼架接合）：1包');
-  copyLines.push('1" 尖釘（封邊/收頭）：1包');
+  copyLines.push(`${panelScrewSize} 白鐵頭自攻螺絲（${panelType}浪板用）：${panelScrewBags}包`);
+  copyLines.push(`1" 自攻螺絲（C型鋼架接合）：${bldBags}包`);
+  copyLines.push(`1" 尖釘（封邊/收頭）：${bldBags}包`);
+  copyLines.push('1.5" 鍍鋅角鐵（鎖外面包角用）：5支');
 
   h+=`<div style="color:#555;font-size:12px;margin-top:8px;">⚠️ 估算值，施工前請現場核對</div>`;
 
@@ -1691,34 +1643,6 @@ function calc3DUnitDims(u, unitDefaultDir, rType, sr){
   return {dir, highSideH, ridgeH, ridgeColN, ridgeColMarks, ridgeColTs};
 }
 
-// 捲過預覽區就把它固定在畫面上方，捲回去再放回原位。
-// 只在有建物時才啟用(空畫布沒東西好預覽，釘著只是擋畫面)。
-let _pinBaseTop=null;
-function updatePreviewPin(){
-  const pane=document.getElementById('previewPane');
-  const spacer=document.getElementById('previewSpacer');
-  if(!pane||!spacer) return;
-  if(!buildings.length || pane.classList.contains('collapsed')){
-    pane.classList.remove('pinned'); spacer.classList.remove('on'); spacer.style.height=''; return;
-  }
-  if(!pane.classList.contains('pinned')){
-    _pinBaseTop = pane.getBoundingClientRect().top + window.scrollY;
-  }
-  if(window.scrollY > _pinBaseTop){
-    if(!pane.classList.contains('pinned')){
-      spacer.style.height = pane.offsetHeight + 'px';
-      spacer.classList.add('on');
-      pane.classList.add('pinned');
-      pane.style.maxWidth = (document.querySelector('.main-grid')||document.body).clientWidth + 'px';
-    }
-  } else {
-    pane.classList.remove('pinned');
-    spacer.classList.remove('on'); spacer.style.height='';
-  }
-}
-window.addEventListener('scroll', updatePreviewPin, {passive:true});
-window.addEventListener('resize', updatePreviewPin);
-
 // 預覽釘住會吃掉畫面高度，手機上想專心看設定時可以先收起來
 function togglePreviewPin(){
   let pane=document.getElementById('previewPane');
@@ -1727,7 +1651,6 @@ function togglePreviewPin(){
   let col=pane.classList.contains('collapsed');
   btn.textContent = col ? '展開預覽' : '收起預覽';
   if(!col){ draw(); redraw3DIfActive(); }
-  updatePreviewPin();
 }
 
 function toggle3DView(){
@@ -1936,6 +1859,98 @@ function draw3D(){
         ctx.beginPath(); ctx.moveTo(pb.px,pb.py); ctx.lineTo(pt.px,pt.py); ctx.stroke();
         ctx.restore();
       }
+    }
+
+    // ── 屋頂板材方向：沿排水方向畫板材接縫線（每 waveW 一條＝一片板材的寬度）──
+    //   用戶2026-09-09指定：示意圖就是「屋頂板材的方向＋組合屋框」，不要太複雜。
+    //   接縫線畫到延伸(出簷)最外緣，因為板材本來就蓋到出簷外沿。
+    //   高度用 roofZ() 沿用上面畫屋頂面同一組公式，不另外推導，免得圖跟面對不起來。
+    function roofZ(x,y){
+      if(rType===1){
+        if(dir==='col') return wallH + (ud>0 ? highSideH*(y-uy)/ud : 0);
+        return wallH + (uw>0 ? highSideH*(x-ux)/uw : 0);
+      }
+      if(dir==='col'){
+        let mY=(uy+uyy)/2;
+        return y<=mY ? wallH + ((mY-uy)>0 ? ridgeH*(y-uy)/(mY-uy) : 0)
+                     : wallH + ((uyy-mY)>0 ? ridgeH*(uyy-y)/(uyy-mY) : 0);
+      }
+      let mX=(ux+uxx)/2;
+      return x<=mX ? wallH + ((mX-ux)>0 ? ridgeH*(x-ux)/(mX-ux) : 0)
+                   : wallH + ((uxx-mX)>0 ? ridgeH*(uxx-x)/(uxx-mX) : 0);
+    }
+    (function drawPanelSeams(){
+      let wWv=parseInt((document.getElementById('waveW')||{}).value)||75;
+      if(!(wWv>0)) return;
+      let x0=ux-_ovL, x1=uxx+_ovR, y0=uy-_ovF, y1=uyy+_ovB;
+      ctx.save();
+      ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=1;
+      if(dir==='col'){
+        let mY=(uy+uyy)/2;
+        let ys = rType===2 ? [y0,mY,y1] : [y0,y1];
+        for(let x=x0; x<=x1+0.01; x+=wWv){
+          let xv=Math.min(x,x1);
+          ctx.beginPath();
+          ys.forEach((yv,i)=>{ let q=w2p(xv,yv,roofZ(xv,yv)); i===0?ctx.moveTo(q.px,q.py):ctx.lineTo(q.px,q.py); });
+          ctx.stroke();
+        }
+      } else {
+        let mX=(ux+uxx)/2;
+        let xs = rType===2 ? [x0,mX,x1] : [x0,x1];
+        for(let y=y0; y<=y1+0.01; y+=wWv){
+          let yv=Math.min(y,y1);
+          ctx.beginPath();
+          xs.forEach((xv,i)=>{ let q=w2p(xv,yv,roofZ(xv,yv)); i===0?ctx.moveTo(q.px,q.py):ctx.lineTo(q.px,q.py); });
+          ctx.stroke();
+        }
+      }
+      // 板材方向箭頭：從中脊(或高邊)指向滴水邊，一片斜面畫一支，旁邊標「板材」
+      let arrows = [];
+      if(dir==='col'){
+        let mY=(uy+uyy)/2, cx=(ux+uxx)/2;
+        if(rType===2){ arrows.push([[cx,mY],[cx,y0]]); arrows.push([[cx,mY],[cx,y1]]); }
+        else { arrows.push([[cx,uyy],[cx,y0]]); }
+      } else {
+        let mX=(ux+uxx)/2, cy=(uy+uyy)/2;
+        if(rType===2){ arrows.push([[mX,cy],[x0,cy]]); arrows.push([[mX,cy],[x1,cy]]); }
+        else { arrows.push([[uxx,cy],[x0,cy]]); }
+      }
+      arrows.forEach(([[ax,ay],[bx,by]])=>{
+        let a=w2p(ax,ay,roofZ(ax,ay)), b2=w2p(bx,by,roofZ(bx,by));
+        ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(a.px,a.py); ctx.lineTo(b2.px,b2.py); ctx.stroke();
+        let ang=Math.atan2(b2.py-a.py, b2.px-a.px);
+        ctx.beginPath();
+        ctx.moveTo(b2.px,b2.py);
+        ctx.lineTo(b2.px-9*Math.cos(ang-0.4), b2.py-9*Math.sin(ang-0.4));
+        ctx.lineTo(b2.px-9*Math.cos(ang+0.4), b2.py-9*Math.sin(ang+0.4));
+        ctx.closePath(); ctx.fillStyle='#fff'; ctx.fill();
+        let mx=(a.px+b2.px)/2, my=(a.py+b2.py)/2;
+        ctx.font='bold 11px Arial'; ctx.textAlign='center';
+        let tw=ctx.measureText('板材').width;
+        ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(mx-tw/2-3,my-12,tw+6,15);
+        ctx.fillStyle='#fff'; ctx.fillText('板材', mx, my);
+      });
+      ctx.restore();
+    })();
+
+    // ── 組合屋框：合併成一片屋頂時，把每一間模組自己的框也畫出來 ──
+    //   不然畫面上只看得到一個大盒子，看不出這片屋頂底下是幾間拼的。
+    if(u.members && u.members.length>1){
+      ctx.save();
+      ctx.strokeStyle='rgba(77,142,219,0.6)'; ctx.lineWidth=1; ctx.setLineDash([4,3]);
+      u.members.forEach(mb=>{
+        let d2=bDims(mb), mx=mb.x, my=mb.y, mxx=mb.x+d2.bw, myy=mb.y+d2.bd;
+        [0,wallH].forEach(zz=>{
+          let pts=[[mx,my,zz],[mxx,my,zz],[mxx,myy,zz],[mx,myy,zz]].map(c=>w2p(c[0],c[1],c[2]));
+          ctx.beginPath(); pts.forEach((q,i)=>{ i===0?ctx.moveTo(q.px,q.py):ctx.lineTo(q.px,q.py); }); ctx.closePath(); ctx.stroke();
+        });
+        [[mx,my],[mxx,my],[mxx,myy],[mx,myy]].forEach(c=>{
+          let a=w2p(c[0],c[1],0), b2=w2p(c[0],c[1],wallH);
+          ctx.beginPath(); ctx.moveTo(a.px,a.py); ctx.lineTo(b2.px,b2.py); ctx.stroke();
+        });
+      });
+      ctx.restore();
     }
 
     // 標示尺寸，方便跟2D俯視圖對照是哪一棟/哪一組。單一建物優先顯示「原始w×d」
