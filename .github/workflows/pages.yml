@@ -3,6 +3,11 @@
 # 且錯誤訊息只有籠統的 "Page build failed."、duration=0（瞬間失敗），
 # 手動重建也一樣，等於網站更新完全停擺。這個 repo 全是靜態 HTML，
 # 不需要 Jekyll，用官方的 upload-pages-artifact + deploy-pages 最單純。
+#
+# 2026-11-28 再修一次：GitHub 停用了 actions/upload-artifact@v3，而 upload-pages-artifact@v3
+# 內部就是用它，所以 deploy 階段報 "No artifacts named github-pages were found"，
+# 11-26 還會過、11-28 就整個掛掉，網站更新又停擺一次。升到 v5（checkout 一併升 v5 消掉
+# Node20 棄用警告）。以後線上沒更新，先看 `gh run list` 有沒有 failure，不要只等 CDN。
 name: Deploy static site to Pages
 
 on:
@@ -26,10 +31,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: '.'
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
