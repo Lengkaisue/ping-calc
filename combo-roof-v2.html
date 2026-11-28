@@ -282,7 +282,7 @@ a.back:hover { color:#fff; }
 
     <div id="previewPane">
       <div id="previewBar">
-        <button class="btn-sm" id="btn3dToggle" onclick="toggle3DView()">顯示3D示意圖</button>
+        <button class="btn-sm" id="btn3dToggle" onclick="toggle3DView()">顯示立體模型</button>
         <button class="btn-sm" onclick="calcMats();document.getElementById('matResult').scrollIntoView({behavior:'smooth',block:'center'})" style="background:#2a5ea8;color:#fff;">計算材料清單</button>
         <button class="btn-sm" id="btnPinToggle" onclick="togglePreviewPin()" style="margin-left:auto;">收起預覽</button>
       </div>
@@ -294,6 +294,18 @@ a.back:hover { color:#fff; }
         <span style="color:#666;font-size:12px;">每次轉90°(從另一面看)，比例保證不會跑掉；紅色短柱＝中柱實際落點</span>
       </div>
       <div id="canvasWrap3d" style="display:none;"><canvas id="cv3d"></canvas></div>
+      <div id="three3dWrap" style="display:none;">
+        <div id="three3dNote" style="color:#bbb;font-size:13px;margin:4px 0 6px 0;"></div>
+        <div id="three3d" style="width:100%;height:480px;border-radius:6px;overflow:hidden;touch-action:none;"></div>
+        <div style="color:#777;font-size:12px;margin-top:6px;line-height:1.7;">
+          手指拖曳＝轉動／兩指＝縮放．
+          <span style="color:#ff9500;">橘色</span>屋頂板
+          <span style="color:#6eeb96;">綠色</span>延伸出簷
+          <span style="color:#8d939a;">深灰</span>斜樑
+          <span style="color:#d2d6da;">淺灰</span>橫梁(桁條)
+          <span style="color:#ff3b3b;">紅色</span>中柱
+        </div>
+      </div>
     </div>
 
     <div id="groupBar" style="display:none;margin-top:8px;align-items:center;gap:8px;">
@@ -1653,15 +1665,24 @@ function togglePreviewPin(){
   if(!col){ draw(); redraw3DIfActive(); }
 }
 
+// three.js 可用就走真立體模型(可手指自由轉)；載入失敗(沒網路/CDN被擋)自動退回舊的 canvas 斜投影，
+// 不會整個功能壞掉。兩邊的幾何數字都來自 calc3DUnitDims()，同一套公式。
+function hasThree(){ return !!(window._three3D && window._three3D.ready); }
 function toggle3DView(){
   is3DView=!is3DView;
+  const T=hasThree();
   document.getElementById('canvasWrap').style.display = is3DView ? 'none' : '';
-  document.getElementById('canvasWrap3d').style.display = is3DView ? '' : 'none';
-  document.getElementById('ctrl3dBar').style.display = is3DView ? '' : 'none';
-  document.getElementById('btn3dToggle').textContent = is3DView ? '顯示2D俯視圖' : '顯示3D示意圖';
-  if(is3DView) draw3D();
+  document.getElementById('canvasWrap3d').style.display = (is3DView && !T) ? '' : 'none';
+  document.getElementById('three3dWrap').style.display = (is3DView && T) ? '' : 'none';
+  document.getElementById('ctrl3dBar').style.display = (is3DView && !T) ? '' : 'none';
+  document.getElementById('btn3dToggle').textContent = is3DView ? '顯示2D俯視圖' : '顯示立體模型';
+  if(is3DView){ if(T){ try{ window._three3D.show(); }catch(e){ console.error(e); draw3D(); } } else draw3D(); }
 }
-function redraw3DIfActive(){ if(is3DView) draw3D(); }
+function redraw3DIfActive(){
+  if(!is3DView) return;
+  if(hasThree()){ try{ window._three3D.build(); return; }catch(e){ console.error(e); } }
+  draw3D();
+}
 
 function draw3D(){
   const cv=document.getElementById('cv3d'), ctx=cv.getContext('2d');
@@ -2007,5 +2028,306 @@ function draw3D(){
 
 updSizeInfo(); draw();
 </script>
+<!-- ===================== 立體模型（three.js） =====================
+  2026-11-28 新增。把原本的 canvas 2D 斜投影升級成可以用手指轉的真立體模型。
+  重點：
+  - 幾何數字全部沿用 calcMats()/calc3DUnitDims() 同一套公式，不另外發明一份，
+    畫面右上角會印支數，可以直接跟材料清單對照，對不起來就是有一邊錯了。
+  - three.js 載入失敗(沒網路/CDN擋掉)時自動退回舊的 canvas 示意圖，不會整個壞掉。
+  - 單位直接用 cm 當 three 的單位；three 的 Y 軸向上，所以世界(x,y,高) -> three(x,高,y)。
+-->
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+let scene, camera, renderer, controls, root, wrap, inited=false, raf=0;
+
+const MAT = {
+  wall  : new THREE.MeshLambertMaterial({color:0x4d8edb, transparent:true, opacity:0.16, side:THREE.DoubleSide, depthWrite:false}),
+  wallLn: new THREE.LineBasicMaterial({color:0x4d8edb}),
+  roof  : new THREE.MeshLambertMaterial({color:0xff9500, transparent:true, opacity:0.30, side:THREE.DoubleSide, depthWrite:false}),
+  roofLn: new THREE.LineBasicMaterial({color:0xff9500}),
+  ov    : new THREE.MeshLambertMaterial({color:0x6eeb96, transparent:true, opacity:0.22, side:THREE.DoubleSide, depthWrite:false}),
+  rail  : new THREE.MeshLambertMaterial({color:0x6f757c}),   // 斜樑
+  purlin: new THREE.MeshLambertMaterial({color:0xe4e8ec}),   // 橫梁(桁條)
+  post  : new THREE.MeshLambertMaterial({color:0xff3b3b}),   // 中柱
+};
+
+function V(x,y,z){ return new THREE.Vector3(x, z, y); }   // 世界(x,y,高) -> three
+
+function ensureInit(){
+  wrap = document.getElementById('three3d');
+  if(inited) return true;
+  const w = wrap.clientWidth || 600, h = 480;
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0e0e0e);
+  camera = new THREE.PerspectiveCamera(42, w/h, 1, 100000);
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.setSize(w, h);
+  wrap.appendChild(renderer.domElement);
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.85);
+  dl.position.set(1, 2, 1.2);
+  scene.add(dl);
+  root = new THREE.Group();
+  scene.add(root);
+  inited = true;
+  const loop = ()=>{ raf=requestAnimationFrame(loop); controls.update(); renderer.render(scene,camera); };
+  loop();
+  window.addEventListener('resize', ()=>{
+    if(!wrap || wrap.offsetParent===null) return;
+    const ww = wrap.clientWidth||600;
+    camera.aspect = ww/480; camera.updateProjectionMatrix(); renderer.setSize(ww,480);
+  });
+  return true;
+}
+
+// 兩點之間長一根方管/C型鋼：bw=寬(cm)、bh=高(cm)
+function beam(p1, p2, bw, bh, mat){
+  const a=V(p1[0],p1[1],p1[2]), b=V(p2[0],p2[1],p2[2]);
+  const len=a.distanceTo(b);
+  if(len<0.5) return null;
+  const g=new THREE.BoxGeometry(bw, bh, len);
+  const m=new THREE.Mesh(g, mat);
+  m.position.copy(a).add(b).multiplyScalar(0.5);
+  m.lookAt(b);
+  root.add(m);
+  return m;
+}
+// 四角平面（屋頂板）
+function quad(pts, mat, lineMat){
+  const v=pts.map(p=>V(p[0],p[1],p[2]));
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([
+    v[0].x,v[0].y,v[0].z, v[1].x,v[1].y,v[1].z, v[2].x,v[2].y,v[2].z,
+    v[0].x,v[0].y,v[0].z, v[2].x,v[2].y,v[2].z, v[3].x,v[3].y,v[3].z
+  ],3));
+  g.computeVertexNormals();
+  root.add(new THREE.Mesh(g, mat));
+  if(lineMat){
+    const lg=new THREE.BufferGeometry().setFromPoints([v[0],v[1],v[2],v[3],v[0]]);
+    root.add(new THREE.Line(lg, lineMat));
+  }
+}
+function boxEdges(x0,y0,x1,y1,h, mat){
+  const c=[[x0,y0],[x1,y0],[x1,y1],[x0,y1]];
+  const pts=[];
+  for(let i=0;i<4;i++){
+    const j=(i+1)%4;
+    pts.push(V(c[i][0],c[i][1],0), V(c[j][0],c[j][1],0));
+    pts.push(V(c[i][0],c[i][1],h), V(c[j][0],c[j][1],h));
+    pts.push(V(c[i][0],c[i][1],0), V(c[i][0],c[i][1],h));
+  }
+  root.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), mat));
+  // 牆面半透明
+  for(let i=0;i<4;i++){
+    const j=(i+1)%4;
+    quad([[c[i][0],c[i][1],0],[c[j][0],c[j][1],0],[c[j][0],c[j][1],h],[c[i][0],c[i][1],h]], MAT.wall, null);
+  }
+}
+
+function clearRoot(){
+  while(root.children.length){
+    const o=root.children.pop();
+    if(o.geometry) o.geometry.dispose();
+  }
+}
+
+function build(){
+  clearRoot();
+  const modB = buildings.filter(b=>b.type!=='deck');
+  const note = document.getElementById('three3dNote');
+  if(!modB.length){ if(note) note.textContent='請先新增建物'; return; }
+
+  const rType = parseInt(document.getElementById('roofType').value);
+  const sr    = parseFloat(document.getElementById('slopeR').value)||1;
+  const wallH = parseFloat(document.getElementById('wallH').value)||250;
+  const PMAX  = parseFloat((document.getElementById('purlinMax')||{}).value)||78;
+  const ovF=parseInt(document.getElementById('ovF').value)||0;
+  const ovB=parseInt(document.getElementById('ovB').value)||0;
+  const ovL=parseInt(document.getElementById('ovL').value)||0;
+  const ovR=parseInt(document.getElementById('ovR').value)||0;
+
+  const roofUnits = groupBuildings(modB);
+  let all={rail:0, purlin:0, post:0};
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity, topH=0;
+
+  roofUnits.forEach(u=>{
+    const bbox = computeBBox(u.members);
+    const g = calc3DUnitDims(u, (u.members[0].dir||'col'), rType, sr);
+    const ux=bbox.minX, uy=bbox.minY, uxx=bbox.maxX, uyy=bbox.maxY;
+    const uw=uxx-ux, ud=uyy-uy;
+    minX=Math.min(minX,ux-ovL); maxX=Math.max(maxX,uxx+ovR);
+    minY=Math.min(minY,uy-ovF); maxY=Math.max(maxY,uyy+ovB);
+
+    boxEdges(ux,uy,uxx,uyy,wallH, MAT.wallLn);
+
+    const RW=6, RH=12;   // C型鋼 100型：畫成 50x100mm 斷面(略放大才看得見)
+    const PW=5, PH=9;
+
+    if(rType===1){
+      const H = wallH + g.highSideH;
+      const col = (g.dir==='col');
+      // 低邊 -> 高邊
+      const lo = col ? uy  : ux;
+      const hi = col ? uyy : uxx;
+      const run = col ? ud : uw;
+      const sp  = Math.round(col ? (ud+ovF+ovB) : (uw+ovL+ovR));   // 板材長(含延伸)
+      const railCm = sp-15;
+      const purlinN = Math.max(2, Math.ceil(railCm/PMAX)+1);
+
+      // 屋頂面（主體＋延伸）
+      const hAt = (v)=> wallH + (run>0 ? g.highSideH*(v-lo)/run : 0);
+      if(col){
+        quad([[ux-ovL,uy-ovF,hAt(uy-ovF)],[uxx+ovR,uy-ovF,hAt(uy-ovF)],
+              [uxx+ovR,uyy+ovB,hAt(uyy+ovB)],[ux-ovL,uyy+ovB,hAt(uyy+ovB)]], MAT.ov, null);
+        quad([[ux,uy,wallH],[uxx,uy,wallH],[uxx,uyy,H],[ux,uyy,H]], MAT.roof, MAT.roofLn);
+      }else{
+        quad([[ux-ovL,uy-ovF,hAt(ux-ovL)],[ux-ovL,uyy+ovB,hAt(ux-ovL)],
+              [uxx+ovR,uyy+ovB,hAt(uxx+ovR)],[uxx+ovR,uy-ovF,hAt(uxx+ovR)]], MAT.ov, null);
+        quad([[ux,uy,wallH],[ux,uyy,wallH],[uxx,uyy,H],[uxx,uy,H]], MAT.roof, MAT.roofLn);
+      }
+      // 斜樑：左右各一組，每組雙C 2支（共4支）
+      const sideA = col ? ux : uy, sideB = col ? uxx : uyy;
+      [sideA, sideB].forEach(s=>{
+        [-RW*0.55, RW*0.55].forEach(off=>{
+          const p1 = col ? [s+off, uy-ovF, hAt(uy-ovF)-PH-RH/2] : [ux-ovL, s+off, hAt(ux-ovL)-PH-RH/2];
+          const p2 = col ? [s+off, uyy,    hAt(uyy)-PH-RH/2]  : [uxx,    s+off, hAt(uxx)-PH-RH/2];
+          beam(p1,p2,RW,RH,MAT.rail); all.rail++;
+        });
+      });
+      // 橫梁(桁條)：垂直斜樑，等間距 purlinN 支
+      for(let i=0;i<purlinN;i++){
+        const t=i/(purlinN-1);
+        const v = lo + (hi-lo)*t;
+        const z = hAt(v) - PH/2;
+        if(col) beam([ux-ovL,v,z],[uxx+ovR,v,z],PH,PW,MAT.purlin);
+        else    beam([v,uy-ovF,z],[v,uyy+ovB,z],PW,PH,MAT.purlin);
+        all.purlin++;
+      }
+      // 中柱：高邊左右兩端，牆高 -> 牆高+中柱高
+      const ends = col ? [[ux,uyy],[uxx,uyy]] : [[uxx,uy],[uxx,uyy]];
+      ends.forEach(([px,py])=>{
+        [-6,6].forEach(o=>{
+          const qx = col ? px : px, qy = col ? py : py;
+          beam([qx + (col?o:0), qy + (col?0:o), wallH],[qx + (col?o:0), qy + (col?0:o), H], 8,8, MAT.post);
+          all.post++;
+        });
+      });
+      topH=Math.max(topH,H);
+    } else {
+      const H = wallH + g.ridgeH;
+      const col = (g.dir==='col');
+      const midY=(uy+uyy)/2, midX=(ux+uxx)/2;
+      const flatA = Math.round(col ? (ud/2+ovF) : (uw/2+ovL));
+      const flatB = Math.round(col ? (ud/2+ovB) : (uw/2+ovR));
+      const n = Math.max(1, g.ridgeColN||2);
+      const purlinA = Math.max(2, Math.ceil(((flatA-15)-15)/PMAX)+1);
+      const purlinB = Math.max(2, Math.ceil(((flatB-15)-15)/PMAX)+1);
+
+      if(col){
+        const hF=(yv)=> wallH + ((midY-uy)>0 ? g.ridgeH*(yv-uy)/(midY-uy) : 0);
+        const hB=(yv)=> wallH + ((uyy-midY)>0 ? g.ridgeH*(uyy-yv)/(uyy-midY) : 0);
+        quad([[ux-ovL,uy-ovF,hF(uy-ovF)],[uxx+ovR,uy-ovF,hF(uy-ovF)],[uxx+ovR,midY,H],[ux-ovL,midY,H]], MAT.ov, null);
+        quad([[ux-ovL,midY,H],[uxx+ovR,midY,H],[uxx+ovR,uyy+ovB,hB(uyy+ovB)],[ux-ovL,uyy+ovB,hB(uyy+ovB)]], MAT.ov, null);
+        quad([[ux,uy,wallH],[uxx,uy,wallH],[uxx,midY,H],[ux,midY,H]], MAT.roof, MAT.roofLn);
+        quad([[ux,midY,H],[uxx,midY,H],[uxx,uyy,wallH],[ux,uyy,wallH]], MAT.roof, MAT.roofLn);
+      }else{
+        const hL=(xv)=> wallH + ((midX-ux)>0 ? g.ridgeH*(xv-ux)/(midX-ux) : 0);
+        const hR=(xv)=> wallH + ((uxx-midX)>0 ? g.ridgeH*(uxx-xv)/(uxx-midX) : 0);
+        quad([[ux-ovL,uy-ovF,hL(ux-ovL)],[ux-ovL,uyy+ovB,hL(ux-ovL)],[midX,uyy+ovB,H],[midX,uy-ovF,H]], MAT.ov, null);
+        quad([[midX,uy-ovF,H],[midX,uyy+ovB,H],[uxx+ovR,uyy+ovB,hR(uxx+ovR)],[uxx+ovR,uy-ovF,hR(uxx+ovR)]], MAT.ov, null);
+        quad([[ux,uy,wallH],[ux,uyy,wallH],[midX,uyy,H],[midX,uy,H]], MAT.roof, MAT.roofLn);
+        quad([[midX,uy,H],[midX,uyy,H],[uxx,uyy,wallH],[uxx,uy,wallH]], MAT.roof, MAT.roofLn);
+      }
+
+      // 中柱落點（沿中脊線的比例位置，跟材料清單同一套）
+      let ts = (g.ridgeColTs && g.ridgeColTs.length) ? g.ridgeColTs.slice() : [];
+      if(!ts.length){ ts = n===1 ? [0.5] : Array.from({length:n},(_,i)=>i/(n-1)); }
+      ts.forEach(t=>{
+        const rp = col ? [ux+(uxx-ux)*t, midY] : [midX, uy+(uyy-uy)*t];
+        [-6,6].forEach(o=>{
+          const qx = col ? rp[0] : rp[0]+o, qy = col ? rp[1]+0 : rp[1];
+          const sx = col ? qx+o : qx;
+          beam([sx,qy,wallH],[sx,qy,H],8,8,MAT.post); all.post++;
+        });
+        // 斜樑：每一組中柱就是兩支斜樑（前後各一）的落腳點，每支雙C 2根
+        [-RW*0.55, RW*0.55].forEach(off=>{
+          if(col){
+            beam([rp[0]+off, midY, H-PH-RH/2],[rp[0]+off, uy-ovF, wallH-PH-RH/2], RW,RH, MAT.rail);
+            beam([rp[0]+off, midY, H-PH-RH/2],[rp[0]+off, uyy+ovB, wallH-PH-RH/2], RW,RH, MAT.rail);
+          }else{
+            beam([midX, rp[1]+off, H-PH-RH/2],[ux-ovL, rp[1]+off, wallH-PH-RH/2], RH,RW, MAT.rail);
+            beam([midX, rp[1]+off, H-PH-RH/2],[uxx+ovR, rp[1]+off, wallH-PH-RH/2], RH,RW, MAT.rail);
+          }
+          all.rail+=2;
+        });
+      });
+      // 橫梁(桁條)：兩片斜面各自等間距
+      const lay=(cntv, fromV, toV, isCol)=>{
+        for(let i=0;i<cntv;i++){
+          const t=i/(cntv-1);
+          const v=fromV+(toV-fromV)*t;
+          if(isCol){
+            const z = (v<=midY ? wallH + ((midY-uy)>0 ? g.ridgeH*(v-uy)/(midY-uy):0)
+                               : wallH + ((uyy-midY)>0 ? g.ridgeH*(uyy-v)/(uyy-midY):0)) - PH/2;
+            beam([ux-ovL,v,z],[uxx+ovR,v,z],PH,PW,MAT.purlin);
+          }else{
+            const z = (v<=midX ? wallH + ((midX-ux)>0 ? g.ridgeH*(v-ux)/(midX-ux):0)
+                               : wallH + ((uxx-midX)>0 ? g.ridgeH*(uxx-v)/(uxx-midX):0)) - PH/2;
+            beam([v,uy-ovF,z],[v,uyy+ovB,z],PW,PH,MAT.purlin);
+          }
+          all.purlin++;
+        }
+      };
+      if(col){ lay(purlinA, midY, uy-ovF, true); lay(purlinB, midY, uyy+ovB, true); }
+      else   { lay(purlinA, midX, ux-ovL, false); lay(purlinB, midX, uxx+ovR, false); }
+      topH=Math.max(topH,H);
+    }
+  });
+
+  // 地面格線
+  const span=Math.max(maxX-minX, maxY-minY)*1.6 || 1000;
+  const grid=new THREE.GridHelper(span, Math.max(4,Math.round(span/100)), 0x333333, 0x222222);
+  grid.position.set((minX+maxX)/2, 0, (minY+maxY)/2);
+  root.add(grid);
+
+  // 鏡頭對準模型
+  const cx=(minX+maxX)/2, cy=(minY+maxY)/2, cz=topH/2;
+  controls.target.set(cx, cz, cy);
+  const r=Math.max(maxX-minX, maxY-minY, topH)*1.02+120;
+  camera.position.set(cx + r*0.85, cz + r*0.62, cy + r*0.85);
+  camera.updateProjectionMatrix();
+  controls.update();
+
+  if(note){
+    note.innerHTML = `斜樑 <b style="color:#aeb4ba">${all.rail}</b> 隻　`
+      + `橫梁 <b style="color:#d2d6da">${all.purlin}</b> 隻　`
+      + `中柱 <b style="color:#ff3b3b">${all.post}</b> 隻　`
+      + `<span style="color:#777">（跟下面材料清單對照，對不起來就是有一邊算錯）</span>`;
+  }
+}
+
+function show(){
+  if(!ensureInit()) return false;
+  const ww = wrap.clientWidth||600;
+  camera.aspect = ww/480; camera.updateProjectionMatrix(); renderer.setSize(ww,480);
+  build();
+  return true;
+}
+
+window._three3D = { show, build, ready:true };
+</script>
+
 </body>
 </html>
